@@ -216,7 +216,10 @@ function L.text(img, x, y, str, code, opts)
       local gy = opts.vertical and (y + i * step) or y
       for j, row in ipairs(g) do
         for k = 1, #row do
-          if row:sub(k, k) == "#" then L.set(img, gx + k - 1, gy + j - 1, code) end
+          if row:sub(k, k) == "#" then
+            local sc = opts.scale or 1
+            for sy = 0, sc - 1 do for sx = 0, sc - 1 do L.set(img, gx + (k - 1) * sc + sx, gy + (j - 1) * sc + sy, code) end end
+          end
         end
       end
     end

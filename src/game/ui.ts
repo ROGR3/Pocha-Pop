@@ -65,7 +65,10 @@ export function txt(scene: Phaser.Scene, x: number, y: number, s: string, o: Tex
 /** Keep text on whole pixels even with a centred origin. */
 export function snapText(t: Phaser.GameObjects.Text) {
   const w = t.width, h = t.height;
-  t.setDisplayOrigin(Math.round(w * t.originX), Math.round(h * t.originY));
+  const ox = Number.isFinite(t.originX) ? t.originX : 0;
+  const oy = Number.isFinite(t.originY) ? t.originY : 0;
+  if (!(w > 0) || !(h > 0)) { t.setOrigin(ox, oy); return t; }
+  t.setDisplayOrigin(Math.round(w * ox), Math.round(h * oy));
   return t;
 }
 

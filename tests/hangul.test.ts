@@ -126,3 +126,13 @@ describe('IME emulation used by screenshots', () => {
     }
   });
 });
+
+import { hasRawJamo } from '../src/logic/hangul';
+describe('hasRawJamo', () => {
+  it('finds unsplit jamo', () => {
+    expect(hasRawJamo('떡', 'ㄸ')).toBe(true);
+    expect(hasRawJamo('과', 'ㅘ')).toBe(true);
+    expect(hasRawJamo('볶', 'ㄲ')).toBe(true);
+    expect(hasRawJamo('과', 'ㅏ')).toBe(false);
+  });
+});

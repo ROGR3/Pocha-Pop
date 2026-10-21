@@ -25,6 +25,7 @@ export class Street {
   gy = 0;
   private placed: Placed[] = [];
   far!: Phaser.GameObjects.Image;
+  sky!: Phaser.GameObjects.Image;
   mid!: Phaser.GameObjects.Sprite;
   near!: Phaser.GameObjects.Sprite;
   stall!: Phaser.GameObjects.Sprite;
@@ -52,6 +53,7 @@ export class Street {
     const up = o.upgrades ?? G.data.upgrades;
     const s = scene;
     const pre = o.backdrop === 'euljiro' ? 'eul' : 'han';
+    this.sky = s.add.image(0, 0, `bg_${pre}_sky`).setOrigin(0.5, 1).setDepth(DEPTH.far);
     this.far = s.add.image(0, 0, `bg_${pre}_far`).setOrigin(0.5, 1).setDepth(DEPTH.far);
     this.mid = s.add.sprite(0, 0, `bg_${pre}_mid`).setOrigin(0.5, 1).setDepth(DEPTH.mid).play(`bg_${pre}_mid:${pre === 'eul' ? 'neon' : 'lights'}`);
     this.near = s.add.sprite(0, 0, `bg_${pre}_near`).setOrigin(0.5, 0).setDepth(DEPTH.near).play(`bg_${pre}_near:${pre === 'eul' ? 'shimmer' : 'twinkle'}`);
@@ -151,6 +153,7 @@ export class Street {
     this.near.setPosition(this.cx, this.gy - 16);
     this.mid.setPosition(this.cx, this.gy - 14);
     this.far.setPosition(this.cx, this.gy - 14);
+    this.sky.setPosition(this.cx, this.gy - 14 - 240);
     for (const p of this.placed) { p.obj.x = this.cx + p.dx; p.obj.y = this.gy + p.dy; }
     if (this.steam) this.steam.setPosition(this.wx(-56), this.wy(-70));
     if (this.notes) this.notes.setPosition(this.wx(66), this.wy(-90));
@@ -168,6 +171,7 @@ export class Street {
     this.t += dt;
     // gentle parallax drift
     this.far.x = this.cx + Math.round(Math.sin(this.t / 5200) * 4);
+    this.sky.x = this.cx + Math.round(Math.sin(this.t / 5200) * 6);
     this.mid.x = this.cx + Math.round(Math.sin(this.t / 5200) * 1.5);
   }
 

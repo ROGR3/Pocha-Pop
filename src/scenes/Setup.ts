@@ -39,7 +39,7 @@ export class SetupScene extends Phaser.Scene {
     const W = this.scale.width, H = this.scale.height;
     this.add.rectangle(0, 0, W, H, 0x262b44).setOrigin(0, 0);
     txt(this, W / 2, 8, 'Korejská klávesnice', { size: 'l', color: C.yellow, origin: [0.5, 0], shadow: true });
-    txt(this, W / 2, 28, 'Hra používá systémovou klávesnici – žádnou vlastní.', { size: 's', color: C.light, origin: [0.5, 0], wrap: W - 20, align: 'center' });
+    txt(this, W / 2, 28, 'Hra používá systémovou klávesnici.', { size: 's', color: C.light, origin: [0.5, 0], wrap: W - 20, align: 'center' });
 
     const tabY = 56;
     const tw = Math.round((W - 24) / 2);

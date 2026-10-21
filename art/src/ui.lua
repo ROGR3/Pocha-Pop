@@ -375,30 +375,35 @@ do
   L.save(spr, "logo")
 end
 
--- ------------------------------------------------------------ app icon 64x64 (exported 1024 by scripts)
+-- ------------------------------------------------------------ app icon 64x64 (scaled to 1024 by scripts/make-icons.sh)
 do
   local spr = L.new(64, 64, 1)
   local img = L.img(spr, 1)
-  L.vgradient(img, 0, 0, 64, 64, { { 0, "y" }, { 40, "B" }, { 63, "C" } })
-  -- stall
-  for y = 14, 26 do
-    local inset = math.floor((26 - y) * 0.8)
-    for x = 8 + inset, 55 - inset do L.set(img, x, y, (y < 16) and "k" or ((x % 8 == 0) and "b" or "j")) end
+  L.vgradient(img, 0, 0, 64, 64, { { 0, "z" }, { 30, "y" }, { 52, "B" }, { 63, "C" } })
+  -- stall roof
+  for y = 26, 35 do
+    local inset = math.floor((35 - y) * 0.7)
+    for x = 9 + inset, 54 - inset do L.set(img, x, y, (y < 28) and "k" or ((x % 7 == 0) and "b" or "j")) end
   end
-  for x = 6, 57 do for y = 26, 30 + ((x % 6 < 3) and 1 or 0) do L.set(img, x, y, y == 26 and "k" or "i") end end
-  L.rect(img, 9, 31, 46, 14, "b"); L.rect(img, 10, 32, 44, 12, "e")
-  L.rect(img, 6, 44, 52, 4, "d"); L.hline(img, 6, 57, 44, "c")
-  L.rect(img, 8, 48, 48, 9, "e"); L.hline(img, 8, 55, 48, "f")
-  L.rect(img, 8, 51, 48, 2, "j")
-  L.rect(img, 6, 26, 2, 32, "w"); L.rect(img, 56, 26, 2, 32, "w")
-  -- bubble with 팝
-  L.ebox(img, 30, 2, 60, 22, "t")
-  L.map(img, 34, 20, { "tt..", "t..." })
-  L.text(img, 41, 8, "팝", "i", { step = 8 })
-  L.ebox(img, 12, 34, 22, 43, "E"); L.rect(img, 11, 33, 13, 4, "y") -- chef head
-  L.set(img, 15, 38, "z"); L.set(img, 19, 38, "z")
-  L.map(img, 28, 36, { "..kk..", ".kllk.", "kkkkkk", "jjjjjj" }) -- ramyeon pot
-  L.map(img, 40, 33, { ".t.", "t..", ".t." })
+  for x = 7, 56 do for y = 35, 38 + ((x % 6 < 3) and 1 or 0) do L.set(img, x, y, y == 35 and "k" or "i") end end
+  -- interior
+  L.rect(img, 10, 39, 44, 10, "b"); L.rect(img, 10, 39, 44, 2, "j")
+  -- chef: head with white towel
+  L.ebox(img, 14, 38, 25, 49, "E")
+  L.rect(img, 14, 38, 12, 3, "t"); L.set(img, 13, 39, "t"); L.set(img, 12, 40, "u")
+  L.set(img, 17, 44, "z"); L.set(img, 22, 44, "z"); L.hline(img, 18, 21, 47, "f"); L.set(img, 16, 46, "D"); L.set(img, 23, 46, "D")
+  -- pot with steam
+  L.rect(img, 33, 44, 12, 6, "v"); L.rect(img, 33, 44, 3, 6, "u"); L.hline(img, 32, 45, 43, "u"); L.hline(img, 34, 43, 44, "j")
+  L.map(img, 35, 37, { ".t..t", "t..t.", ".t..t", "t..t." })
+  -- counter
+  L.rect(img, 6, 50, 52, 3, "d"); L.hline(img, 6, 57, 50, "c")
+  L.rect(img, 8, 53, 48, 8, "e"); L.rect(img, 8, 55, 48, 2, "j")
+  for x = 11, 54, 6 do L.set(img, x, 55, "l") end
+  L.rect(img, 6, 35, 2, 26, "w"); L.rect(img, 56, 35, 2, 26, "w")
+  -- speech bubble with 팝
+  L.ebox(img, 26, 2, 60, 26, function(nx, ny) return (nx + ny > 0.9) and "u" or "t" end)
+  L.map(img, 30, 22, { "ttt..", "tt...", "t...." })
+  L.text(img, 36, 6, "팝", "i", { scale = 2 })
   L.outline(img, "z")
   L.save(spr, "appicon")
 end

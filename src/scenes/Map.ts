@@ -89,7 +89,7 @@ export class MapScene extends Phaser.Scene {
     this.tweens.add({ targets: s, angle: { from: -3, to: 3 }, yoyo: true, repeat: -1, duration: 1500 + n * 97, ease: 'Sine.easeInOut' });
     const h = boss ? 34 : 22;
     const label = txt(this, x, y + h + 2, boss ? '미식가' : String(n), { size: boss ? 's' : 'm', color: unlocked ? C.white : C.grey, origin: [0.5, 0], shadow: true });
-    if (rec && !boss) smallStars(this, x, y + h + 18, rec.stars);
+    if (rec && !boss) smallStars(this, x, y + h + 21, rec.stars);
     if (rec && boss) txt(this, x, y + h + 15, '★'.repeat(rec.stars), { size: 's', color: C.yellow, origin: [0.5, 0] });
     if (unlocked && !rec) {
       // current frontier: bouncing marker

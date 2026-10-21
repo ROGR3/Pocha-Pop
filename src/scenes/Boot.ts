@@ -11,7 +11,7 @@ const SHEETS: [string, number, number][] = [
   ['bg_eul_mid', 320, 240], ['bg_eul_near', 320, 40], ['bg_han_mid', 320, 240], ['bg_han_near', 320, 40],
 ];
 const IMAGES = ['counter', 'awning', 'stool', 'bubble', 'bubble_hi', 'bubble_tail', 'panel', 'paper', 'btn', 'btn_down', 'btn_wood', 'btn_wood_down', 'btn_off',
-  'postcard_jeju', 'stamp', 'bg_eul_far', 'bg_han_far', 'appicon'];
+  'postcard_jeju', 'stamp', 'bg_eul_far', 'bg_han_far', 'bg_eul_sky', 'bg_han_sky', 'appicon'];
 
 export const CHARS = ['char_kim', 'char_haeun', 'char_critic', 'char_halmeoni', 'char_cust_a', 'char_cust_b', 'char_cust_c', 'char_cust_d'];
 

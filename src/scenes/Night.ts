@@ -152,7 +152,7 @@ export class NightScene extends Phaser.Scene {
     });
     const focusHint = this.time.addEvent({ delay: 400, loop: true, callback: () => {
       if (this.ended) return;
-      if (!G.ime.hasFocus()) this.box.setHint('Klepni sem a piš ⌨', C.orange); else this.box.setHint('Napiš objednávku…');
+      if (!G.ime.hasFocus()) this.box.setHint('Klepni sem a piš', C.orange); else this.box.setHint('Napiš objednávku…');
     } });
     void focusHint;
     // the input panel is a big tap target that refocuses the IME (Android)

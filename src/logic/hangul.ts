@@ -167,3 +167,10 @@ export function splitComposing(text: string, composing: boolean): { done: string
   if (!composing || chars.length === 0) return { done: text, current: '' };
   return { done: chars.slice(0, -1).join(''), current: chars[chars.length - 1] };
 }
+
+/** Does a syllable use this (unsplit) jamo as initial, medial or final? */
+export function hasRawJamo(ch: string, jamo: string): boolean {
+  const s = splitSyllable(ch);
+  if (!s) return false;
+  return s.initial === jamo || s.medial === jamo || s.final === jamo;
+}
