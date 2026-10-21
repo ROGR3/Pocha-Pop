@@ -25,8 +25,14 @@ npm run tauri android build -- --apk     # APK v src-tauri/gen/android/app/build
 npm run tauri android build -- --apk --debug   # debug-podepsané APK, dá se rovnou nainstalovat
 ```
 
-Release APK je **nepodepsané** (`app-universal-release-unsigned.apk`). Pro instalaci buď použij `--debug`,
-nebo ho podepiš (`apksigner sign --ks ~/.android/debug.keystore …`).
+Release APK z `tauri android build` je **nepodepsané**. Instalovatelné APK:
+
+```bash
+bash scripts/sign-apk.sh        # build arm64 + podpis lokálním klíčem → release/pocha-pop-0.1.0-arm64.apk (~13 MB)
+```
+
+Klíč (`signing/`, heslo v `signing/key.properties`) se vytvoří při prvním běhu a je v `.gitignore`.
+Debug APK (`--debug`) je podepsané automaticky, ale má ~130 MB kvůli ladicím symbolům.
 
 ## Nastavení korejské klávesnice
 

@@ -3,3 +3,7 @@ node_modules/
 dist/
 src-tauri/target/
 src-tauri/gen/android/app/build/
+signing/
+*.keystore
+*.jks
+release/
