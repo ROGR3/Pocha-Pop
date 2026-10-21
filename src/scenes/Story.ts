@@ -24,12 +24,12 @@ export class StoryScene extends Phaser.Scene {
     if (!ending) {
       // grandma stands behind the counter, the chef (you) walks in
       this.street.chef.setVisible(false);
-      const h = this.add.sprite(this.street.wx(-84), this.street.wy(-36), 'char_halmeoni').setOrigin(0.5, 1).setDepth(DEPTH.chef).play('char_halmeoni:idle');
+      const h = this.add.sprite(this.street.wx(-84), this.street.wy(-40), 'char_halmeoni').setOrigin(0.5, 1).setDepth(DEPTH.chef).play('char_halmeoni:idle');
       const you = this.add.sprite(this.street.wx(140), this.street.wy(-28), 'chef').setOrigin(0.5, 1).setDepth(DEPTH.customer).play('chef:idle');
       this.tweens.add({ targets: you, x: this.street.wx(20), duration: 1800, ease: 'Sine.easeOut' });
       void h;
     } else {
-      ['char_kim', 'char_haeun'].forEach((k, i) => this.add.sprite(this.street.wx(this.street.seatX[i]), this.street.wy(-36), k).setOrigin(0.5, 1).setDepth(DEPTH.customer).play(`${k}:happy`));
+      ['char_kim', 'char_haeun'].forEach((k, i) => this.add.sprite(this.street.wx(this.street.seatX[i]), this.street.wy(-40), k).setOrigin(0.5, 1).setDepth(DEPTH.customer).play(`${k}:happy`));
       const cat = G.data.friends.nabi?.chapter >= 2 ? 'nabi_fat' : 'nabi';
       this.add.sprite(this.street.wx(this.street.seatX[2]), this.street.wy(-41), cat).setOrigin(0.5, 1).setDepth(DEPTH.customer).play(`${cat}:sit`);
     }

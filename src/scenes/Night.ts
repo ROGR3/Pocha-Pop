@@ -276,7 +276,7 @@ export class NightScene extends Phaser.Scene {
   }
 
   private placeCustomer(c: Customer, relayout = false) {
-    const y = c.kind === 'nabi' ? this.street.wy(-41) : this.street.wy(-36);
+    const y = c.kind === 'nabi' ? this.street.wy(-41) : this.street.wy(-40);
     c.sprite.y = y;
     if (relayout && c.state !== 'walk' && c.state !== 'leave') c.sprite.x = this.street.wx(this.street.seatX[c.seat]);
     if (c.bubble) this.placeBubble(c);
@@ -286,7 +286,7 @@ export class NightScene extends Phaser.Scene {
     const b = c.bubble!;
     const W = this.scale.width;
     const row = c.kind === 'critic' ? 1 : c.seat % 2;
-    const anchorY = this.street.wy(c.kind === 'nabi' ? -58 : -78) - row * 56;
+    const anchorY = this.street.wy(c.kind === 'nabi' ? -58 : -82) - row * 56;
     const cx = this.street.wx(this.street.seatX[c.seat]);
     let x = Math.round(cx - b.bw / 2);
     x = Math.max(2, Math.min(W - b.bw - 2, x));
