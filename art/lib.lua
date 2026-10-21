@@ -177,6 +177,104 @@ function L.rng(seed)
   end
 end
 
+
+-- Tiny 7x7 Hangul glyphs for neon signs / sign boards.
+L.glyph = {
+  ["포"] = { "#######", ".#...#.", ".#...#.", "#######", "...#...", "#######", "......." },
+  ["차"] = { "..#..#.", "####.#.", "..#..##", ".#.#.#.", "#...##.", ".....#.", "......." },
+  ["호"] = { "...#...", ".#####.", "..###..", ".#...#.", "..###..", "...#...", "#######" },
+  ["프"] = { "#######", ".#...#.", ".#...#.", "#######", ".......", "#######", "......." },
+  ["치"] = { "..#..#.", "####.#.", "..#..#.", ".#.#.#.", "#...##.", ".....#.", "......." },
+  ["킨"] = { "####.#.", "...#.#.", "####.#.", "...#.#.", "#......", "#......", "######." },
+  ["맥"] = { "###.#.#", "#.#.###", "###.#.#", ".......", "######.", ".....#.", ".....#." },
+  ["주"] = { "#######", "...#...", "..#.#..", ".#...#.", "#######", "...#...", "...#..." },
+  ["노"] = { "#......", "#......", "######.", "...#...", "...#...", "#######", "......." },
+  ["래"] = { "###.#.#", "..#.#.#", "###.###", "#...#.#", "###.#.#", ".......", "......." },
+  ["방"] = { "#.#.#..", "###.##.", "#.#.#..", "###.#..", "..###..", ".#...#.", "..###.." },
+  ["라"] = { "###.#..", "..#.#..", "###.##.", "#...#..", "###.#..", ".......", "......." },
+  ["면"] = { "###..#.", "#.###..", "###..#.", "......#", "#......", "#......", "######." },
+  ["밥"] = { "#.#.#..", "###.##.", "###.#..", ".......", "#.#....", "###....", "###...." },
+  ["커"] = { "####.#.", "...#.#.", "####.#.", "...##..", "...#.#.", "...#.#.", ".....#." },
+  ["피"] = { "#####.#", ".#.#..#", ".#.#..#", "#####.#", "......#", "......#", "......." },
+  ["을"] = { "..###..", ".#...#.", "..###..", "#######", "######.", ".....#.", "######." },
+  ["지"] = { "####.#.", "...#.#.", "..#..#.", ".#.#.#.", "#...##.", ".....#.", "......." },
+  ["로"] = { "######.", ".....#.", "######.", "#......", "######.", "...#...", "#######" },
+  ["메"] = { "###.#.#", "#.#.#.#", "#.###.#", "###.#.#", ".....#.", ".......", "......." },
+  ["뉴"] = { "#......", "#......", "######.", ".......", "#######", ".#...#.", ".#...#." },
+}
+
+-- Draw a string of glyphs. step = advance per glyph, vertical = stack downwards.
+function L.text(img, x, y, str, code, opts)
+  opts = opts or {}
+  local step = opts.step or 8
+  local i = 0
+  for _, cp in utf8.codes(str) do
+    local ch = utf8.char(cp)
+    local g = L.glyph[ch]
+    if g then
+      local gx = opts.vertical and x or (x + i * step)
+      local gy = opts.vertical and (y + i * step) or y
+      for j, row in ipairs(g) do
+        for k = 1, #row do
+          if row:sub(k, k) == "#" then L.set(img, gx + k - 1, gy + j - 1, code) end
+        end
+      end
+    end
+    i = i + 1
+  end
+end
+
+-- Glow: soft 1px halo in `code` around every pixel of colour `src` (8-neighbour).
+function L.glow(img, srcCode, code, alpha)
+  local src = L.c(srcCode)
+  local pts = {}
+  for y = 0, img.height - 1 do
+    for x = 0, img.width - 1 do
+      if img:getPixel(x, y) == src then pts[#pts + 1] = { x, y } end
+    end
+  end
+  for _, p in ipairs(pts) do
+    for dy = -1, 1 do for dx = -1, 1 do
+      local x, y = p[1] + dx, p[2] + dy
+      if x >= 0 and y >= 0 and x < img.width and y < img.height and img:getPixel(x, y) ~= src then
+        L.set(img, x, y, code, alpha)
+      end
+    end end
+  end
+end
+
+
+-- Neon text: glyphs in `code` with a 1px halo in `glowCode`, isolated from
+-- whatever is already on the image.
+function L.neon(img, x, y, str, code, glowCode, opts)
+  local tmp = Image(img.width, img.height, ColorMode.RGB)
+  L.text(tmp, x, y, str, code, opts)
+  if glowCode then L.glow(tmp, code, glowCode) end
+  img:drawImage(tmp, Point(0, 0))
+end
+
+-- Ordered (Bayer 4x4) dither between two codes; t in 0..1 = share of b.
+local BAYER = { 0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5 }
+function L.dither(x, y, t, a, b)
+  local thr = (BAYER[(y % 4) * 4 + (x % 4) + 1] + 0.5) / 16
+  return t > thr and b or a
+end
+
+-- Vertical multi-stop gradient with dithering. stops = { {y, code}, ... }
+function L.vgradient(img, x0, y0, w, h, stops)
+  for y = y0, y0 + h - 1 do
+    local a, b, t = stops[1][2], stops[1][2], 0
+    for k = 1, #stops - 1 do
+      if y >= stops[k][1] and y <= stops[k + 1][1] then
+        a, b = stops[k][2], stops[k + 1][2]
+        t = (y - stops[k][1]) / math.max(1, stops[k + 1][1] - stops[k][1])
+      end
+    end
+    if y > stops[#stops][1] then a, b, t = stops[#stops][2], stops[#stops][2], 0 end
+    for x = x0, x0 + w - 1 do L.set(img, x, y, L.dither(x, y, t, a, b)) end
+  end
+end
+
 function L.isOpaque(img, x, y)
   if x < 0 or y < 0 or x >= img.width or y >= img.height then return false end
   return app.pixelColor.rgbaA(img:getPixel(x, y)) > 0

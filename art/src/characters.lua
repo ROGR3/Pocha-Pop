@@ -378,3 +378,28 @@ build("cust_d", with(SKIN, {
     L.map(img, 9 + dx, 17 + b, { "............", "......t.....", "......j.....", "......t.....", "......j.....", "......t.....", "..jj..j..jj.", "......t....." })
   end,
 }))
+
+-- 할머니 – grandma: grey bun, purple cardigan, round glasses, apron
+build("halmeoni", with(SKIN, {
+  hair = "u", hair2 = "v", top = "B", top2 = "y", pants = "w", pants2 = "x", shoes = "f",
+  hairFront = {
+    "......uuuuuu......",
+    ".....uuvvvvuu.....",
+    "......uuuuuu......",
+    "....uuuuuuuuuu....",
+    "...uuuuuuuuuuuu...",
+    "..uuuvuuuuuuvuuu..",
+    ".uuuu.uuuuuu.uuuu.",
+    ".uuu..........uuu.",
+    ".uu............uu.",
+    ".u..............u.",
+  },
+  hairY = -1,
+  face = function(img, dx, b, pose)
+    L.map(img, 10 + dx, 10 + b, { "vvvv...vvvv", "v..vvvvv..v", "v..v...v..v", "vvvv...vvvv" })
+    L.set(img, 10 + dx, 15 + b, "F"); L.set(img, 21 + dx, 15 + b, "F")
+  end,
+  bodyDetail = function(img, dx, b)
+    L.map(img, 10 + dx, 18 + b, { "..cccccc..", ".cccccccc.", ".cDccccDc.", ".cccccccc.", ".cccDDccc.", ".cccccccc.", ".cccccccc.", ".cccccccc.", ".dddddddd." })
+  end,
+}))
