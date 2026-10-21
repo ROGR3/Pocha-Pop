@@ -113,3 +113,16 @@ describe('composition split', () => {
     expect(splitComposing('김치', false)).toEqual({ done: '김치', current: '' });
   });
 });
+
+import { imeStates } from '../src/game/debug';
+describe('IME emulation used by screenshots', () => {
+  it('produces 하나 states like a real 두벌식 IME', () => {
+    expect(imeStates('하나')).toEqual(['ㅎ', '하', '한', '하나']);
+    expect(imeStates('라면')).toEqual(['ㄹ', '라', '람', '라며', '라면']);
+  });
+  it('every intermediate state is a valid prefix', () => {
+    for (const w of ['떡볶이', '샌드위치', '과자', '김치찌개 하나 주세요']) {
+      for (const st of imeStates(w)) expect(matchKind(st, w)).not.toBe('none');
+    }
+  });
+});
