@@ -1,0 +1,21 @@
+@font-face { font-family: 'Galmuri11'; src: url('/fonts/Galmuri11.woff2') format('woff2'); }
+@font-face { font-family: 'Galmuri9'; src: url('/fonts/Galmuri9.woff2') format('woff2'); }
+@font-face { font-family: 'Galmuri7'; src: url('/fonts/Galmuri7.woff2') format('woff2'); }
+@font-face { font-family: 'Galmuri14'; src: url('/fonts/Galmuri14.woff2') format('woff2'); }
+html, body {
+  margin: 0; padding: 0; width: 100%; height: 100%;
+  background: #181425; overflow: hidden;
+  overscroll-behavior: none; touch-action: none;
+  -webkit-user-select: none; user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+#game { position: fixed; left: 0; top: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: flex-start; }
+#game canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+/* Hidden but focusable input for the system Korean IME (not display:none!) */
+#ime {
+  position: fixed; left: 0; bottom: 0; width: 1px; height: 1px;
+  opacity: 0; border: 0; padding: 0; margin: 0; outline: none;
+  font-size: 16px; /* prevents iOS/Android zoom on focus */
+  color: transparent; background: transparent; caret-color: transparent;
+  z-index: 10;
+}
