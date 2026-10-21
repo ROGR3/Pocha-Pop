@@ -209,3 +209,10 @@ export function smallStars(scene: Phaser.Scene, x: number, y: number, n: number,
   for (let i = 0; i < of; i++) c.add(scene.add.image(Math.round((i - (of - 1) / 2) * 8), 0, 'star_s', i < n ? 0 : 1));
   return c;
 }
+
+/** Logical (game) rect → CSS pixel rect on the page (for the IME tap area). */
+export function cssRect(scene: Phaser.Scene, x: number, y: number, w: number, h: number) {
+  const r = scene.game.canvas.getBoundingClientRect();
+  const k = r.width / scene.scale.width;
+  return { left: r.left + x * k, top: r.top + y * k, width: w * k, height: h * k };
+}

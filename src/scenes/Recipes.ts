@@ -55,6 +55,11 @@ export class RecipesScene extends Phaser.Scene {
 
   private relayout() { this.scene.restart(); }
 
+  onBack() {
+    if (this.popup) { this.popup.destroy(); this.popup = undefined; return; }
+    goto(this, 'Map');
+  }
+
   private setScroll(v: number) {
     this.scrollY = Phaser.Math.Clamp(v, 0, this.maxScroll);
     this.list.y = 30 - Math.round(this.scrollY);

@@ -48,5 +48,10 @@ export class StoryScene extends Phaser.Scene {
     });
   }
 
+  onBack() {
+    if (this.kind === 'ending') goto(this, 'Map');
+    else { G.night = 1; goto(this, 'Night', { night: 1 }); }
+  }
+
   update(_t: number, dt: number) { this.street.update(dt); }
 }

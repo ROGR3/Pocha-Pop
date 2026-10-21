@@ -74,4 +74,6 @@ export class SettingsScene extends Phaser.Scene {
   }
 
   private relayout() { this.scene.restart({ from: this.from }); }
+
+  onBack() { goto(this, this.from); }
 }

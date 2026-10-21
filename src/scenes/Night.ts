@@ -12,7 +12,8 @@ import { makeOrder, tokenAt, type Kind, type Order } from '../game/orders';
 import { G, iconIdx, word } from '../game/state';
 import { DEPTH, Street, particleFrame } from '../game/street';
 import { TypeBox } from '../game/typebox';
-import { C, HEX, button, fadeIn, floatText, goto, iconButton, panel, snapText, toast, txt } from '../game/ui';
+import { IS_ANDROID } from '../game/ime';
+import { C, HEX, button, cssRect, fadeIn, floatText, goto, iconButton, panel, snapText, toast, txt } from '../game/ui';
 
 type CState = 'walk' | 'wait' | 'eat' | 'leave';
 
@@ -153,7 +154,9 @@ export class NightScene extends Phaser.Scene {
     });
     const focusHint = this.time.addEvent({ delay: 400, loop: true, callback: () => {
       if (this.ended) return;
-      if (!G.ime.hasFocus()) this.box.setHint('Klepni sem a piš', C.orange); else this.box.setHint('Napiš objednávku…');
+      // Android: keyboard closed (WebView is padded by the IME inset, so full height = no keyboard)
+      const kbClosed = IS_ANDROID && window.innerHeight > screen.height * 0.72;
+      if (!G.ime.hasFocus() || kbClosed) this.box.setHint('Klepni kamkoli a piš', C.orange); else this.box.setHint('Napiš objednávku…');
     } });
     void focusHint;
     // the input panel is a big tap target that refocuses the IME (Android)
@@ -167,8 +170,10 @@ export class NightScene extends Phaser.Scene {
     if (boss) {
       this.intro = true;
       this.time.delayedCall(900, async () => {
+        this.updateTapArea();
         await playDialogue(this, CRITIC_INTRO, { bottom: this.scale.height - INPUT_H - 4 });
         this.intro = false;
+        this.updateTapArea();
       });
     }
   }
@@ -207,7 +212,15 @@ export class NightScene extends Phaser.Scene {
     this.hintBtn.setPosition(15, gy + 3 + (INPUT_H - 6) / 2);
     this.hud.setPosition(0, 0);
     this.layoutHud();
+    this.updateTapArea();
     for (const c of this.customers) this.placeCustomer(c, true);
+  }
+
+  /** Whole scene below the HUD (except the hint button) is a tap target for the keyboard. */
+  updateTapArea() {
+    if (this.paused || this.intro || this.ended) { G.ime.setTapArea(null); return; }
+    const W = this.scale.width, H = this.scale.height;
+    G.ime.setTapArea(cssRect(this, 30, 24, W - 30, H - 24));
   }
 
   private buildHud() {
@@ -633,6 +646,7 @@ export class NightScene extends Phaser.Scene {
   private checkEnd() {
     if (this.ended || this.queue.length || this.customers.length) return;
     this.ended = true;
+    this.updateTapArea();
     this.time.delayedCall(700, () => this.finish());
   }
 
@@ -665,10 +679,16 @@ export class NightScene extends Phaser.Scene {
   }
 
   // ------------------------------------------------------------- pause
+  onBack() {
+    if (this.intro || this.ended) return;
+    this.togglePause();
+  }
+
   private togglePause() {
     if (this.ended) return;
-    if (this.pauseLayer) { this.pauseLayer.destroy(); this.pauseLayer = undefined; this.paused = false; this.tweens.resumeAll(); G.ime.focus(); return; }
+    if (this.pauseLayer) { this.pauseLayer.destroy(); this.pauseLayer = undefined; this.paused = false; this.tweens.resumeAll(); G.ime.focus(); this.updateTapArea(); return; }
     this.paused = true;
+    this.updateTapArea();
     this.tweens.pauseAll();
     const W = this.scale.width, H = this.scale.height;
     const c = this.add.container(0, 0).setDepth(DEPTH.overlay);

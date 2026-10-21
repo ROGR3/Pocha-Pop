@@ -10,6 +10,11 @@ export interface ImeState {
 
 type Listener = (s: ImeState) => void;
 
+export const IS_ANDROID = typeof navigator !== 'undefined' && /android/i.test(navigator.userAgent);
+
+/** Tap area in CSS pixels (where a tap lands directly on the input → keyboard opens). */
+export interface TapArea { left: number; top: number; width: number; height: number }
+
 export class Ime {
   readonly el: HTMLInputElement;
   private listeners = new Set<Listener>();
@@ -61,7 +66,28 @@ export class Ime {
   deactivate() {
     this.active = false;
     this.clear();
+    this.setTapArea(null);
     this.el.blur();
+  }
+
+  /**
+   * Put the (invisible) input over a screen area. Android only opens the soft
+   * keyboard for a real tap on an editable element, so the input itself has to
+   * be under the finger – a programmatic focus() is not enough. null parks it.
+   */
+  setTapArea(a: TapArea | null) {
+    const st = this.el.style;
+    if (!a) {
+      st.left = '0px'; st.top = ''; st.bottom = '0px'; st.width = '1px'; st.height = '1px';
+      st.pointerEvents = 'none';
+      return;
+    }
+    st.bottom = '';
+    st.left = `${Math.round(a.left)}px`;
+    st.top = `${Math.round(a.top)}px`;
+    st.width = `${Math.round(a.width)}px`;
+    st.height = `${Math.round(a.height)}px`;
+    st.pointerEvents = 'auto';
   }
 
   focus() {
@@ -83,16 +109,19 @@ export class Ime {
   }
 
   /**
-   * Clear the field and terminate the IME composition. Blur → value='' →
-   * focus resets the composition on Android/WebKitGTK; otherwise the IME
-   * would put the rest of the syllable back. Whatever the IME re-inserts
-   * from the old word is stripped (see `stale`).
+   * Clear the field and terminate the IME composition.
+   * Desktop (WebKitGTK): blur → value='' → focus resets the composition.
+   * Android: no blur – it would hide the soft keyboard and a programmatic
+   * focus() can't bring it back. Setting the value makes Chrome restart the
+   * IME input connection. Whatever the IME re-inserts from the old word is
+   * stripped (see `stale`).
    */
   clear() {
     const old = this.el.value;
     const wasFocused = this.hasFocus();
-    if (wasFocused) this.el.blur();
+    if (wasFocused && !IS_ANDROID) this.el.blur();
     this.el.value = '';
+    if (IS_ANDROID && wasFocused) { try { this.el.setSelectionRange(0, 0); } catch { /* */ } }
     this.composing = false;
     this.stale = old;
     this.lastText = '';

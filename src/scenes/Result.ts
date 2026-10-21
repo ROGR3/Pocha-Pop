@@ -16,6 +16,8 @@ export class ResultScene extends Phaser.Scene {
 
   init(s: NightSummary) { this.s = s; }
 
+  onBack() { goto(this, 'Map'); }
+
   create() {
     fadeIn(this, 400);
     G.ime.deactivate();

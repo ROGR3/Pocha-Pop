@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { G, WORDS } from './game/state';
 import { Ime } from './game/ime';
 import { imeStates, typeKorean } from './game/debug';
+import { setupBack } from './game/back';
 import { computeLayout, viewportSize } from './game/layout';
 import { BootScene } from './scenes/Boot';
 import { TitleScene } from './scenes/Title';
@@ -40,6 +41,7 @@ async function start() {
     scene: [BootScene, TitleScene, SetupScene, StoryScene, MapScene, NightScene, ResultScene, ShopScene, RecipesScene, SettingsScene],
   });
   G.audio.attach(game);
+  setupBack(game);
 
   let pending = 0;
   const relayout = () => {

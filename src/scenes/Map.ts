@@ -49,6 +49,11 @@ export class MapScene extends Phaser.Scene {
 
   private relayout() { this.scene.restart(); }
 
+  onBack() {
+    if (this.popup) { this.popup.destroy(); this.popup = undefined; return; }
+    goto(this, 'Title');
+  }
+
   private section(idx: number, y: number, W: number, h: number, pre: 'eul' | 'han', title: string, sub: string, nights: number[]) {
     // backdrop crop
     const far = this.add.image(Math.round(W / 2), y + h, `bg_${pre}_far`).setOrigin(0.5, 1);

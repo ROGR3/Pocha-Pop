@@ -3,7 +3,7 @@ import Phaser from 'phaser';
 import { matchKind, toJamo } from '../logic/hangul';
 import { G } from '../game/state';
 import { TypeBox } from '../game/typebox';
-import { Button, C, button, fadeIn, goto, panel, txt } from '../game/ui';
+import { Button, C, button, cssRect, fadeIn, goto, panel, txt } from '../game/ui';
 
 const ANDROID = [
   'Gboard: Nastavení → Jazyky → Přidat klávesnici → Korejština → „2 sady“ (두벌식).',
@@ -63,6 +63,9 @@ export class SetupScene extends Phaser.Scene {
     button(this, 46, by, 70, 22, this.next === 'Settings' ? 'Zpět' : 'Přeskočit', () => this.finish(), { style: 'wood', size: 's' });
 
     G.ime.activate();
+    this.tap = [10, ty + 18, W - 20, 40];
+    this.builtW = W;
+    G.ime.setTapArea(cssRect(this, ...this.tap));
     this.unsub = G.ime.subscribe((s) => this.onIme(s.text, s.composing));
     G.ime.onKey = (e) => { if (e.key === 'Enter' && this.passed) this.finish(); };
     this.events.once('shutdown', () => { this.unsub?.(); G.ime.onKey = null; G.ime.deactivate(); this.game.events.off('layout', this.relayout, this); });
@@ -72,7 +75,16 @@ export class SetupScene extends Phaser.Scene {
     } });
   }
 
-  private relayout() { this.scene.restart({ next: this.next }); }
+  private tap: [number, number, number, number] = [0, 0, 0, 0];
+  private builtW = 0;
+
+  /** Height-only changes (soft keyboard) must not restart the scene – that would close the keyboard. */
+  private relayout() {
+    if (this.scale.width !== this.builtW) { this.scene.restart({ next: this.next }); return; }
+    G.ime.setTapArea(cssRect(this, ...this.tap));
+  }
+
+  onBack() { this.finish(); }
 
   private setTab(t: 'android' | 'linux') {
     this.tab = t;

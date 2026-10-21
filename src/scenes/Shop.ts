@@ -72,6 +72,8 @@ export class ShopScene extends Phaser.Scene {
 
   private relayout() { this.scene.restart(); }
 
+  onBack() { goto(this, 'Map'); }
+
   private buy(id: string) {
     const u = UPGRADES.find((x) => x.id === id)!;
     if (G.data.coins < u.price || G.hasUpgrade(id)) return;
