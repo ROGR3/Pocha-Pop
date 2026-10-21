@@ -118,6 +118,7 @@ export class NightScene extends Phaser.Scene {
 
   create() {
     fadeIn(this, 400);
+    if (G.speed !== 1) { this.time.timeScale = G.speed; this.tweens.timeScale = G.speed; this.anims.globalTimeScale = G.speed; }
     const boss = this.n === BOSS_NIGHT;
     const backdrop = this.def.district === 'euljiro' ? 'euljiro' : 'hangang';
     this.street = new Street(this, { backdrop, seats: boss ? 3 : undefined });
@@ -600,7 +601,7 @@ export class NightScene extends Phaser.Scene {
   update(_t: number, dtMs: number) {
     this.street.update(dtMs);
     if (this.paused || this.ended) return;
-    const dt = dtMs / 1000;
+    const dt = (dtMs / 1000) * G.speed;
     if (!this.intro) {
       this.clock += dt;
       // arrivals

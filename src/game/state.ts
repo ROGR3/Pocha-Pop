@@ -37,6 +37,8 @@ class GameState {
   audio = new Audio();
   ime!: Ime;
   layout!: Layout;
+  /** Debug/test only: game speed multiplier for nights (window.__pocha.G.speed). */
+  speed = 1;
   /** Night the player picked on the map. */
   night = 1;
 
