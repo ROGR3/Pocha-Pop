@@ -39,13 +39,13 @@ export class Bubble extends Phaser.GameObjects.Container {
     if (order.kind !== 'nabi') {
       cs = txt(scene, bw / 2, y, order.cs, { size: 's', color: C.ink, origin: [0.5, 0], align: 'center', wrap: bw - 6, lineSpacing: 0 });
       parts.push(cs);
-      y += cs.height + 1;
+      y += cs.height + 2;
     }
     const kh = koreanHint(order);
     this.ko = txt(scene, bw / 2, y, kh.text || ' ', { size: 'm', color: C.brown, origin: [0.5, 0], align: 'center', wrap: bw - 6, lineSpacing: 0 });
     parts.push(this.ko);
     const koLines = critic ? 2 : 1;
-    y += order.kind === 'nabi' ? 0 : 13 * koLines;
+    y += order.kind === 'nabi' ? 0 : 15 * koLines;
     // patience
     this.face = scene.add.image(pad + 5, y + 4, 'faces', 0).setOrigin(0.5);
     this.barBg = scene.add.rectangle(pad + 12, y + 3, bw - pad * 2 - 13, 4, 0x3e2731).setOrigin(0, 0);

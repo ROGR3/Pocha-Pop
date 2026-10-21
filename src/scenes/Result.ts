@@ -108,7 +108,9 @@ export class ResultScene extends Phaser.Scene {
     const s = this.s;
     const W = this.scale.width, H = this.scale.height;
     G.audio.play('paper');
-    this.tweens.add({ targets: this.layer, alpha: 0, duration: 200, onComplete: () => this.layer.removeAll(true).setAlpha(1) });
+    const old = this.layer;
+    this.tweens.add({ targets: old, alpha: 0, duration: 200, onComplete: () => old.destroy() });
+    this.layer = this.add.container(0, 0);
     const pc = POSTCARDS[s.night];
     const c = this.add.container(0, H);
     const cw = Math.min(W - 12, 240);

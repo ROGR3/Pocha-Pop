@@ -17,7 +17,7 @@ export class TitleScene extends Phaser.Scene {
     G.audio.setAmbient('rain');
     G.audio.setLofi(G.hasUpgrade('radio'));
     // a sleepy regular and the cat keep the stall company
-    const kim = this.add.sprite(this.street.wx(this.street.seatX[1]), this.street.wy(-28), 'char_kim').setOrigin(0.5, 1).setDepth(DEPTH.customer).play('char_kim:idle');
+    const kim = this.add.sprite(this.street.wx(this.street.seatX[1]), this.street.wy(-36), 'char_kim').setOrigin(0.5, 1).setDepth(DEPTH.customer).play('char_kim:idle');
     const cat = this.add.sprite(this.street.wx(this.street.seatX[2]), this.street.wy(-41), G.data.friends.nabi?.chapter >= 2 ? 'nabi_fat' : 'nabi').setOrigin(0.5, 1).setDepth(DEPTH.customer + 1);
     cat.play(`${cat.texture.key}:sit`);
     void kim;

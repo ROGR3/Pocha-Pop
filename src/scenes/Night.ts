@@ -191,7 +191,7 @@ export class NightScene extends Phaser.Scene {
       if (r === 'kim') i = slot(Math.floor(total * 0.6), total);
       if (i >= 0) q[i] = r;
     }
-    if (this.n === BOSS_NIGHT) q.splice(1, 0, 'critic');
+    if (this.n === BOSS_NIGHT) q.unshift('critic');
     this.queue = q;
   }
 
@@ -275,7 +275,7 @@ export class NightScene extends Phaser.Scene {
   }
 
   private placeCustomer(c: Customer, relayout = false) {
-    const y = c.kind === 'nabi' ? this.street.wy(-41) : this.street.wy(-28);
+    const y = c.kind === 'nabi' ? this.street.wy(-41) : this.street.wy(-36);
     c.sprite.y = y;
     if (relayout && c.state !== 'walk' && c.state !== 'leave') c.sprite.x = this.street.wx(this.street.seatX[c.seat]);
     if (c.bubble) this.placeBubble(c);
@@ -285,7 +285,7 @@ export class NightScene extends Phaser.Scene {
     const b = c.bubble!;
     const W = this.scale.width;
     const row = c.kind === 'critic' ? 1 : c.seat % 2;
-    const anchorY = this.street.wy(c.kind === 'nabi' ? -58 : -70) - row * 52;
+    const anchorY = this.street.wy(c.kind === 'nabi' ? -58 : -78) - row * 56;
     const cx = this.street.wx(this.street.seatX[c.seat]);
     let x = Math.round(cx - b.bw / 2);
     x = Math.max(2, Math.min(W - b.bw - 2, x));
@@ -476,7 +476,7 @@ export class NightScene extends Phaser.Scene {
       const icons = o.icons;
       icons.forEach((ic, i) => {
         const dish = this.add.image(this.street.wx(-40), this.street.wy(-43), 'icons', iconIdx(ic)).setOrigin(0.5, 1).setDepth(DEPTH.dish);
-        const tx = this.street.wx(this.street.seatX[c.seat]) + (icons.length > 1 ? (i - 0.5) * 18 : 0);
+        const tx = this.street.wx(this.street.seatX[c.seat]) + (icons.length > 1 ? (i - 0.5) * 18 : c.kind === 'nabi' ? -14 : 0);
         this.tweens.add({
           targets: dish, x: tx, duration: 280 + Math.abs(tx - dish.x) * 1.2, ease: 'Cubic.easeOut', delay: i * 80,
           onComplete: () => {
