@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "aseprite": {
+      "command": "/home/rogr/.local/bin/uv",
+      "args": ["--directory", "/home/rogr/Projects/pocha-pop/tools/aseprite-mcp", "run", "-m", "aseprite_mcp"]
+    }
+  }
+}
