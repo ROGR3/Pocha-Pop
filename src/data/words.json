@@ -1,0 +1,488 @@
+[
+ {
+  "id": "cha",
+  "ko": "차",
+  "cs": "čaj",
+  "en": "tea",
+  "category": "food",
+  "icon": "cha",
+  "difficulty": 1.5
+ },
+ {
+  "id": "uyu",
+  "ko": "우유",
+  "cs": "mléko",
+  "en": "milk",
+  "category": "food",
+  "icon": "uyu",
+  "difficulty": 3
+ },
+ {
+  "id": "dubu",
+  "ko": "두부",
+  "cs": "tofu",
+  "en": "tofu",
+  "category": "food",
+  "icon": "dubu",
+  "difficulty": 3
+ },
+ {
+  "id": "gogi",
+  "ko": "고기",
+  "cs": "maso",
+  "en": "meat",
+  "category": "food",
+  "icon": "gogi",
+  "difficulty": 3
+ },
+ {
+  "id": "podo",
+  "ko": "포도",
+  "cs": "hrozny",
+  "en": "grape",
+  "category": "food",
+  "icon": "podo",
+  "difficulty": 3
+ },
+ {
+  "id": "juseu",
+  "ko": "주스",
+  "cs": "džus",
+  "en": "juice",
+  "category": "food",
+  "icon": "juseu",
+  "difficulty": 3
+ },
+ {
+  "id": "keopi",
+  "ko": "커피",
+  "cs": "káva",
+  "en": "coffee",
+  "category": "food",
+  "icon": "keopi",
+  "difficulty": 3
+ },
+ {
+  "id": "hana",
+  "ko": "하나",
+  "cs": "jeden",
+  "en": "",
+  "category": "phrase",
+  "icon": "phrase",
+  "difficulty": 3
+ },
+ {
+  "id": "hago",
+  "ko": "하고",
+  "cs": "a (spojka)",
+  "en": "",
+  "category": "phrase",
+  "icon": "phrase",
+  "difficulty": 3
+ },
+ {
+  "id": "mul",
+  "ko": "물",
+  "cs": "voda",
+  "en": "water",
+  "category": "food",
+  "icon": "mul",
+  "difficulty": 3.3
+ },
+ {
+  "id": "bap",
+  "ko": "밥",
+  "cs": "rýže",
+  "en": "rice (cooked)",
+  "category": "food",
+  "icon": "bap",
+  "difficulty": 3.3
+ },
+ {
+  "id": "gyul",
+  "ko": "귤",
+  "cs": "mandarinka",
+  "en": "tangerine",
+  "category": "food",
+  "icon": "gyul",
+  "difficulty": 3.3
+ },
+ {
+  "id": "dul",
+  "ko": "둘",
+  "cs": "dva",
+  "en": "two",
+  "category": "phrase",
+  "icon": "phrase",
+  "difficulty": 3.3
+ },
+ {
+  "id": "dijeoteu",
+  "ko": "디저트",
+  "cs": "dezert",
+  "en": "dessert",
+  "category": "food",
+  "icon": "dijeoteu",
+  "difficulty": 4.5
+ },
+ {
+  "id": "banana",
+  "ko": "바나나",
+  "cs": "banán",
+  "en": "banana",
+  "category": "food",
+  "icon": "banana",
+  "difficulty": 4.5
+ },
+ {
+  "id": "keikeu",
+  "ko": "케이크",
+  "cs": "dort",
+  "en": "cake",
+  "category": "food",
+  "icon": "keikeu",
+  "difficulty": 4.5
+ },
+ {
+  "id": "paseuta",
+  "ko": "파스타",
+  "cs": "těstoviny",
+  "en": "pasta",
+  "category": "food",
+  "icon": "paseuta",
+  "difficulty": 4.5
+ },
+ {
+  "id": "juseyo",
+  "ko": "주세요",
+  "cs": "prosím, dejte mi",
+  "en": "Please give me",
+  "category": "phrase",
+  "icon": "phrase",
+  "difficulty": 4.5
+ },
+ {
+  "id": "mandu",
+  "ko": "만두",
+  "cs": "knedlíčky",
+  "en": "dumpling",
+  "category": "food",
+  "icon": "mandu",
+  "difficulty": 4.8
+ },
+ {
+  "id": "ramyeon",
+  "ko": "라면",
+  "cs": "instantní nudle",
+  "en": "ramyeon (instant noodles)",
+  "category": "food",
+  "icon": "ramyeon",
+  "difficulty": 4.8
+ },
+ {
+  "id": "galbi",
+  "ko": "갈비",
+  "cs": "grilovaná žebírka",
+  "en": "grilled ribs",
+  "category": "food",
+  "icon": "galbi",
+  "difficulty": 4.8
+ },
+ {
+  "id": "kimchi",
+  "ko": "김치",
+  "cs": "kimči",
+  "en": "kimchi",
+  "category": "food",
+  "icon": "kimchi",
+  "difficulty": 4.8
+ },
+ {
+  "id": "japchae",
+  "ko": "잡채",
+  "cs": "skleněné nudle",
+  "en": "japchae (glass noodle stir-fry)",
+  "category": "food",
+  "icon": "japchae",
+  "difficulty": 4.8
+ },
+ {
+  "id": "satang",
+  "ko": "사탕",
+  "cs": "bonbon",
+  "en": "candy",
+  "category": "food",
+  "icon": "satang",
+  "difficulty": 4.8
+ },
+ {
+  "id": "bingsu",
+  "ko": "빙수",
+  "cs": "ledová tříšť",
+  "en": "bingsu (shaved ice dessert)",
+  "category": "food",
+  "icon": "bingsu",
+  "difficulty": 4.8
+ },
+ {
+  "id": "chikin",
+  "ko": "치킨",
+  "cs": "smažené kuře",
+  "en": "fried chicken",
+  "category": "food",
+  "icon": "chikin",
+  "difficulty": 4.8
+ },
+ {
+  "id": "maekju",
+  "ko": "맥주",
+  "cs": "pivo",
+  "en": "beer",
+  "category": "food",
+  "icon": "maekju",
+  "difficulty": 4.8
+ },
+ {
+  "id": "kolla",
+  "ko": "콜라",
+  "cs": "kola",
+  "en": "cola",
+  "category": "food",
+  "icon": "kolla",
+  "difficulty": 4.8
+ },
+ {
+  "id": "jjigae",
+  "ko": "찌개",
+  "cs": "hustá polévka",
+  "en": "stew",
+  "category": "food",
+  "icon": "jjigae",
+  "difficulty": 5
+ },
+ {
+  "id": "tteok",
+  "ko": "떡",
+  "cs": "rýžový koláček",
+  "en": "rice cake",
+  "category": "food",
+  "icon": "tteok",
+  "difficulty": 5.3
+ },
+ {
+  "id": "ppang",
+  "ko": "빵",
+  "cs": "chléb",
+  "en": "bread",
+  "category": "food",
+  "icon": "ppang",
+  "difficulty": 5.3
+ },
+ {
+  "id": "gwaja",
+  "ko": "과자",
+  "cs": "křupky",
+  "en": "crackers",
+  "category": "food",
+  "icon": "gwaja",
+  "difficulty": 5.3
+ },
+ {
+  "id": "sagwa",
+  "ko": "사과",
+  "cs": "jablko",
+  "en": "apple",
+  "category": "food",
+  "icon": "sagwa",
+  "difficulty": 5.3
+ },
+ {
+  "id": "danmuji",
+  "ko": "단무지",
+  "cs": "nakládaná ředkev",
+  "en": "pickled radish",
+  "category": "food",
+  "icon": "danmuji",
+  "difficulty": 6.3
+ },
+ {
+  "id": "eumnyosu",
+  "ko": "음료수",
+  "cs": "nápoj",
+  "en": "beverage",
+  "category": "food",
+  "icon": "eumnyosu",
+  "difficulty": 6.3
+ },
+ {
+  "id": "beobeulti",
+  "ko": "버블티",
+  "cs": "bublinkový čaj",
+  "en": "bubble tea",
+  "category": "food",
+  "icon": "beobeulti",
+  "difficulty": 6.3
+ },
+ {
+  "id": "gimbap",
+  "ko": "김밥",
+  "cs": "rýžové rolky",
+  "en": "kimbap",
+  "category": "food",
+  "icon": "gimbap",
+  "difficulty": 6.5
+ },
+ {
+  "id": "naengmyeon",
+  "ko": "냉면",
+  "cs": "studené nudle",
+  "en": "naengmyeon (cold noodles)",
+  "category": "food",
+  "icon": "naengmyeon",
+  "difficulty": 6.5
+ },
+ {
+  "id": "gansik",
+  "ko": "간식",
+  "cs": "svačina",
+  "en": "snack",
+  "category": "food",
+  "icon": "gansik",
+  "difficulty": 6.5
+ },
+ {
+  "id": "eumsik",
+  "ko": "음식",
+  "cs": "jídlo",
+  "en": "food",
+  "category": "food",
+  "icon": "eumsik",
+  "difficulty": 6.5
+ },
+ {
+  "id": "mellon",
+  "ko": "멜론",
+  "cs": "meloun",
+  "en": "melon",
+  "category": "food",
+  "icon": "mellon",
+  "difficulty": 6.5
+ },
+ {
+  "id": "popkon",
+  "ko": "팝콘",
+  "cs": "popcorn",
+  "en": "popcorn",
+  "category": "food",
+  "icon": "popkon",
+  "difficulty": 6.5
+ },
+ {
+  "id": "ttalgi",
+  "ko": "딸기",
+  "cs": "jahoda",
+  "en": "strawberry",
+  "category": "food",
+  "icon": "ttalgi",
+  "difficulty": 6.8
+ },
+ {
+  "id": "gwail",
+  "ko": "과일",
+  "cs": "ovoce",
+  "en": "fruit",
+  "category": "food",
+  "icon": "gwail",
+  "difficulty": 7
+ },
+ {
+  "id": "bibimbap",
+  "ko": "비빔밥",
+  "cs": "rýže se zeleninou",
+  "en": "bibimbap",
+  "category": "food",
+  "icon": "bibimbap",
+  "difficulty": 8
+ },
+ {
+  "id": "galbitang",
+  "ko": "갈비탕",
+  "cs": "polévka z žeber",
+  "en": "galbitang (rib bone soup)",
+  "category": "food",
+  "icon": "galbitang",
+  "difficulty": 8
+ },
+ {
+  "id": "chokollit",
+  "ko": "초콜릿",
+  "cs": "čokoláda",
+  "en": "chocolate",
+  "category": "food",
+  "icon": "chokollit",
+  "difficulty": 8
+ },
+ {
+  "id": "aiseukeurim",
+  "ko": "아이스크림",
+  "cs": "zmrzlina",
+  "en": "ice cream",
+  "category": "food",
+  "icon": "aiseukeurim",
+  "difficulty": 9.3
+ },
+ {
+  "id": "samgyetang",
+  "ko": "삼계탕",
+  "cs": "kuřecí polévka s ženšenem",
+  "en": "samgyetang (ginseng chicken soup)",
+  "category": "food",
+  "icon": "samgyetang",
+  "difficulty": 9.5
+ },
+ {
+  "id": "kimchijjigae",
+  "ko": "김치찌개",
+  "cs": "kimči polévka",
+  "en": "kimchi stew",
+  "category": "food",
+  "icon": "kimchijjigae",
+  "difficulty": 9.8
+ },
+ {
+  "id": "jjajangmyeon",
+  "ko": "짜장면",
+  "cs": "nudle v černé omáčce",
+  "en": "jajangmyeon (black bean noodles)",
+  "category": "food",
+  "icon": "jjajangmyeon",
+  "difficulty": 10
+ },
+ {
+  "id": "saendeuwichi",
+  "ko": "샌드위치",
+  "cs": "sendvič",
+  "en": "sandwich",
+  "category": "food",
+  "icon": "saendeuwichi",
+  "difficulty": 10
+ },
+ {
+  "id": "tteokbokki",
+  "ko": "떡볶이",
+  "cs": "pálivé rýžové válečky",
+  "en": "tteokbokki (spicy rice cakes)",
+  "category": "food",
+  "icon": "tteokbokki",
+  "difficulty": 12
+ },
+ {
+  "id": "doenjangjjigae",
+  "ko": "된장찌개",
+  "cs": "sójová polévka",
+  "en": "doenjang jjigae (soybean paste stew)",
+  "category": "food",
+  "icon": "doenjangjjigae",
+  "difficulty": 13.8
+ }
+]

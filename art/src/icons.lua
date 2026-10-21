@@ -905,6 +905,28 @@ icon("samgyetang", function(img)
   steam(img, { 6, 15 }, 0)
 end)
 
+icon("phrase", function(img)
+  -- speech bubble with "가" glyph
+  L.map(img, 1, 3, {
+    "...tttttttttttttttt...",
+    "..ttttttttttttttttuu..",
+    ".ttttttttttttttttttuu.",
+    "ttttttzzzttttzzttttuuv",
+    "ttttttttzttttzzttttuuv",
+    "tttttttzzttttzttttttuv",
+    "ttttttzzttttzzzttttuuv",
+    "tttttzzttttttzzttttuuv",
+    "ttttttttttttttzttttuuv",
+    "tttttttttttttttttttuuv",
+    ".ttttttttttttttttuuvv.",
+    "..ttttttttttttuuuuvv..",
+    "....ttttuvvvvvvvvv....",
+    "....tuuv..............",
+    "...tuv................",
+    "..uv..................",
+  })
+end)
+
 -- ---------------------------------------------------------------- build
 local spr = L.new(W, W, #ICONS)
 local names = {}

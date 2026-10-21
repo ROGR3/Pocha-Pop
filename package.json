@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "tauri": "tauri",
-    "words": "node scripts/build-words.mjs",
+    "words": "vite-node scripts/build-words.ts",
     "sfx": "node scripts/gen-sfx.mjs",
     "art": "bash scripts/build-art.sh",
     "screenshots": "node scripts/screenshots.mjs"
