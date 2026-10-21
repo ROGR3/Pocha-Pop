@@ -62,6 +62,13 @@ src-tauri/             Rust + gen/android (commitované; AndroidManifest má adj
   ostatní scény se restartují.
 - Debug v prohlížeči: `__pocha.G` (stav), `__pocha.typeKorean('김치')` emuluje IME vč. mezistavů.
 
+## Testování desktopového okna
+**Nikdy neotevírej Tauri okno na uživatelově ploše.** Použij `scripts/xvfb-tauri.sh start` (virtuální
+X display :99, `GDK_BACKEND=x11`, scratch `XDG_DATA_HOME`), `shot <png>`, `focus`, `key <keysym>`
+(keydown/keyup), `stop`. fcitx5 přes `GTK_IM_MODULE=fcitx` se pod Xvfb chová jinak než nativní Wayland –
+po testu vždy `fcitx5-remote -s keyboard-us` (uživatelův výchozí stav). Prohlížečové testy: `npm run screenshots`.
+`pkill -f` používej jen s ukotveným vzorem (`'^target/debug/...'`), jinak zabije i vlastní shell.
+
 ## Zdroje počítače
 Na tomhle stroji už jednou spadlo jádro při souběhu `cargo build` (16 vláken) + headless Chromium +
 Vite + Aseprite. Těžké úlohy pouštěj **po jedné**, cargo s `CARGO_BUILD_JOBS=4`, po sobě zavírej dev servery.

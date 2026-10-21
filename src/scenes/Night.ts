@@ -156,7 +156,7 @@ export class NightScene extends Phaser.Scene {
     } });
     void focusHint;
     // the input panel is a big tap target that refocuses the IME (Android)
-    this.box.bg.setInteractive().on('pointerdown', () => G.ime.focus());
+    this.box.bg.setInteractive().on('pointerdown', () => G.ime.reopen());
 
     this.nextArrival = 1.4;
     const title = boss ? 'Finále · 미식가' : `Noc ${this.n}`;

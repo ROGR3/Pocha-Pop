@@ -55,6 +55,7 @@ export class SetupScene extends Phaser.Scene {
     const ty = 68 + bodyH + 10;
     txt(this, W / 2, ty, 'Vyzkoušej: napiš  안녕  (ahoj)', { size: 'm', color: C.white, origin: [0.5, 0] });
     this.box = new TypeBox(this, 10, ty + 18, W - 20, 40, 'Klepni sem a piš');
+    this.box.bg.setInteractive().on('pointerdown', () => G.ime.reopen());
     this.status = txt(this, W / 2, ty + 64, '', { size: 's', color: C.grey, origin: [0.5, 0], wrap: W - 20, align: 'center' });
 
     const by = Math.min(H - 18, ty + 100);

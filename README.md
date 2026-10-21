@@ -38,9 +38,13 @@ slabiku vidíš živě (ㅎ → 하 → 한). První spuštění má návod a te
 1. `fcitx5`, `fcitx5-hangul`, `fcitx5-gtk` (na Omarchy už je).
 2. `fcitx5-configtool` → přidat vstupní metodu **Hangul**.
 3. Přepínání Ctrl+Mezerník (nebo klávesa 한/영).
-4. Pokud v okně Tauri nejde psát korejsky (WebKitGTK nedostává IME), spusť:
-   `GTK_IM_MODULE=fcitx npm run tauri dev` (resp. `GTK_IM_MODULE=fcitx pocha-pop`).
-   Na Waylandu (Hyprland) GTK3 standardně používá text-input protokol a funguje i bez toho.
+4. Na Waylandu (Hyprland/Omarchy) to funguje **bez dalšího nastavení** – ověřeno s fcitx5-hangul
+   v okně Tauri: živá kompozice (안 → 안녀 → 안녕) i dokončení slova.
+5. Na X11 by šlo zkusit `GTK_IM_MODULE=fcitx npm run tauri dev`. Pozor: v testu pod Xvfb se syntetickými
+   klávesami (xdotool) se rozepsaná slabika (preedit) do WebKitu nedostala – na skutečném X11 neověřeno.
+
+Testy desktopového okna bez otevírání okna na reálné ploše: `scripts/xvfb-tauri.sh start|shot|focus|key|type|stop`
+(izolovaný virtuální X display, vlastní `XDG_DATA_HOME`, takže nesahá na skutečný save).
 
 **Android:**
 - Gboard: Nastavení → Jazyky → Přidat klávesnici → Korejština → „2 sady“ (두벌식).

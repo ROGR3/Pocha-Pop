@@ -1,7 +1,7 @@
-@font-face { font-family: 'Galmuri11'; src: url('/fonts/Galmuri11.woff2') format('woff2'); }
-@font-face { font-family: 'Galmuri9'; src: url('/fonts/Galmuri9.woff2') format('woff2'); }
-@font-face { font-family: 'Galmuri7'; src: url('/fonts/Galmuri7.woff2') format('woff2'); }
-@font-face { font-family: 'Galmuri14'; src: url('/fonts/Galmuri14.woff2') format('woff2'); }
+@font-face { font-family: 'Galmuri11'; src: url('/fonts/Galmuri11.woff') format('woff'); }
+@font-face { font-family: 'Galmuri9'; src: url('/fonts/Galmuri9.woff') format('woff'); }
+@font-face { font-family: 'Galmuri7'; src: url('/fonts/Galmuri7.woff') format('woff'); }
+@font-face { font-family: 'Galmuri14'; src: url('/fonts/Galmuri14.woff') format('woff'); }
 html, body {
   margin: 0; padding: 0; width: 100%; height: 100%;
   background: #181425; overflow: hidden;
@@ -10,7 +10,7 @@ html, body {
   -webkit-tap-highlight-color: transparent;
 }
 #game { position: fixed; left: 0; top: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: flex-start; }
-#game canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+#game canvas { image-rendering: crisp-edges; image-rendering: -webkit-optimize-contrast; image-rendering: pixelated; display: block; }
 /* Hidden but focusable input for the system Korean IME (not display:none!) */
 #ime {
   position: fixed; left: 0; bottom: 0; width: 1px; height: 1px;

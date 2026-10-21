@@ -73,6 +73,16 @@ export class Ime {
   hasFocus() { return document.activeElement === this.el; }
 
   /**
+   * Show the soft keyboard again (Android hides it on Back while the input
+   * keeps focus – a plain focus() is then a no-op). Must run in a user gesture.
+   */
+  reopen() {
+    if (!this.active) return;
+    if (this.hasFocus()) this.el.blur();
+    try { this.el.focus({ preventScroll: true }); } catch { this.el.focus(); }
+  }
+
+  /**
    * Clear the field and terminate the IME composition. Blur → value='' →
    * focus resets the composition on Android/WebKitGTK; otherwise the IME
    * would put the rest of the syllable back. Whatever the IME re-inserts
