@@ -28,6 +28,12 @@ export interface StreetOpts {
   weather?: boolean;
   /** Snow instead of rain / fireflies (크리스마스). */
   snow?: boolean;
+  /** false = dry night in 을지로 (holidays). */
+  rain?: boolean;
+  /** Kittens at the counter regardless of 나비's story (birthday). */
+  kittens?: boolean;
+  /** Lanterns lit for a holiday even without the upgrade. */
+  festive?: boolean;
 }
 
 export class Street {
@@ -64,7 +70,7 @@ export class Street {
   constructor(scene: Phaser.Scene, o: StreetOpts) {
     this.scene = scene;
     this.backdrop = o.backdrop;
-    this.raining = o.backdrop === 'euljiro' && o.weather !== false && !o.snow;
+    this.raining = o.backdrop === 'euljiro' && o.weather !== false && !o.snow && o.rain !== false;
     const up = o.upgrades ?? G.data.upgrades;
     const s = scene;
     const pre = BG_PREFIX[o.backdrop];
@@ -92,7 +98,7 @@ export class Street {
         this.place(this.helper, -60, -47);
       }
     }
-    if (up.includes('lanterns')) {
+    if (up.includes('lanterns') || o.festive) {
       [-78, -39, 0, 39, 78].forEach((x, i) => {
         const lc = colorFrame(cos.lanterns);
         const l = s.add.sprite(0, 0, 'lanterns', lc * 4).setOrigin(0.5, 0).setDepth(DEPTH.lantern);
@@ -129,7 +135,7 @@ export class Street {
       this.stools.push(st);
     });
     const nabi = G.data.friends.nabi;
-    if (nabi && nabi.chapter >= 3 && o.backdrop !== 'pharmacy') {
+    if (o.kittens || (nabi && nabi.chapter >= 3 && o.backdrop !== 'pharmacy')) {
       ['kitten_a', 'kitten_b', 'kitten_c'].forEach((k, i) => {
         const kt = s.add.sprite(0, 0, k).setOrigin(0.5, 1).setDepth(DEPTH.stool + 1).play({ key: `${k}:idle`, startFrame: i % 2 });
         this.place(kt, 100 + i * 9 - (seats === 4 ? 0 : 0), 1 + (i % 2));

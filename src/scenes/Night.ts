@@ -135,6 +135,7 @@ export class NightScene extends Phaser.Scene {
   private progress!: Phaser.GameObjects.Rectangle;
   private progressBg!: Phaser.GameObjects.Rectangle;
   private comboText!: Phaser.GameObjects.Text;
+  private titleText!: Phaser.GameObjects.Text;
   private hud!: Phaser.GameObjects.Container;
   private hintBtn!: Phaser.GameObjects.Container;
   private pauseLayer?: Phaser.GameObjects.Container;
@@ -168,14 +169,14 @@ export class NightScene extends Phaser.Scene {
     fadeIn(this, 400);
     if (G.speed !== 1) { this.time.timeScale = G.speed; this.tweens.timeScale = G.speed; this.anims.globalTimeScale = G.speed; }
     const boss = !!this.def.boss;
-    const backdrop = DISTRICTS[homeDistrict(this.def)].backdrop;
-    this.street = new Street(this, { backdrop, seats: this.seats });
+    const backdrop = this.def.backdrop ?? DISTRICTS[homeDistrict(this.def)].backdrop;
+    this.street = new Street(this, { backdrop, seats: this.seats, snow: this.def.weather === 'snow', rain: this.def.weather !== 'dry', kittens: this.n === 303, festive: this.def.district === 'holiday' });
     this.seatsTaken = this.street.seatX.map(() => null);
     this.patMul = patienceMultiplier(G.data.upgrades, G.data.settings.relaxed, this.street.raining);
     this.pool = nightPool(this.n, G.data.upgrades);
     this.newTonight = new Set(this.def.newWords);
     for (const [id, s] of Object.entries(G.data.words)) if (s.seen > 0) this.seenBefore.add(id);
-    G.audio.setAmbient(ambientFor(backdrop));
+    G.audio.setAmbient(this.def.weather === 'dry' || this.def.weather === 'snow' ? 'city' : ambientFor(backdrop));
     G.audio.setLofi(G.hasUpgrade('radio'), G.station());
 
     this.buildQueue();
@@ -277,7 +278,7 @@ export class NightScene extends Phaser.Scene {
     this.hud = this.add.container(0, 0).setDepth(DEPTH.hud);
     const bg = this.add.rectangle(0, 0, 10, 22, 0x181425, 0.85).setOrigin(0, 0).setName('bg');
     const line = this.add.rectangle(0, 22, 10, 1, 0x3a4466).setOrigin(0, 0).setName('line');
-    const night = txt(s, 6, 11, nightTitle(this.n, this.def.boss ? NAMES[this.def.boss] : undefined), { size: 's', color: C.cream, origin: [0, 0.5] });
+    const night = this.titleText = txt(s, 6, 11, nightTitle(this.n, this.def.boss ? NAMES[this.def.boss] : undefined), { size: 's', color: C.cream, origin: [0, 0.5] });
     this.progressBg = this.add.rectangle(0, 9, 10, 5, 0x3a4466).setOrigin(0, 0);
     this.progress = this.add.rectangle(0, 10, 0, 3, 0xf77622).setOrigin(0, 0);
     this.coinIcon = this.add.sprite(0, 11, 'coin').play('coin:spin');
@@ -295,8 +296,9 @@ export class NightScene extends Phaser.Scene {
     pause.setPosition(W - 13, 11);
     this.coinIcon.setPosition(W - 64, 11);
     this.coinText.setPosition(W - 56, 11);
-    this.progressBg.setPosition(48, 9).width = W - 124;
-    this.progress.setPosition(49, 10);
+    const px = Math.max(48, this.titleText.width + 12);
+    this.progressBg.setPosition(px, 9).width = W - 76 - px;
+    this.progress.setPosition(px + 1, 10);
     this.comboText.setPosition(Math.round(W / 2), 34);
     this.updateProgress();
   }
@@ -370,7 +372,7 @@ export class NightScene extends Phaser.Scene {
   private newOrder(c: Customer) {
     const exclude = new Set<string>([...this.recent.slice(-2)]);
     for (const o of this.customers) if (o.order) o.order.tokens.forEach((t) => exclude.add(t.id));
-    const order = makeOrder(c.kind, { pool: this.pool, newTonight: this.newTonight, exclude, rand: this.rand, mechanic: DISTRICTS[homeDistrict(this.def)].mechanic, boss: this.def.boss, late: this.def.late });
+    const order = makeOrder(c.kind, { pool: this.pool, newTonight: this.newTonight, exclude, rand: this.rand, mechanic: this.def.mechanic ?? DISTRICTS[homeDistrict(this.def)].mechanic, boss: this.def.boss, late: this.def.late });
     c.order = order;
     const base = c.kind === 'boss' ? CRITIC_PATIENCE : this.def.patience * (c.kind === 'haeun' ? 0.7 : c.kind === 'nabi' ? 1.2 : 1);
     c.max = base * this.patMul;

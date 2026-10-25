@@ -6,7 +6,7 @@ export type District = 'euljiro' | 'hangang' | 'dongdaemun' | 'hongdae' | 'yongs
 export type BossId = 'critic' | 'blogger' | 'manager' | 'trader' | 'captain';
 /** The district's extra game element (how orders are built). */
 export type Mechanic = 'food' | 'colorItem' | 'loanword' | 'haggle' | 'symptom' | 'destination' | 'family' | 'xmas' | 'birthday';
-export type RegularId = 'kim' | 'haeun' | 'nabi' | 'imo' | 'minsu' | 'park' | 'kang';
+export type RegularId = 'kim' | 'haeun' | 'nabi' | 'imo' | 'minsu' | 'park' | 'kang' | 'halmeoni';
 
 export interface NightDef {
   n: number;
@@ -28,6 +28,11 @@ export interface NightDef {
   prev?: number;
   /** Second half of a district (e.g. 기차 표 in 부산, symptoms in 약국). */
   late?: boolean;
+  /** Holiday nights: own mechanic / backdrop / weather / extra words. */
+  mechanic?: Mechanic;
+  backdrop?: Backdrop;
+  weather?: 'rain' | 'dry' | 'snow';
+  review?: string[];
 }
 
 export interface DistrictDef {
@@ -105,6 +110,10 @@ export const NIGHTS: NightDef[] = [
   { n: 202, district: 'pharmacy', newWords: ['dari', 'gwi', 'mom', 'uisa', 'ganhosa', 'yaksa'], newJamo: ['ㅢ'], customers: 8, patience: 29, spawn: [5.5, 8], regulars: [] },
   { n: 203, district: 'pharmacy', late: true, newWords: ['yak', 'banchanggo', 'byeongwon', 'gamgi', 'sangcheo'], newJamo: ['ㅝ'], customers: 8, patience: 28, spawn: [5, 7.5], regulars: [] },
   { n: 204, district: 'pharmacy', late: true, newWords: ['apeuda', 'josimhada'], newJamo: [], customers: 8, patience: 27, spawn: [5, 7], regulars: [] },
+  // holiday nights (each unlocks after a district's boss)
+  { n: 301, district: 'holiday', prev: 116, mechanic: 'family', backdrop: 'euljiro', weather: 'dry', newWords: ['halmeoni', 'harabeoji', 'eomma', 'appa', 'imo', 'sachon', 'eonni', 'oppa', 'nuna', 'hyeong', 'namdongsaeng', 'yeodongsaeng', 'adeul', 'ttal'], newJamo: [], customers: 12, patience: 28, spawn: [5, 7.5], regulars: ['halmeoni', 'imo', 'kim', 'nabi'] },
+  { n: 302, district: 'holiday', prev: 121, mechanic: 'xmas', backdrop: 'hongdae', weather: 'snow', newWords: ['seonmul', 'keuriseumaseu', 'meri_keuriseumaseu', 'nun_snow', 'gyeoul', 'jangnangam'], review: ['pati', 'keikeu', 'chokollit', 'keopi'], newJamo: [], customers: 12, patience: 27, spawn: [5, 7.5], regulars: ['minsu', 'haeun', 'nabi'] },
+  { n: 303, district: 'holiday', prev: 126, mechanic: 'birthday', backdrop: 'euljiro', weather: 'dry', newWords: ['saengil', 'saengil_chukahaeyo', 'kkot'], review: ['seonmul', 'keikeu', 'pati', 'uyu', 'gogi'], newJamo: [], customers: 11, patience: 28, spawn: [5, 7.5], regulars: ['nabi', 'kim', 'haeun', 'park'] },
 ];
 
 const HOLIDAY_NAMES: Record<number, string> = { 301: '추석', 302: '크리스마스', 303: '생일 나비' };
@@ -180,6 +189,7 @@ export const UPGRADES: UpgradeDef[] = [
 /** Words a night can order: tonight's + earlier words of the same district (+ review, packs). */
 export function nightPool(n: number, upgrades: string[]): string[] {
   const def = nightDef(n);
+  if (def.district === 'holiday') return [...new Set([...def.newWords, ...(def.review ?? [])])];
   const home = homeDistrict(def);
   const ids = new Set<string>();
   // the critic reviews everything from 을지로 and 한강

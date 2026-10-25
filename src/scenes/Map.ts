@@ -24,7 +24,7 @@ function sections(): Section[] {
     { pre: 'ddm', title: '동대문', sub: 'noci 12–16 + blogerka', nights: [...range(12, 16), 116].filter(has), color: C.yellow, h: 150 },
     { pre: 'eul', title: '추석', sub: 'sváteční noc', nights: [301].filter(has), color: C.orange, h: 84 },
     { pre: 'hgd', title: '홍대', sub: 'noci 17–21 + manažer', nights: [...range(17, 21), 121].filter(has), color: C.pink, h: 150 },
-    { pre: 'han', title: '크리스마스', sub: 'sváteční noc', nights: [302].filter(has), color: C.green, h: 84 },
+    { pre: 'hgd', title: '크리스마스', sub: 'sváteční noc', nights: [302].filter(has), color: C.green, h: 84 },
     { pre: 'ysn', title: '용산', sub: 'noci 22–26 + obchodník', nights: [...range(22, 26), 126].filter(has), color: C.cyan, h: 150 },
     { pre: 'eul', title: '생일', sub: 'narozeniny 나비', nights: [303].filter(has), color: C.pink, h: 84 },
     { pre: 'bsn', title: '부산', sub: 'noci 27–31 + kapitán', nights: [...range(27, 31), 131].filter(has), color: C.blue, h: 150 },
