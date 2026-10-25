@@ -7,6 +7,7 @@ import { buyAndEquip, itemState, unequip, type ShopState, type Slot } from '../l
 import { matchKind } from '../logic/hangul';
 import { hintLevel, recordMistake, recordServe } from '../logic/srs';
 import { attachHat } from '../game/hats';
+import { checkAchievements } from '../game/achievements';
 import { G, iconTex, word } from '../game/state';
 import { DEPTH, Street } from '../game/street';
 import { TypeBox } from '../game/typebox';
@@ -65,6 +66,7 @@ export class PaintScene extends Phaser.Scene {
       this.street.flash(3);
       toast(this, this.flash, C.green, 70);
       G.audio.play('buy');
+      this.time.delayedCall(900, () => checkAchievements(this));
     }
   }
 

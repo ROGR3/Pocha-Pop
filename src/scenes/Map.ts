@@ -2,7 +2,9 @@
 // a strip of backdrop with lanterns on a wire. Side lines (약국) and holiday
 // nights are smaller strips under the district that unlocks them.
 import Phaser from 'phaser';
-import { DISTRICTS, NIGHTS, homeDistrict, nightDef } from '../data/levels';
+import { DAILY_NIGHT, DISTRICTS, NIGHTS, homeDistrict, nightDef } from '../data/levels';
+import { dailyBest } from '../logic/daily';
+import { dayKey } from '../logic/save';
 import { NAMES } from '../data/story';
 import { G, iconTex, word } from '../game/state';
 import { BG_PREFIX, DEPTH } from '../game/street';
@@ -56,9 +58,11 @@ export class MapScene extends Phaser.Scene {
     const frontier = G.frontier();
     let focusY = 0;
     const secs = sections();
+    const dailyH = G.isUnlocked(DAILY_NIGHT) ? 46 : 0;
     const natural = secs.reduce((a, s) => a + s.h, 0);
+    if (dailyH) { this.dailyStrip(W, dailyH); y = dailyH; }
     // few districts unlocked so far: stretch the strips to fill the screen
-    const k = natural < viewH ? viewH / natural : 1;
+    const k = natural + dailyH < viewH ? (viewH - dailyH) / natural : 1;
     for (const sec of secs) {
       sec.h = Math.floor(sec.h * k);
       this.section(y, W, sec);
@@ -90,18 +94,27 @@ export class MapScene extends Phaser.Scene {
     txt(this, Math.round(W / 2) - 5, 13, `${streak} ${streak === 1 ? 'den' : streak >= 2 && streak <= 4 ? 'dny' : 'dní'}`, { size: 's', color: streak > 0 ? C.orange : C.grey, origin: [0, 0.5] }).setDepth(DEPTH.hud);
     const regular = NIGHTS.filter((d) => !d.boss);
     const stars = regular.reduce((a, d) => a + (G.data.nights[d.n]?.stars ?? 0), 0);
-    this.add.image(W - 46, 13, 'star_s', 0).setDepth(DEPTH.hud);
-    txt(this, W - 39, 13, `${stars}/${regular.length * 3}`, { size: 's', color: C.yellow, origin: [0, 0.5] }).setDepth(DEPTH.hud);
+    const st = txt(this, W - 28, 13, `${stars}/${regular.length * 3}`, { size: 's', color: C.yellow, origin: [1, 0.5] }).setDepth(DEPTH.hud);
+    this.add.image(W - 34 - st.width, 13, 'star_s', 0).setDepth(DEPTH.hud);
+    iconButton(this, W - 13, 13, 'gear', () => goto(this, 'Settings', { from: 'Map' })).setDepth(DEPTH.hud);
 
     // bottom bar
     this.add.rectangle(0, H - bottom, W, bottom, 0x181425).setOrigin(0, 0).setDepth(DEPTH.hud);
     this.add.rectangle(0, H - bottom, W, 1, 0x3a4466).setOrigin(0, 0).setDepth(DEPTH.hud);
     const by = H - bottom / 2;
-    const bw = Math.floor((W - 40) / 3);
+    const bw = Math.floor((W - 30) / 4);
     iconButton(this, 14, by, 'back', () => goto(this, 'Title')).setDepth(DEPTH.hud);
-    button(this, 30 + bw / 2, by, bw - 4, 22, 'Obchod', () => goto(this, 'Shop'), { icon: 'bag', style: 'wood', size: 's' }).setDepth(DEPTH.hud);
-    button(this, 30 + bw * 1.5, by, bw - 4, 22, 'Receptář', () => goto(this, 'Recipes'), { icon: 'book', style: 'wood', size: 's' }).setDepth(DEPTH.hud);
-    button(this, 30 + bw * 2.5, by, bw - 4, 22, 'Nastavení', () => goto(this, 'Settings', { from: 'Map' }), { icon: 'gear', style: 'wood', size: 's' }).setDepth(DEPTH.hud);
+    const items: [string, string, () => void][] = [
+      ['Obchod', 'bag', () => goto(this, 'Shop')],
+      ['Recepty', 'book', () => goto(this, 'Recipes')],
+      ['Trénink', 'target', () => goto(this, 'Training')],
+      ['Odznaky', 'trophy', () => goto(this, 'Badges')],
+    ];
+    items.forEach(([label, icon, fn], i) => {
+      const x = 28 + bw * (i + 0.5);
+      button(this, x, by - 5, Math.min(bw - 4, 44), 20, '', fn, { icon, style: 'wood' }).setDepth(DEPTH.hud);
+      txt(this, x, by + 13, label, { size: 'xs', color: C.cream, origin: [0.5, 0.5] }).setDepth(DEPTH.hud);
+    });
 
     this.game.events.on('layout', this.relayout, this);
     this.events.once('shutdown', () => this.game.events.off('layout', this.relayout, this));
@@ -157,6 +170,25 @@ export class MapScene extends Phaser.Scene {
       const p = pt((i + 0.5) / n);
       this.node(Math.round(p.x), Math.round(p.y), night);
     });
+  }
+
+  /** Top strip: today's daily challenge. */
+  private dailyStrip(W: number, h: number) {
+    const L = this.list;
+    const today = dayKey(new Date());
+    const rec = G.data.daily[today];
+    L.add(this.add.rectangle(0, 0, W, h, 0x262b44).setOrigin(0, 0));
+    L.add(this.add.rectangle(0, h - 1, W, 1, 0x181425).setOrigin(0, 0));
+    L.add(this.add.image(16, h / 2, 'uiicons', iconFrame('calendar')));
+    L.add(txt(this, 30, 8, 'Denní výzva', { size: 'm', color: C.yellow }));
+    const best = dailyBest(G.data.daily);
+    L.add(txt(this, 30, 25, rec ? `Dnes: ${'★'.repeat(rec.stars)} ${rec.coins} mincí` : `${today.slice(8)}. ${today.slice(5, 7)}. · nejlépe ${best}`, { size: 'xs', color: rec ? C.green : C.light }));
+    const b = button(this, W - 40, h / 2, 64, 20, rec ? 'Znovu' : 'Hrát', () => {
+      if (this.dragMoved > 6) return;
+      goto(this, 'Night', { night: DAILY_NIGHT, seats: 3 });
+    }, { size: 's', style: rec ? 'wood' : 'red' });
+    L.add(b);
+    if (!rec) this.tweens.add({ targets: b, scale: { from: 1, to: 1.06 }, yoyo: true, repeat: -1, duration: 600 });
   }
 
   private node(x: number, y: number, n: number) {

@@ -124,6 +124,7 @@ export function nightTitle(n: number, bossName?: string): string {
   if (d.boss) return bossName ?? 'Boss';
   if (d.district === 'pharmacy') return `약국 L${n - 200}`;
   if (d.district === 'holiday') return HOLIDAY_NAMES[n] ?? '명절';
+  if (n === DAILY_NIGHT) return 'Denní výzva';
   return `Noc ${n}`;
 }
 
@@ -159,7 +160,12 @@ export const BOSS_NIGHT = 11;
 export const CRITIC_ORDERS = 5;
 export const CRITIC_PATIENCE = 55;
 
+/** Daily challenge: one synthetic night a day (seeded), unlocked after night 3. */
+export const DAILY_NIGHT = 900;
+const DAILY_DEF: NightDef = { n: DAILY_NIGHT, district: 'euljiro', prev: 3, mechanic: 'food', newWords: [], newJamo: [], customers: 12, patience: 25, spawn: [5, 7.5], regulars: ['nabi', 'kim', 'haeun'] };
+
 export function nightDef(n: number): NightDef {
+  if (n === DAILY_NIGHT) return DAILY_DEF;
   const d = NIGHTS.find((x) => x.n === n);
   if (!d) throw new Error('no night ' + n);
   return d;

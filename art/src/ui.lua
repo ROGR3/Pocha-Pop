@@ -230,9 +230,12 @@ do
     door = { "..ffffffff..", "..fbbbbbbf..", "..fbeeeebf..", "..fbeeeebf..", "..fbbbbbbf..", "..fbeeeebf..", "..fbeeekbf..", "..fbeeeebf..", "..fbeeeebf..", "..fbbbbbbf..", "..ffffffff..", ".dddddddddd." },
     paint = { "..........ff", ".........fef", "........fef.", ".......fef..", "......fef...", ".....uvu....", "....uvvu....", "...iiiv.....", "..iDii......", ".iiih.......", "iiih........", "hhh........." },
     stool_s = { "............", "............", "............", "............", "....DDDD....", "...iiiiii...", "....h..h....", "....h..h....", "...hh..hh...", "............", "............", "............" },
+    trophy = { "kkkkkkkkkkkk", "klllllllllkj", "klllllllllkj", ".kllllllkkj.", ".kllllllkkj.", "..kllllkkj..", "...kllkkj...", ".....kj.....", ".....kj.....", "...kkkkjj...", "..ffffffff..", "..eeeeeeee.." },
+    calendar = { ".i..i..i..i.", "iiiiiiiiiiii", "ihhhhhhhhhhi", "tttttttttttu", "tvtvtvtvtvtu", "tttttttttttu", "tvtvtiivtvtu", "ttttiiitttu.", "tvtvtvtvtvtu", "tttttttttttu", "uuuuuuuuuuuu", "............" },
+    target = { "....iiii....", "..iittttii..", ".iittttttii.", ".ittiiiitti.", "ittittttitti", "ittitlltitth", "ittitlltitth", "ittittttitth", ".ittiiiitth.", ".iitttttthh.", "..iitttthh..", "....ihhh...." },
     close = { "............", ".tt......tt.", ".ttt....ttt.", "..ttt..ttt..", "...tttttt...", "....tttt....", "....tttt....", "...tttttt...", "..ttt..ttt..", ".ttt....ttt.", ".tt......tt.", "............" },
   }
-  local order = { "gear", "book", "bag", "back", "help", "pause", "sound", "mute", "fire", "heart", "keyboard", "lock", "check", "play", "map", "close", "stool", "hand", "door", "paint", "stool_s" }
+  local order = { "gear", "book", "bag", "back", "help", "pause", "sound", "mute", "fire", "heart", "keyboard", "lock", "check", "play", "map", "close", "stool", "hand", "door", "paint", "stool_s", "trophy", "calendar", "target" }
   sheet("uiicons", 14, 14, order, function(img, n) L.map(img, 1, 1, ICONS[n]) end, { outline = "g" })
   local f = io.open(L.root .. "/public/assets/uiicons.json", "w")
   local q = {}

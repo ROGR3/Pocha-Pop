@@ -1,7 +1,7 @@
 // One night = one level. Customers order in bubbles, the player types the
 // Korean with the system IME, matching orders are served.
 import Phaser from 'phaser';
-import { nightTitle, CRITIC_ORDERS, CRITIC_PATIENCE, DISTRICTS, homeDistrict, nightDef, nightPool, type NightDef, type RegularId } from '../data/levels';
+import { DAILY_NIGHT, NIGHTS, nightTitle, CRITIC_ORDERS, CRITIC_PATIENCE, DISTRICTS, homeDistrict, nightDef, nightPool, type NightDef, type RegularId } from '../data/levels';
 import { BOSS_INTRO, HOLIDAY_INTRO, NAMES, PHARMACY_INTRO } from '../data/story';
 import { matchAgainst } from '../logic/hangul';
 import { BOSS_SEATS, DEFAULT_SEATS, comboMultiplier, criticStars, nightStars, patienceMultiplier, seatMultiplier, serveCoins, spawnInterval } from '../logic/rules';
@@ -15,7 +15,10 @@ import { recordMissed, recordMistake, recordServe, rng } from '../logic/srs';
 import { Bubble } from '../game/bubble';
 import { playDialogue } from '../game/dialogue';
 import { joinTokens, makeOrder, orderTargets, tokenAt, type Kind, type Order } from '../game/orders';
-import { G, iconTex, word } from '../game/state';
+import { G, WORDS, iconTex, word } from '../game/state';
+import { dailyPool, daySeed, recordDaily } from '../logic/daily';
+import { dayKey } from '../logic/save';
+import { SHIFT_JAMO } from '../logic/achievements';
 import { DEPTH, Street, particleFrame } from '../game/street';
 import { TypeBox } from '../game/typebox';
 import { attachHat } from '../game/hats';
@@ -70,6 +73,8 @@ export interface NightSummary {
   greetings: number;
   reactions: number;
   haggles: number;
+  /** Daily challenge: was this today's (first, recorded) attempt? */
+  dailyCounted?: boolean;
 }
 
 /** Ambient sound per backdrop. */
@@ -147,11 +152,17 @@ export class NightScene extends Phaser.Scene {
     this.n = d?.night ?? G.night;
     G.night = this.n;
     this.def = nightDef(this.n);
+    if (this.n === DAILY_NIGHT) {
+      // today's backdrop: one of the districts the player has reached
+      const reached = (['euljiro', 'hangang', 'dongdaemun', 'hongdae', 'yongsan', 'busan'] as const).filter((b) => NIGHTS.some((d) => d.district === b && G.isUnlocked(d.n)));
+      this.def = { ...this.def, backdrop: reached[daySeed(dayKey(new Date())) % reached.length] };
+    }
     this.seats = this.def.boss ? BOSS_SEATS : (d?.seats ?? G.data.settings.seats ?? DEFAULT_SEATS);
     this.seatMul = seatMultiplier(this.seats);
     this.helped = this.greetings = this.reactions = this.haggles = this.lost = 0;
     this.greetDirty = this.criticGreeted = false;
     this.known = jamoKnown(this.n);
+    if (this.n === DAILY_NIGHT) for (const d of NIGHTS) if (G.data.nights[d.n]) jamoKnown(d.n).forEach((j) => this.known.add(j));
     this.customers = [];
     this.queue = [];
     this.clock = 0;
@@ -162,7 +173,8 @@ export class NightScene extends Phaser.Scene {
     this.regularsSeen = [];
     this.cleanServes = {};
     this.critic = { mistakes: 0, walkouts: 0, done: false };
-    this.rand = rng(Date.now() & 0xffffffff);
+    // the daily challenge is the same night for everyone that day
+    this.rand = rng(this.n === DAILY_NIGHT ? daySeed(dayKey(new Date())) : Date.now() & 0xffffffff);
   }
 
   create() {
@@ -173,7 +185,10 @@ export class NightScene extends Phaser.Scene {
     this.street = new Street(this, { backdrop, seats: this.seats, snow: this.def.weather === 'snow', rain: this.def.weather !== 'dry', kittens: this.n === 303, festive: this.def.district === 'holiday' });
     this.seatsTaken = this.street.seatX.map(() => null);
     this.patMul = patienceMultiplier(G.data.upgrades, G.data.settings.relaxed, this.street.raining);
-    this.pool = nightPool(this.n, G.data.upgrades);
+    this.pool = this.n === DAILY_NIGHT
+      ? dailyPool(WORDS.filter((w) => (G.data.words[w.id]?.seen ?? 0) > 0 && !['phrase', 'expr', 'adj'].includes(w.category)).map((w) => w.id), dayKey(new Date()))
+      : nightPool(this.n, G.data.upgrades);
+    if (this.pool.length < 3) this.pool = ['cha', 'uyu', 'mul', 'dubu', 'mandu'];
     this.newTonight = new Set(this.def.newWords);
     for (const [id, s] of Object.entries(G.data.words)) if (s.seen > 0) this.seenBefore.add(id);
     G.audio.setAmbient(this.def.weather === 'dry' || this.def.weather === 'snow' ? 'city' : ambientFor(backdrop));
@@ -515,6 +530,15 @@ export class NightScene extends Phaser.Scene {
     o.tokens.forEach((t, i) => G.setStat(t.id, recordServe(G.stat(t.id), { clean: !o.mistakes[i], hinted: o.hinted, night: this.n })));
     o.tokens.forEach((t) => this.recent.push(t.id));
     if (clean && !o.hinted && c.kind !== 'generic' && c.kind !== 'boss') this.cleanServes[c.kind] = (this.cleanServes[c.kind] ?? 0) + 1;
+    if (clean && !o.hinted) {
+      // lifetime stats for the badges
+      const st = G.data.stats;
+      st.cleanServed = (st.cleanServed ?? 0) + 1;
+      st.shiftClean = st.shiftClean ?? {};
+      for (const t of o.tokens) for (const j of new Set(rawJamo(t.ko).flatMap((x) => [x.initial, x.medial, x.final]))) {
+        if (SHIFT_JAMO.includes(j)) st.shiftClean[j] = (st.shiftClean[j] ?? 0) + 1;
+      }
+    }
     // score
     if (clean) this.combo++; else this.combo = 0;
     this.bestCombo = Math.max(this.bestCombo, this.combo);
@@ -1048,6 +1072,10 @@ export class NightScene extends Phaser.Scene {
     d.stats.served += this.served;
     d.stats.mistakes += this.mistakes;
     d.stats.nightsPlayed++;
+    d.stats.bestCombo = Math.max(d.stats.bestCombo ?? 0, this.bestCombo);
+    d.stats.greetings = (d.stats.greetings ?? 0) + this.greetings;
+    let dailyCounted: boolean | undefined;
+    if (this.n === DAILY_NIGHT) dailyCounted = recordDaily(d.daily, dayKey(new Date()), { stars, coins: this.coins, served: this.served, total });
     for (const [k, v] of Object.entries(this.cleanServes)) {
       const f = d.friends[k] ?? { clean: 0, chapter: 0 };
       d.friends[k] = { ...f, clean: f.clean + (v ?? 0) };
@@ -1060,6 +1088,7 @@ export class NightScene extends Phaser.Scene {
       night: this.n, stars, total, served: this.served, angry: this.angry, mistakes: this.mistakes, coins: this.coins, tips: this.tips,
       bestCombo: this.bestCombo, newWords, trouble, regularsSeen: this.regularsSeen, clean: this.cleanServes, seats: this.seats, helped: this.helped, greetings: this.greetings, reactions: this.reactions, haggles: this.haggles,
       critic: boss ? { stars, mistakes: this.critic.mistakes, walkouts: this.critic.walkouts } : undefined,
+      dailyCounted,
     };
     G.ime.deactivate();
     goto(this, 'Result', summary, 500);

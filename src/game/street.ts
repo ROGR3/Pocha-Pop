@@ -3,6 +3,9 @@
 import Phaser from 'phaser';
 import { G } from './state';
 import { colorFrame } from '../data/colors';
+import badgesJson from '../../public/assets/badges.json';
+
+const badgeFrame = (id: string) => Math.max(0, (badgesJson.names as string[]).indexOf(id));
 
 export type { Backdrop } from '../data/levels';
 import type { Backdrop } from '../data/levels';
@@ -122,6 +125,11 @@ export class Street {
       }
       this.place(this.radio, 66, -76);
     }
+    // achievement pins on the side tarps (up to 6 per side)
+    G.data.achievements.slice(0, 12).forEach((id, i) => {
+      const pin = s.add.image(0, 0, 'badges_s', badgeFrame(id)).setDepth(DEPTH.stall + 0.4);
+      this.place(pin, i % 2 ? 97 : -97, -100 + Math.floor(i / 2) * 12);
+    });
     if (up.includes('mug')) this.place(s.add.sprite(0, 0, 'mug').setOrigin(0.5, 1).setDepth(DEPTH.pot).play('mug:steam'), -98, -41);
     if (up.includes('awning')) {
       this.awning = s.add.image(0, 0, 'awnings', colorFrame(cos.roof)).setOrigin(0.5, 0).setDepth(DEPTH.awning);

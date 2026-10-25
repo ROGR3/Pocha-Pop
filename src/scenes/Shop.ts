@@ -1,6 +1,7 @@
 // Upgrades shop with a live preview of the stall.
 import Phaser from 'phaser';
 import { UPGRADES } from '../data/levels';
+import { checkAchievements } from '../game/achievements';
 import { G, iconTex, word } from '../game/state';
 import { DEPTH, Street } from '../game/street';
 import { C, button, iconFrame, fadeIn, goto, iconButton, panel, toast, txt } from '../game/ui';
@@ -70,6 +71,7 @@ export class ShopScene extends Phaser.Scene {
     if (this.bought) {
       toast(this, 'Koupeno!', C.green, gy - 90);
       this.street.flash(3);
+      this.time.delayedCall(900, () => checkAchievements(this));
     }
     this.game.events.on('layout', this.relayout, this);
     this.events.once('shutdown', () => this.game.events.off('layout', this.relayout, this));

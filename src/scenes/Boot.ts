@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { SFX_KEYS } from '../game/audio';
 
 const SHEETS: [string, number, number][] = [
-  ['icons', 24, 24], ['clothes', 24, 24], ['uiicons', 14, 14], ['particles', 8, 8],
+  ['icons', 24, 24], ['badges', 24, 24], ['badges_s', 10, 10], ['clothes', 24, 24], ['uiicons', 14, 14], ['particles', 8, 8],
   ['char_kim', 32, 40], ['char_haeun', 32, 40], ['char_critic', 32, 40], ['char_halmeoni', 32, 40],
   ['char_cust_a', 32, 40], ['char_cust_b', 32, 40], ['char_cust_c', 32, 40], ['char_cust_d', 32, 40],
   ['chef', 32, 40], ['char_kim_helper', 32, 40], ['nabi', 24, 16], ['nabi_fat', 24, 16], ['kitten_a', 12, 10], ['kitten_b', 12, 10], ['kitten_c', 12, 10],

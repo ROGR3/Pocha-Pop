@@ -65,7 +65,7 @@ for (const [idx, n] of nights.entries()) {
     const r = P.game.scene.getScene('Result');
     return { night: n, typed, scenes: P.game.scene.getScenes(true).map((s) => s.scene.key), summary: r?.s, saved: P.G.data.nights[n], coins: P.G.data.coins, words: Object.keys(P.G.data.words).length };
   }, [n, seats]);
-  const ok = res.scenes.includes('Result') && res.summary && res.saved?.plays >= 1 && (n < 6 || res.summary.greetings > 0);
+  const ok = res.scenes.includes('Result') && res.summary && res.saved?.plays >= 1 && (n < 6 || n === 900 || res.summary.greetings > 0);
   if (!ok) failed = true;
   console.log(ok ? 'PASS' : 'FAIL', JSON.stringify({ night: res.night, seats: res.summary?.seats, typed: res.typed, stars: res.summary?.stars, served: res.summary?.served, total: res.summary?.total, mistakes: res.summary?.mistakes, greetings: res.summary?.greetings, haggles: res.summary?.haggles, reactions: res.summary?.reactions, critic: res.summary?.critic, coins: res.coins, words: res.words, scenes: res.scenes }));
   await page.screenshot({ path: `/tmp/pocha-autoplay-${n}.png` });

@@ -16,6 +16,8 @@ import { ShopScene } from './scenes/Shop';
 import { RecipesScene } from './scenes/Recipes';
 import { SettingsScene } from './scenes/Settings';
 import { PaintScene } from './scenes/Paint';
+import { TrainingScene } from './scenes/Training';
+import { BadgesScene } from './scenes/Badges';
 
 async function start() {
   const fonts = ['Galmuri11', 'Galmuri9', 'Galmuri7', 'Galmuri14'];
@@ -40,7 +42,7 @@ async function start() {
     scale: { mode: Phaser.Scale.NONE, zoom: G.layout.scale / dpr },
     input: { activePointers: 2 },
     disableContextMenu: true,
-    scene: [BootScene, TitleScene, SetupScene, StoryScene, MapScene, NightScene, ResultScene, ShopScene, RecipesScene, SettingsScene, PaintScene],
+    scene: [BootScene, TitleScene, SetupScene, StoryScene, MapScene, NightScene, ResultScene, ShopScene, RecipesScene, SettingsScene, PaintScene, TrainingScene, BadgesScene],
   });
   G.audio.attach(game);
   setupBack(game);

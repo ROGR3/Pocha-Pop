@@ -1,9 +1,11 @@
 // End of night: stars, coins, new words → grandma's postcard → regulars' stories.
 import Phaser from 'phaser';
-import { nightTitle, BOSS_NIGHT, DISTRICTS, FINAL_NIGHT, PHARMACY_LAST, homeDistrict, nightDef } from '../data/levels';
+import { DAILY_NIGHT, nightTitle, BOSS_NIGHT, DISTRICTS, FINAL_NIGHT, PHARMACY_LAST, homeDistrict, nightDef } from '../data/levels';
 import { BOSS_REVIEW, JAMO_TIPS, NAMES, PHARMACY_OUTRO, POSTCARDS, REGULARS } from '../data/story';
 import { hasRawJamo } from '../logic/hangul';
 import { seatMultiplier } from '../logic/rules';
+import { dailyBest } from '../logic/daily';
+import { checkAchievements } from '../game/achievements';
 import { playDialogue } from '../game/dialogue';
 import { G, iconTex, word } from '../game/state';
 import { BG_PREFIX } from '../game/street';
@@ -29,6 +31,7 @@ export class ResultScene extends Phaser.Scene {
     this.add.rectangle(0, 0, W, H, 0x181425, 0.5).setOrigin(0, 0);
     this.layer = this.add.container(0, 0);
     this.stats();
+    this.time.delayedCall(1800, () => checkAchievements(this));
   }
 
   // ------------------------------------------------------------ phase 1
@@ -66,6 +69,10 @@ export class ResultScene extends Phaser.Scene {
       const review = txt(this, W / 2, y, BOSS_REVIEW[def.boss!][s.stars], { size: 's', color: C.cream, origin: [0.5, 0], align: 'center', wrap: W - 24 });
       L.add(review);
       y += review.height + 8;
+    } else if (s.night === DAILY_NIGHT) {
+      const msg = s.dailyCounted ? `Výsledek dne zapsán! Nejlepší denní výzva: ${dailyBest(G.data.daily)} mincí.` : 'Dnešní pokus už je zapsaný – tohle bylo jen pro radost.';
+      L.add(txt(this, W / 2, y, msg, { size: 's', color: s.dailyCounted ? C.green : C.light, origin: [0.5, 0], align: 'center', wrap: W - 24 }));
+      y += 26;
     } else if (failed) {
       L.add(txt(this, W / 2, y, 'Málo spokojených zákazníků. Zkus to znovu – příště to vyjde!', { size: 's', color: C.light, origin: [0.5, 0], align: 'center', wrap: W - 24 }));
       y += 26;
@@ -121,7 +128,9 @@ export class ResultScene extends Phaser.Scene {
     const old = this.layer;
     this.tweens.add({ targets: old, alpha: 0, duration: 200, onComplete: () => old.destroy() });
     this.layer = this.add.container(0, 0);
-    const pc = POSTCARDS[s.night] ?? { title: 'Pozdrav z Jeju', text: 'Další noc za tebou! Jsem na tebe pyšná.', tip: 'Tip: opakování je matka moudrosti.' };
+    const pc = s.night === DAILY_NIGHT
+      ? { title: 'Denní výzva', text: 'Každý den jiná směs slov, která už znáš. Zítra zase – babička drží palce!', tip: 'Tip: denní výzva se počítá i do denní série.' }
+      : POSTCARDS[s.night] ?? { title: 'Pozdrav z Jeju', text: 'Další noc za tebou! Jsem na tebe pyšná.', tip: 'Tip: opakování je matka moudrosti.' };
     const c = this.add.container(0, H);
     const cw = Math.min(W - 12, 240);
     const cx = Math.round((W - cw) / 2);
