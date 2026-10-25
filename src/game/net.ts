@@ -134,6 +134,8 @@ export class NetSession {
   /** 'lobby' → 'night' → back to 'lobby' after the results. */
   phase: 'lobby' | 'night' = 'lobby';
   closed = false;
+  /** Host: guests whose night scene is loaded ("ready" can arrive before the host's own scene). */
+  ready = new Set<number>();
   private hostMsgs = new Set<MsgFn>();
   private guestMsgs = new Set<MsgFn>();
   private off: () => void;
@@ -165,6 +167,7 @@ export class NetSession {
   /** Host → everyone (itself included, synchronously). */
   broadcast(m: Msg) {
     if (!this.isHost) return;
+    if (m.t === 'start') this.ready.clear();
     this.t.send(null, encode(m));
     this.guestMsgs.forEach((f) => f(m, 0));
   }
@@ -206,6 +209,7 @@ export class NetSession {
     }
     if (!this.players.some((p) => p.pid === pid)) return;
     if (m.t === 'bye') { this.t.kick(pid); this.dropPlayer(pid); return; }
+    if (m.t === 'ready') this.ready.add(pid);
     this.hostMsgs.forEach((f) => f(m, pid));
   }
 

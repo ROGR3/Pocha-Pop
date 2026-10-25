@@ -32,7 +32,6 @@ export class CoopDirector {
   referee: CoopReferee;
   clock = 0;
   private started = false;
-  private ready = new Set<number>();
   private customers: HostCustomer[] = [];
   private seats: (number | null)[];
   private nextCid = 1;
@@ -53,8 +52,7 @@ export class CoopDirector {
   destroy() { this.off(); }
 
   private onMsg(m: Msg, pid: number) {
-    if (m.t === 'ready') this.ready.add(pid);
-    if (m.t === 'bye') { this.referee.drop(pid); this.ready.delete(pid); }
+    if (m.t === 'bye') this.referee.drop(pid);
     if (m.t === 'miss') this.referee.miss(pid, m.cid);
     if (m.t === 'done') {
       const c = this.customers.find((x) => x.cid === m.cid);
@@ -82,7 +80,7 @@ export class CoopDirector {
     const now = this.clock;
     if (now >= this.nextTick) { this.nextTick = now + TICK_MS; this.s.broadcast({ t: 'tick', ms: Math.round(now) }); }
     if (!this.started) {
-      const everyone = this.s.players.every((p) => p.pid === 0 || this.ready.has(p.pid));
+      const everyone = this.s.players.every((p) => p.pid === 0 || this.s.ready.has(p.pid));
       if (!everyone && now < READY_WAIT_MS) return;
       this.started = true;
       this.nextArrival = now + 1400;
