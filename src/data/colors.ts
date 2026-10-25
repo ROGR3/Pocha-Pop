@@ -26,9 +26,9 @@ export type PartId = 'roof' | 'sign' | 'stools' | 'lanterns';
 
 export const PARTS: { id: PartId; name: string; price: number }[] = [
   { id: 'roof', name: 'Plachta', price: 80 },
-  { id: 'sign', name: 'Cedule', price: 50 },
-  { id: 'stools', name: 'Stoličky', price: 40 },
-  { id: 'lanterns', name: 'Lampiony', price: 60 },
+  { id: 'sign', name: 'Cedule', price: 60 },
+  { id: 'stools', name: 'Stoličky', price: 50 },
+  { id: 'lanterns', name: 'Lampiony', price: 70 },
 ];
 
 export const HATS: { id: string; name: string; price: number }[] = [

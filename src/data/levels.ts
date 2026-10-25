@@ -181,6 +181,10 @@ export interface UpgradeDef {
   district?: District;
   /** Only for sale after this regular's last (3rd) story chapter. */
   story?: RegularId;
+  /** Review pack: its words also come back in these later districts. */
+  districts?: District[];
+  /** Night that must be cleared before the pack is sold. */
+  after?: number;
 }
 
 export const UPGRADES: UpgradeDef[] = [
@@ -190,6 +194,9 @@ export const UPGRADES: UpgradeDef[] = [
   { id: 'helper', name: 'Pomocník 김 대리', desc: 'Jednou za noc obslouží netrpělivého zákazníka.', price: 200, story: 'kim' },
   { id: 'menu_soups', name: 'Menu: polévky', desc: 'Slova: 갈비탕, 삼계탕, 된장찌개', price: 120, words: ['galbitang', 'samgyetang', 'doenjangjjigae'], district: 'euljiro' },
   { id: 'menu_sweets', name: 'Menu: sladkosti', desc: 'Slova: 사탕, 초콜릿, 케이크, 디저트', price: 120, words: ['satang', 'chokollit', 'keikeu', 'dijeoteu'] },
+  { id: 'menu_street', name: 'Menu: pouliční klasika', desc: 'Jídla z 을지로 i v 홍대, 용산 a 부산.', price: 250, after: 116, words: ['tteokbokki', 'gimbap', 'ramyeon', 'mandu', 'kimchi', 'japchae'], districts: ['hongdae', 'yongsan', 'busan'] },
+  { id: 'menu_drinks', name: 'Menu: nápoje', desc: 'Nápoje u řeky i v 용산 a 부산.', price: 200, after: 121, words: ['keopi', 'juseu', 'eumnyosu', 'beobeulti', 'cha', 'mul'], districts: ['yongsan', 'busan'] },
+  { id: 'menu_jeju', name: 'Menu: babiččino Jeju', desc: 'Ovoce a polévky z Jeju v přístavu.', price: 220, after: 126, words: ['gyul', 'samgyetang', 'galbitang', 'gwail', 'podo', 'bingsu'], districts: ['busan'] },
 ];
 
 /** Words a night can order: tonight's + earlier words of the same district (+ review, packs). */
@@ -208,6 +215,7 @@ export function nightPool(n: number, upgrades: string[]): string[] {
   DISTRICTS[home].review?.forEach((w) => ids.add(w));
   for (const u of UPGRADES) {
     if (!u.words || !upgrades.includes(u.id)) continue;
+    if (u.districts) { if (u.districts.includes(home) && !def.boss) u.words.forEach((w) => ids.add(w)); continue; }
     const food = home === 'euljiro' || home === 'hangang';
     if (food && (!u.district || u.district === home || def.boss || (u.district === 'euljiro' && n >= 5))) u.words.forEach((w) => ids.add(w));
   }

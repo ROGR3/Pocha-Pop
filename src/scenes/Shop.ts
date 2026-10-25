@@ -20,7 +20,7 @@ export class ShopScene extends Phaser.Scene {
     const rowH = 36;
     const listH = UPGRADES.length * rowH + 6;
     const footer = 34;
-    const gy = Math.max(150, H - footer - listH - 2);
+    const gy = Math.max(Math.min(150, H - footer - 3 * rowH - 4), H - footer - listH - 2);
     this.street = new Street(this, { backdrop: 'euljiro', weather: false });
     this.street.layout(gy);
     G.audio.setAmbient('rain');
@@ -33,10 +33,11 @@ export class ShopScene extends Phaser.Scene {
 
     const ly = gy + 2;
     this.add.rectangle(0, ly - 2, W, H - ly + 2, 0x181425).setOrigin(0, 0).setDepth(DEPTH.hud - 2);
+    const before = this.children.list.length;
     UPGRADES.forEach((u, i) => {
-      const y = ly + i * rowH;
+      const y = i * rowH;
       const owned = G.hasUpgrade(u.id);
-      const locked = !!u.story && (G.data.friends[u.story]?.chapter ?? 0) < 3;
+      const locked = (!!u.story && (G.data.friends[u.story]?.chapter ?? 0) < 3) || (!!u.after && !G.data.nights[u.after]);
       panel(this, 4, y, W - 8, rowH - 2).setDepth(DEPTH.hud - 1);
       // icon
       const ix = 20, iy = y + rowH / 2 - 1;
@@ -48,7 +49,7 @@ export class ShopScene extends Phaser.Scene {
       else icon = this.add.image(ix, iy, ...iconTex(word(u.words![0]).icon));
       (icon as any).setDepth(DEPTH.hud);
       txt(this, 36, y + 3, u.name, { size: 's', color: owned ? C.green : C.white }).setDepth(DEPTH.hud);
-      txt(this, 36, y + 14, locked ? 'Odemkne se v příběhu 김 대리.' : u.desc, { size: 'xs', color: C.light, wrap: W - 100, lineSpacing: 0 }).setCrop(0, 0, W, 21).setDepth(DEPTH.hud);
+      txt(this, 36, y + 14, locked ? (u.story ? 'Odemkne se v příběhu 김 대리.' : 'Odemkne se v další čtvrti.') : u.desc, { size: 'xs', color: C.light, wrap: W - 100, lineSpacing: 0 }).setCrop(0, 0, W, 21).setDepth(DEPTH.hud);
       if (owned) {
         this.add.image(W - 46, iy, 'uiicons', iconFrame('check')).setDepth(DEPTH.hud);
         txt(this, W - 38, iy, 'máš', { size: 's', color: C.green, origin: [0, 0.5] }).setDepth(DEPTH.hud);
@@ -65,6 +66,20 @@ export class ShopScene extends Phaser.Scene {
         this.tweens.add({ targets: fl, alpha: 0, duration: 700, onComplete: () => fl.destroy() });
       }
     });
+    // the rows scroll when they don't fit (drag / wheel)
+    const rows = this.children.list.slice(before);
+    const list = this.add.container(0, ly, rows).setDepth(DEPTH.hud - 1);
+    const viewH = H - footer - ly;
+    const maxScroll = Math.max(0, listH - viewH);
+    list.setMask(this.make.graphics({}, false).fillRect(0, ly, W, viewH).createGeometryMask());
+    let start = 0, startScroll = 0, scroll = 0, dragging = false;
+    const more = txt(this, W - 12, H - footer - 4, '▼', { size: 's', color: C.yellow, origin: [0.5, 1], shadow: true }).setDepth(DEPTH.hud + 2).setVisible(maxScroll > 0);
+    this.tweens.add({ targets: more, y: more.y + 2, yoyo: true, repeat: -1, duration: 400 });
+    const setScroll = (v: number) => { scroll = Phaser.Math.Clamp(v, 0, maxScroll); list.y = ly - Math.round(scroll); more.setVisible(scroll < maxScroll - 2); };
+    this.input.on('pointerdown', (p: Phaser.Input.Pointer) => { dragging = true; this.moved = 0; start = p.y; startScroll = scroll; });
+    this.input.on('pointermove', (p: Phaser.Input.Pointer) => { if (!dragging || !p.isDown || !maxScroll) return; this.moved = Math.max(this.moved, Math.abs(p.y - start)); setScroll(startScroll - (p.y - start)); });
+    this.input.on('pointerup', () => { dragging = false; });
+    this.input.on('wheel', (_p: unknown, _o: unknown, _dx: number, dy: number) => setScroll(scroll + dy * 0.5));
     iconButton(this, 16, H - footer / 2, 'back', () => goto(this, 'Map')).setDepth(DEPTH.hud);
     txt(this, 32, H - footer / 2, 'Upgrady jsou vidět u stánku.', { size: 'xs', color: C.grey, origin: [0, 0.5], wrap: W - 130 }).setDepth(DEPTH.hud);
     button(this, W - 50, H - footer / 2, 88, 20, 'Barvírna', () => goto(this, 'Paint', { from: 'Shop' }), { icon: 'paint', style: 'wood', size: 's' }).setDepth(DEPTH.hud);
@@ -81,10 +96,14 @@ export class ShopScene extends Phaser.Scene {
 
   onBack() { goto(this, 'Map'); }
 
+  private moved = 0;
+
   private buy(id: string) {
+    if (this.moved > 6) return;
     const u = UPGRADES.find((x) => x.id === id)!;
     if (G.data.coins < u.price || G.hasUpgrade(id)) return;
     if (u.story && (G.data.friends[u.story]?.chapter ?? 0) < 3) return;
+    if (u.after && !G.data.nights[u.after]) return;
     G.data.coins -= u.price;
     G.data.upgrades.push(id);
     G.save.save();
