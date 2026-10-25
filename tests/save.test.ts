@@ -71,3 +71,20 @@ describe('daily streak', () => {
     expect(currentStreak({ count: 4, lastDay: '2026-10-01' }, d('2026-10-04'))).toBe(0);
   });
 });
+
+describe('migration v1 → v2', () => {
+  it('refunds the removed 4th stool once', () => {
+    const v1 = { version: 1, coins: 20, upgrades: ['lanterns', 'stool4'], nights: { 1: { stars: 3, bestCoins: 50, plays: 2 } } };
+    const m = migrate(v1);
+    expect(m.upgrades).toEqual(['lanterns']);
+    expect(m.coins).toBe(170);
+    expect(m.version).toBe(2);
+    expect(m.settings.seats).toBe(3);
+    expect(m.nights[1].stars).toBe(3);
+    // migrating again does not pay twice
+    expect(migrate(JSON.parse(serialize(m))).coins).toBe(170);
+  });
+  it('leaves saves without the stool alone', () => {
+    expect(migrate({ coins: 5, upgrades: ['radio'] }).coins).toBe(5);
+  });
+});

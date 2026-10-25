@@ -155,6 +155,43 @@ export class Button extends Phaser.GameObjects.Container {
     snapText(this.label);
     return this;
   }
+
+  setStyle(style: 'red' | 'wood') {
+    if (!this.enabled) return this;
+    this.style = style;
+    this.bg.setTexture(this.tex(false));
+    this.label.setColor(style === 'wood' ? C.cream : C.white);
+    return this;
+  }
+}
+
+/**
+ * Segmented toggle (e.g. seats 2 · 3 · 4). Locked segments are greyed out and
+ * call onLocked instead. Returns the buttons.
+ */
+export function segmented(scene: Phaser.Scene, x: number, y: number, w: number, h: number, labels: string[], value: number,
+  onChange: (i: number) => void, o: { locked?: boolean[]; onLocked?: (i: number) => void; icon?: string } = {}) {
+  const n = labels.length;
+  const sw = Math.floor(w / n);
+  const btns: Button[] = [];
+  let cur = value;
+  labels.forEach((lab, i) => {
+    const locked = !!o.locked?.[i];
+    const b = new Button(scene, x + sw * i + sw / 2, y, sw - 2, h, lab, () => {
+      if (cur === i) return;
+      cur = i;
+      btns.forEach((bb, k) => bb.setStyle(k === i ? 'red' : 'wood'));
+      scene.tweens.add({ targets: b, scale: { from: 1.12, to: 1 }, duration: 180, ease: 'Back.easeOut' });
+      onChange(i);
+    }, { style: i === value ? 'red' : 'wood', size: 's', icon: locked ? 'lock' : o.icon });
+    if (locked) {
+      b.setEnabled(false);
+      b.setInteractive({ useHandCursor: true });
+      b.on('pointerup', () => o.onLocked?.(i));
+    }
+    btns.push(b);
+  });
+  return btns;
 }
 
 export function button(scene: Phaser.Scene, x: number, y: number, w: number, h: number, text: string, onClick: () => void, o: ButtonOpts = {}) {

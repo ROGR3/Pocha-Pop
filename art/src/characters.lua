@@ -153,12 +153,15 @@ local POSES = {
   { name = "walk", eyes = "blink", mouth = "smile" },
 }
 
-local function build(name, P)
-  local spr = L.new(FW, FH, #POSES)
-  for i, pose in ipairs(POSES) do
+local DEFAULT_TAGS = { { "idle", 1, 2 }, { "neutral", 3, 3 }, { "angry", 4, 5 }, { "happy", 6, 7 }, { "eat", 8, 9 }, { "walk", 10, 13 } }
+
+local function build(name, P, poses, tags)
+  poses = poses or POSES
+  local spr = L.new(FW, FH, #poses)
+  for i, pose in ipairs(poses) do
     local img = L.img(spr, i)
     figure(img, P, pose)
-    if pose.name == "eat" and P.chopsticks ~= false then
+    if pose.name == "eat" and P.chopsticks ~= false and pose.handR then
       -- chopsticks in the raised right hand
       local hy = 26 + (pose.bob or 0) + (pose.handR or 0)
       L.line(img, 23, hy, 18, hy - 5, "d"); L.line(img, 24, hy, 20, hy - 6, "e")
@@ -167,8 +170,7 @@ local function build(name, P)
     if pose.fx then pose.fx(img, pose.bob or 0) end
   end
   L.durations(spr, 160)
-  L.tag(spr, "idle", 1, 2); L.tag(spr, "neutral", 3, 3); L.tag(spr, "angry", 4, 5)
-  L.tag(spr, "happy", 6, 7); L.tag(spr, "eat", 8, 9); L.tag(spr, "walk", 10, 13)
+  for _, t in ipairs(tags or DEFAULT_TAGS) do L.tag(spr, t[1], t[2], t[3]) end
   L.save(spr, "char_" .. name)
 end
 
@@ -178,7 +180,7 @@ local SKIN_TAN = { skin = "d", skin2 = "F" }
 local function with(base, t) local r = {}; for k, v in pairs(base) do r[k] = v end; for k, v in pairs(t) do r[k] = v end; return r end
 
 -- 김 대리 – tired office worker: neat black side part, white shirt, loose red tie, eye bags
-build("kim", with(SKIN, {
+local KIM = with(SKIN, {
   hair = "y", hair2 = "x", top = "t", top2 = "u", pants = "x", pants2 = "y", shoes = "z", eyeBags = true,
   hairFront = {
     ".....yyyyyyyyy....",
@@ -197,7 +199,62 @@ build("kim", with(SKIN, {
     L.map(img, 9 + dx, 17 + b, { "...ttt", "......" })
     L.set(img, 11 + dx, 22 + b, "r"); L.rect(img, 10 + dx, 23 + b, 2, 3, "r"); L.set(img, 10 + dx, 23 + b, "s")
   end,
-}))
+})
+build("kim", KIM)
+
+-- 김 as the stall helper (after he quit): orange bandana, rolled-up sleeves,
+-- navy apron, no more eye bags. idle 1-2 | cook 3-6 (chopping) | wave 7-8
+do
+  local H = with(KIM, {
+    eyeBags = false,
+    hairFront = {
+      ".....yyyyyyyyy....",
+      "...yyyyyyyyyyyyy..",
+      "..yyyxxyyyyyyyyyy.",
+      ".jjjjjjjjjjjjjjjjk",
+      ".bbbbbbbbbbbbbbbjk",
+      ".yyyyyyyy...yyyy.j",
+      ".yyyyy.......yyyy.",
+      ".yyy...........yyy",
+      ".yy.............yy",
+      ".y...............y",
+    },
+    bodyDetail = function(img, dx, b)
+      -- apron over the white shirt: bib, straps, pocket with a pen
+      L.map(img, 10 + dx, 17 + b, { "..x....x..", "..x....x..", "..xxxxxx..", ".xxxxxxxxx", ".xxxxxxxxy", ".xxwwwxxxy", ".xxwkwxxxy", ".xxxxxxxxy", ".xxxxxxxxy", ".yyyyyyyyy" })
+      L.set(img, 13 + dx, 23 + b, "k")
+    end,
+  })
+  local function board(img, b, P, up, chips)
+    -- cutting board with a green onion, knife in the right hand
+    L.rect(img, 7, 27, 18, 2, "d"); L.hline(img, 7, 24, 27, "c"); L.hline(img, 7, 24, 29, "f")
+    L.hline(img, 9, 15, 26, "m"); L.set(img, 16, 26, "t"); L.set(img, 17, 26, "t")
+    if up then
+      L.line(img, 24, 21 + b, 26, 17 + b, "v"); L.line(img, 25, 21 + b, 27, 17 + b, "t"); L.set(img, 24, 22 + b, "f")
+    else
+      L.hline(img, 16, 21, 26, "v"); L.hline(img, 17, 21, 25, "t"); L.set(img, 22, 26, "f"); L.set(img, 23, 26, "f")
+    end
+    if chips then L.set(img, 15, 23 + chips, "m"); L.set(img, 18, 22 + chips, "n"); L.set(img, 13, 24 + chips, "m") end
+  end
+  local function waveArm(x)
+    return function(img, b, P)
+      L.rect(img, 22, 18 + b, 2, 3, P.top2)
+      L.line(img, 23, 17 + b, 24 + x, 10 + b, P.top2); L.line(img, 22, 17 + b, 23 + x, 10 + b, P.top)
+      L.rect(img, 23 + x, 7 + b, 3, 3, P.skin); L.set(img, 25 + x, 9 + b, P.skin2); L.set(img, 23 + x, 6 + b, P.skin)
+    end
+  end
+  local HP = {
+    { name = "idle", eyes = "open", mouth = "smile" },
+    { name = "idle", eyes = "blink", mouth = "smile" },
+    { name = "cook", eyes = "flat", mouth = "neutral", handL = -1, handR = -4, extra = function(img, b, P) board(img, b, P, true) end },
+    { name = "cook", eyes = "flat", mouth = "neutral", handL = -1, handR = -1, bob = 1, extra = function(img, b, P) board(img, b, P, false, 0) end },
+    { name = "cook", eyes = "open", mouth = "smile", handL = -1, handR = -4, extra = function(img, b, P) board(img, b, P, true, -2) end },
+    { name = "cook", eyes = "happy", mouth = "smile", handL = -1, handR = -1, bob = 1, extra = function(img, b, P) board(img, b, P, false) end },
+    { name = "wave", eyes = "happy", mouth = "happy", blush = true, noRightArm = true, extra = waveArm(0) },
+    { name = "wave", eyes = "happy", mouth = "happy", blush = true, noRightArm = true, bob = -1, extra = waveArm(2) },
+  }
+  build("kim_helper", H, HP, { { "idle", 1, 2 }, { "cook", 3, 6 }, { "wave", 7, 8 } })
+end
 
 -- 하은 – student before 수능: long brown hair, exam headband, navy uniform, ribbon
 build("haeun", with(SKIN, {

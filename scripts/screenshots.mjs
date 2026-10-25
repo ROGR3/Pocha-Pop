@@ -35,7 +35,7 @@ const helpers = () => {
     d.settings.firstRunDone = true;
     d.coins = 240;
     d.upgrades = upTo >= 6 ? ['lanterns', 'radio', 'awning'] : [];
-    for (let n = 1; n <= upTo; n++) d.nights[n] = { stars: n % 3 === 0 ? 2 : 3, bestCoins: 60 + n * 7, plays: 1 };
+    for (let n = 1; n <= upTo; n++) d.nights[n] = { stars: n % 3 === 0 ? 2 : 3, bestCoins: 60 + n * 7, plays: 1, seats: 2 + (n % 3) };
     const ids = ['cha', 'uyu', 'dubu', 'mul', 'mandu', 'bap', 'gogi', 'ramyeon', 'kimchi', 'gimbap', 'ppang', 'tteok', 'danmuji', 'jjigae', 'japchae', 'galbi', 'gansik', 'eumsik', 'gwaja', 'tteokbokki', 'podo', 'juseu', 'keopi'];
     ids.slice(0, upTo * 4).forEach((id, i) => { d.words[id] = { mastery: i % 6, seen: 3 + i, correct: 2 + i, errors: i % 3, lapses: 0, lastNight: 1 }; });
     d.friends = { kim: { clean: 3, chapter: 1 }, haeun: { clean: 2, chapter: 1 }, nabi: { clean: 7, chapter: upTo >= 9 ? 3 : 1 } };
@@ -69,12 +69,14 @@ const SHOTS = [
   ['09-night-error', async (p) => { await ev(p, "(()=>{const el=P.G.ime.el; el.value='ㅋㅋ'; el.dispatchEvent(new InputEvent('input'));})()"); await p.waitForTimeout(120); }],
   ['10-pause', async (p) => { await ev(p, 'P.night().togglePause()'); await p.waitForTimeout(400); }],
   ['11-night-hangang', async (p) => { await ev(p, "P.seed(7); P.start('Night',{night:8})"); await p.waitForTimeout(14000); }],
+  ['11b-night-helper', async (p) => { await ev(p, "P.seed(9); P.G.data.upgrades=['lanterns','helper']; P.G.data.friends.kim.chapter=3; P.start('Night',{night:8,seats:4})"); await p.waitForTimeout(9000);
+    await ev(p, "(()=>{const c=P.night().customers.find(x=>x.state==='wait'&&x.bubble); if(c) c.patience=c.max*0.15;})()"); await p.waitForTimeout(900); }],
   ['12-night-boss', async (p) => { await ev(p, "P.seed(10); P.start('Night',{night:11})"); await p.waitForTimeout(1500); await p.mouse.click(200, 400); await p.waitForTimeout(300); await p.mouse.click(200, 400); await p.waitForTimeout(300); await p.mouse.click(200, 400); await p.waitForTimeout(300); await p.mouse.click(200, 400); await p.waitForTimeout(6000); }],
   ['13-result', async (p) => { await ev(p, "P.start('Result',{night:4,stars:3,total:11,served:11,angry:0,mistakes:2,coins:132,tips:30,bestCombo:7,newWords:['jjigae','japchae','galbi','gansik','eumsik'],trouble:['jjigae','gwaja'],regularsSeen:[],clean:{}})"); await p.waitForTimeout(3200); }],
   ['14-postcard', async (p) => { await ev(p, "P.game.scene.getScene('Result').postcard()"); await p.waitForTimeout(1300); }],
   ['15-result-boss', async (p) => { await ev(p, "P.start('Result',{night:11,stars:4,total:11,served:10,angry:1,mistakes:1,coins:210,tips:40,bestCombo:5,newWords:['hana','juseyo'],trouble:[],regularsSeen:[],clean:{},critic:{stars:4,mistakes:1,walkouts:0}})"); await p.waitForTimeout(3200); }],
   ['16-shop', async (p) => { await ev(p, "P.seed(4); P.G.data.coins=170; P.start('Shop')"); await p.waitForTimeout(900); }],
-  ['17-shop-upgraded', async (p) => { await ev(p, "P.seed(9); P.G.data.upgrades=['lanterns','radio','awning','stool4']; P.start('Shop')"); await p.waitForTimeout(900); }],
+  ['17-shop-upgraded', async (p) => { await ev(p, "P.seed(9); P.G.data.upgrades=['lanterns','radio','awning','helper']; P.G.data.friends.kim.chapter=3; P.start('Shop')"); await p.waitForTimeout(900); }],
   ['18-recipes', async (p) => { await ev(p, "P.seed(6); P.start('Recipes')"); await p.waitForTimeout(900); }],
   ['19-recipe-detail', async (p) => { await ev(p, "P.game.scene.getScene('Recipes').detail(P.WORDS.find(w=>w.id==='tteokbokki'), true)"); await p.waitForTimeout(400); }],
   ['20-settings', async (p) => { await ev(p, "P.start('Settings',{from:'Map'})"); await p.waitForTimeout(700); }],
@@ -91,7 +93,9 @@ for (const vp of VIEWPORTS) {
   await page.goto(url);
   await page.waitForTimeout(1200);
   await page.evaluate(helpers);
+  const ONLY = process.env.ONLY ? process.env.ONLY.split(',') : null;
   for (const [name, fn] of SHOTS) {
+    if (ONLY && !ONLY.some((o) => name.startsWith(o))) continue;
     try { await fn(page); } catch (e) { errors.push(`${vp.name}/${name}: ${e.message}`); }
     await page.screenshot({ path: path.join(OUT, `${vp.name}-${name}.png`) });
     console.log('✓', vp.name, name);

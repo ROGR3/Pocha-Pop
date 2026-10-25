@@ -3,7 +3,7 @@ import Phaser from 'phaser';
 import { UPGRADES } from '../data/levels';
 import { G, iconIdx, word } from '../game/state';
 import { DEPTH, Street } from '../game/street';
-import { C, button, fadeIn, goto, iconButton, panel, toast, txt } from '../game/ui';
+import { C, button, iconFrame, fadeIn, goto, iconButton, panel, toast, txt } from '../game/ui';
 
 export class ShopScene extends Phaser.Scene {
   private street!: Street;
@@ -16,7 +16,7 @@ export class ShopScene extends Phaser.Scene {
     fadeIn(this, this.bought ? 120 : 260);
     G.ime.deactivate();
     const W = this.scale.width, H = this.scale.height;
-    const rowH = 30;
+    const rowH = 36;
     const listH = UPGRADES.length * rowH + 6;
     const footer = 34;
     const gy = Math.max(150, H - footer - listH - 2);
@@ -35,6 +35,7 @@ export class ShopScene extends Phaser.Scene {
     UPGRADES.forEach((u, i) => {
       const y = ly + i * rowH;
       const owned = G.hasUpgrade(u.id);
+      const locked = !!u.story && (G.data.friends[u.story]?.chapter ?? 0) < 3;
       panel(this, 4, y, W - 8, rowH - 2).setDepth(DEPTH.hud - 1);
       // icon
       const ix = 20, iy = y + rowH / 2 - 1;
@@ -42,14 +43,17 @@ export class ShopScene extends Phaser.Scene {
       if (u.id === 'lanterns') icon = this.add.sprite(ix, iy, 'lantern').play('lantern:blink');
       else if (u.id === 'awning') icon = this.add.image(ix, iy, 'awning').setCrop(0, 0, 22, 12).setOrigin(0.05, 0.5);
       else if (u.id === 'radio') icon = this.add.sprite(ix, iy, 'radio').play('radio:play');
-      else if (u.id === 'stool4') icon = this.add.image(ix, iy, 'stool');
+      else if (u.id === 'helper') icon = this.add.image(ix, iy + 3, 'char_kim_helper', 6).setCrop(4, 2, 24, 22);
       else icon = this.add.image(ix, iy, 'icons', iconIdx(word(u.words![0]).icon));
       (icon as any).setDepth(DEPTH.hud);
-      txt(this, 36, y + 4, u.name, { size: 's', color: owned ? C.green : C.white }).setDepth(DEPTH.hud);
-      txt(this, 36, y + 15, u.desc, { size: 'xs', color: C.light, wrap: W - 110 }).setDepth(DEPTH.hud);
+      txt(this, 36, y + 3, u.name, { size: 's', color: owned ? C.green : C.white }).setDepth(DEPTH.hud);
+      txt(this, 36, y + 14, locked ? 'Odemkne se v příběhu 김 대리.' : u.desc, { size: 'xs', color: C.light, wrap: W - 100, lineSpacing: 0 }).setCrop(0, 0, W, 21).setDepth(DEPTH.hud);
       if (owned) {
-        this.add.image(W - 46, iy, 'uiicons', 12).setDepth(DEPTH.hud);
+        this.add.image(W - 46, iy, 'uiicons', iconFrame('check')).setDepth(DEPTH.hud);
         txt(this, W - 38, iy, 'máš', { size: 's', color: C.green, origin: [0, 0.5] }).setDepth(DEPTH.hud);
+      }
+      else if (locked) {
+        this.add.image(W - 34, iy, 'uiicons', iconFrame('lock')).setDepth(DEPTH.hud);
       }
       else {
         const can = G.data.coins >= u.price;
@@ -77,6 +81,7 @@ export class ShopScene extends Phaser.Scene {
   private buy(id: string) {
     const u = UPGRADES.find((x) => x.id === id)!;
     if (G.data.coins < u.price || G.hasUpgrade(id)) return;
+    if (u.story && (G.data.friends[u.story]?.chapter ?? 0) < 3) return;
     G.data.coins -= u.price;
     G.data.upgrades.push(id);
     G.save.save();

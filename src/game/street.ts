@@ -7,6 +7,9 @@ export type Backdrop = 'euljiro' | 'hangang';
 
 export const DEPTH = { far: 0, mid: 1, rainBack: 2, near: 3, stall: 10, lantern: 11, customer: 20, chef: 21, counter: 30, pot: 31, stool: 32, dish: 33, awning: 35, bubble: 40, rain: 45, fx: 50, hud: 100, input: 110, overlay: 1000 };
 
+/** Stool x offsets (from the stall centre) for 2–4 seats. */
+const SEAT_X: Record<number, number[]> = { 2: [10, 62], 3: [-12, 32, 76], 4: [-22, 14, 50, 86] };
+
 interface Placed { obj: Phaser.GameObjects.Components.Transform; dx: number; dy: number }
 
 export interface StreetOpts {
@@ -32,6 +35,8 @@ export class Street {
   counter!: Phaser.GameObjects.Image;
   pot!: Phaser.GameObjects.Sprite;
   chef!: Phaser.GameObjects.Sprite;
+  /** 김 대리 in an apron (helper upgrade). */
+  helper?: Phaser.GameObjects.Sprite;
   lanterns: Phaser.GameObjects.Sprite[] = [];
   radio?: Phaser.GameObjects.Sprite;
   awning?: Phaser.GameObjects.Image;
@@ -67,6 +72,10 @@ export class Street {
       this.place(this.chef, -84, -28);
       this.pot = s.add.sprite(0, 0, 'pot').setOrigin(0.5, 1).setDepth(DEPTH.pot).play('pot:boil');
       this.place(this.pot, -56, -39);
+      if (up.includes('helper')) {
+        this.helper = s.add.sprite(0, 0, 'char_kim_helper').setOrigin(0.5, 1).setDepth(DEPTH.chef - 0.5).play('char_kim_helper:idle');
+        this.place(this.helper, -60, -47);
+      }
     }
     if (up.includes('lanterns')) {
       [-78, -39, 0, 39, 78].forEach((x, i) => {
@@ -85,8 +94,8 @@ export class Street {
       this.awning = s.add.image(0, 0, 'awning').setOrigin(0.5, 0).setDepth(DEPTH.awning);
       this.place(this.awning, 0, -104);
     }
-    const seats = o.seats ?? (up.includes('stool4') ? 4 : 3);
-    this.seatX = seats === 4 ? [-22, 14, 50, 86] : [-12, 32, 76];
+    const seats = o.seats ?? 3;
+    this.seatX = SEAT_X[seats] ?? SEAT_X[3];
     this.seatX.forEach((x) => {
       const st = s.add.image(0, 0, 'stool').setOrigin(0.5, 1).setDepth(DEPTH.stool);
       this.place(st, x, 2);

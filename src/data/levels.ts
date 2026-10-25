@@ -53,13 +53,15 @@ export interface UpgradeDef {
   price: number;
   words?: string[];
   district?: District;
+  /** Only for sale after this regular's last (3rd) story chapter. */
+  story?: RegularId;
 }
 
 export const UPGRADES: UpgradeDef[] = [
   { id: 'lanterns', name: 'Lampiony', desc: 'Zákazníci čekají o 20 % déle.', price: 60 },
   { id: 'awning', name: 'Plachta proti dešti', desc: 'V dešti +10 % trpělivosti.', price: 80 },
   { id: 'radio', name: 'Rádio', desc: 'Tichá lo-fi smyčka do noci.', price: 100 },
-  { id: 'stool4', name: '4. stolička', desc: 'Až 4 zákazníci najednou.', price: 150 },
+  { id: 'helper', name: 'Pomocník 김 대리', desc: 'Jednou za noc obslouží netrpělivého zákazníka.', price: 200, story: 'kim' },
   { id: 'menu_soups', name: 'Menu: polévky', desc: 'Slova: 갈비탕, 삼계탕, 된장찌개', price: 120, words: ['galbitang', 'samgyetang', 'doenjangjjigae'], district: 'euljiro' },
   { id: 'menu_sweets', name: 'Menu: sladkosti', desc: 'Slova: 사탕, 초콜릿, 케이크, 디저트', price: 120, words: ['satang', 'chokollit', 'keikeu', 'dijeoteu'] },
 ];

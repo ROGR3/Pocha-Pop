@@ -3,9 +3,10 @@ import Phaser from 'phaser';
 import { BOSS_NIGHT } from '../data/levels';
 import { CRITIC_REVIEW, JAMO_TIPS, POSTCARDS, REGULARS } from '../data/story';
 import { hasRawJamo } from '../logic/hangul';
+import { seatMultiplier } from '../logic/rules';
 import { playDialogue } from '../game/dialogue';
 import { G, iconIdx, word } from '../game/state';
-import { C, button, fadeIn, goto, panel, snapText, txt } from '../game/ui';
+import { C, button, fadeIn, goto, panel, snapText, toast, txt } from '../game/ui';
 import type { NightSummary } from './Night';
 import type { RegularId } from '../data/levels';
 
@@ -86,7 +87,12 @@ export class ResultScene extends Phaser.Scene {
     L.add(ct);
     const counter = { v: 0 };
     this.tweens.add({ targets: counter, v: s.coins, duration: 900, delay: 600, onUpdate: () => { ct.setText(`+${Math.round(counter.v)}`); snapText(ct); }, onComplete: () => G.audio.play('coin') });
-    y += 92;
+    y += 88;
+    if (!boss && s.seats) {
+      const extra = `Míst u pultu: ${s.seats} (mince ×${seatMultiplier(s.seats).toLocaleString('cs-CZ')})${s.helped ? ` · 김 대리 pomohl ${s.helped}×` : ''}`;
+      L.add(txt(this, W / 2, y, extra, { size: 'xs', color: C.grey, origin: [0.5, 0] }));
+      y += 12;
+    } else y += 4;
     if (s.newWords.length) {
       L.add(txt(this, W / 2, y, 'Nová slova v receptáři', { size: 's', color: C.cream, origin: [0.5, 0] }));
       y += 14;
@@ -169,7 +175,7 @@ export class ResultScene extends Phaser.Scene {
     const buttons = () => {
       const boss = s.night === BOSS_NIGHT;
       const failed = !boss && s.stars === 0;
-      this.layer.add(button(this, W / 2 - 52, by, 96, 22, failed ? 'Zkusit znovu' : 'Znovu', () => goto(this, 'Night', { night: s.night }), { style: failed ? 'red' : 'wood', size: 's' }));
+      this.layer.add(button(this, W / 2 - 52, by, 96, 22, failed ? 'Zkusit znovu' : 'Znovu', () => goto(this, 'Night', { night: s.night, seats: s.seats }), { style: failed ? 'red' : 'wood', size: 's' }));
       if (boss) this.layer.add(button(this, W / 2 + 52, by, 96, 22, 'Epilog', () => goto(this, 'Story', { kind: 'ending' }), { size: 's' }));
       else this.layer.add(button(this, W / 2 + 52, by, 96, 22, 'Na mapu', () => goto(this, 'Map'), { style: failed ? 'wood' : 'red', size: 's' }));
     };
@@ -182,6 +188,7 @@ export class ResultScene extends Phaser.Scene {
       await playDialogue(this, ch.lines);
       banner.destroy();
       G.data.friends[r] = { ...f, chapter: f.chapter + 1 };
+      if (r === 'kim' && f.chapter + 1 === 3) toast(this, 'Nové v obchodě: pomocník 김 대리!', C.green, 40);
     }
     G.save.save();
     buttons();

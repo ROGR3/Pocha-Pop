@@ -2,19 +2,25 @@
 // localStorage in a plain browser (Vite dev / Playwright), memory in tests.
 import type { WordStat } from './srs';
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
+/** Coins refunded for the removed "4th stool" upgrade (stage 1 → 2). */
+export const STOOL4_REFUND = 150;
 
 export interface Settings {
   sfx: number; // 0..1
   ambient: number; // 0..1
   relaxed: boolean; // longer patience
   firstRunDone: boolean;
+  /** Last seat count picked on the map (2..4). */
+  seats: number;
 }
 
 export interface NightRecord {
   stars: number; // 0..3 (boss: 1..5)
   bestCoins: number;
   plays: number;
+  /** Most seats this night was played with (map shows a stool badge). */
+  seats?: number;
 }
 
 export interface FriendState {
@@ -39,7 +45,7 @@ export interface SaveData {
 export function defaultSave(): SaveData {
   return {
     version: SAVE_VERSION,
-    settings: { sfx: 0.8, ambient: 0.5, relaxed: false, firstRunDone: false },
+    settings: { sfx: 0.8, ambient: 0.5, relaxed: false, firstRunDone: false, seats: 3 },
     coins: 0,
     upgrades: [],
     nights: {},
@@ -55,7 +61,7 @@ export function migrate(raw: unknown): SaveData {
   const d = defaultSave();
   if (!raw || typeof raw !== 'object') return d;
   const r = raw as Partial<SaveData>;
-  return {
+  const out: SaveData = {
     ...d,
     ...r,
     version: SAVE_VERSION,
@@ -68,6 +74,12 @@ export function migrate(raw: unknown): SaveData {
     stats: { ...d.stats, ...(r.stats ?? {}) },
     coins: typeof r.coins === 'number' && isFinite(r.coins) ? r.coins : 0,
   };
+  // v1 → v2: the 4th stool is no longer an upgrade but a choice before each night
+  if (out.upgrades.includes('stool4')) {
+    out.upgrades = out.upgrades.filter((u) => u !== 'stool4');
+    out.coins += STOOL4_REFUND;
+  }
+  return out;
 }
 
 export function serialize(s: SaveData): string {

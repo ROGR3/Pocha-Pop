@@ -20,14 +20,16 @@ page.on('pageerror', (e) => errors.push(e.message));
 await page.goto(url);
 await page.waitForTimeout(1500);
 let failed = false;
-for (const n of nights) {
-  const res = await page.evaluate(async (n) => {
+for (const [idx, n] of nights.entries()) {
+  const seats = [2, 3, 4][idx % 3];
+  const res = await page.evaluate(async ([n, seats]) => {
     const P = window.__pocha;
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     P.G.data.settings.firstRunDone = true;
     P.G.speed = 3;
     if (n === 11) for (let k = 1; k <= 10; k++) P.G.data.nights[k] = P.G.data.nights[k] ?? { stars: 2, bestCoins: 50, plays: 1 };
-    P.game.scene.getScenes(true)[0].scene.start('Night', { night: n });
+    if (!P.G.data.upgrades.includes('helper')) P.G.data.upgrades.push('helper');
+    P.game.scene.getScenes(true)[0].scene.start('Night', { night: n, seats });
     await sleep(800);
     const el = P.G.ime.el;
     const t0 = Date.now();
@@ -51,10 +53,10 @@ for (const n of nights) {
     await sleep(1500);
     const r = P.game.scene.getScene('Result');
     return { night: n, typed, scenes: P.game.scene.getScenes(true).map((s) => s.scene.key), summary: r?.s, saved: P.G.data.nights[n], coins: P.G.data.coins, words: Object.keys(P.G.data.words).length };
-  }, n);
+  }, [n, seats]);
   const ok = res.scenes.includes('Result') && res.summary && res.saved?.plays >= 1;
   if (!ok) failed = true;
-  console.log(ok ? 'PASS' : 'FAIL', JSON.stringify({ night: res.night, typed: res.typed, stars: res.summary?.stars, served: res.summary?.served, total: res.summary?.total, mistakes: res.summary?.mistakes, critic: res.summary?.critic, coins: res.coins, words: res.words, scenes: res.scenes }));
+  console.log(ok ? 'PASS' : 'FAIL', JSON.stringify({ night: res.night, seats: res.summary?.seats, typed: res.typed, stars: res.summary?.stars, served: res.summary?.served, total: res.summary?.total, mistakes: res.summary?.mistakes, critic: res.summary?.critic, coins: res.coins, words: res.words, scenes: res.scenes }));
   await page.screenshot({ path: `/tmp/pocha-autoplay-${n}.png` });
 }
 const stored = await page.evaluate(() => localStorage.getItem('pocha-pop-save')?.length ?? 0);

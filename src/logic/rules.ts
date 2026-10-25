@@ -47,3 +47,29 @@ export function mood(fraction: number): 0 | 1 | 2 {
   if (fraction > 0.28) return 1;
   return 0;
 }
+
+// ------------------------------------------------------------------ seats
+/** Seats at the counter the player can pick before a night. */
+export const SEAT_OPTIONS = [2, 3, 4] as const;
+export const DEFAULT_SEATS = 3;
+/** Bosses always get this many seats. */
+export const BOSS_SEATS = 3;
+
+/** More seats = more parallel orders = harder, so it pays more. */
+export function seatMultiplier(seats: number): number {
+  if (seats <= 2) return 1;
+  if (seats === 3) return 1.3;
+  return 1.7;
+}
+
+/** Arrival gap scales with the seat count (3 seats = the night's base pace). */
+export function spawnInterval(base: [number, number], seats: number): [number, number] {
+  const k = 3 / Math.max(1, seats);
+  return [base[0] * k, base[1] * k];
+}
+
+/** 4 seats ("Nával") unlock after the first 3★ night. */
+export function seatsAvailable(nights: Record<number, { stars: number }>, bossNights: number[] = []): number[] {
+  const three = Object.entries(nights).some(([n, r]) => !bossNights.includes(Number(n)) && r.stars >= 3);
+  return three ? [2, 3, 4] : [2, 3];
+}

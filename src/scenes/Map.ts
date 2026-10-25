@@ -3,7 +3,8 @@ import Phaser from 'phaser';
 import { BOSS_NIGHT, NIGHTS, nightDef } from '../data/levels';
 import { G, iconIdx, word } from '../game/state';
 import { DEPTH } from '../game/street';
-import { C, button, fadeIn, goto, iconButton, panel, smallStars, txt } from '../game/ui';
+import { C, button, fadeIn, goto, iconButton, iconFrame, panel, segmented, smallStars, snapText, toast, txt } from '../game/ui';
+import { BOSS_SEATS, DEFAULT_SEATS, SEAT_OPTIONS, seatMultiplier, seatsAvailable } from '../logic/rules';
 
 export class MapScene extends Phaser.Scene {
   private popup?: Phaser.GameObjects.Container;
@@ -95,6 +96,10 @@ export class MapScene extends Phaser.Scene {
     const h = boss ? 34 : 22;
     const label = txt(this, x, y + h + 2, boss ? '미식가' : String(n), { size: boss ? 's' : 'm', color: unlocked ? C.white : C.grey, origin: [0.5, 0], shadow: true });
     if (rec && !boss) smallStars(this, x, y + h + 21, rec.stars);
+    if (rec?.seats && !boss) {
+      this.add.image(x + 13, y + 5, 'uiicons', iconFrame('stool'));
+      txt(this, x + 19, y + 8, String(rec.seats), { size: 'xs', color: C.cream, shadow: true });
+    }
     if (rec && boss) txt(this, x, y + h + 15, '★'.repeat(rec.stars), { size: 's', color: C.yellow, origin: [0.5, 0] });
     if (unlocked && !rec) {
       // current frontier: bouncing marker
@@ -116,7 +121,7 @@ export class MapScene extends Phaser.Scene {
     this.popup?.destroy();
     const W = this.scale.width, H = this.scale.height;
     const def = nightDef(n);
-    const pw = W - 30, ph = 150;
+    const pw = W - 30, ph = 200;
     const c = this.add.container(15, Math.round(H / 2 - ph / 2)).setDepth(DEPTH.overlay);
     const shade = this.add.rectangle(-15, -c.y, W, H, 0x181425, 0.6).setOrigin(0, 0).setInteractive();
     shade.on('pointerup', () => { c.destroy(); this.popup = undefined; });
@@ -150,9 +155,34 @@ export class MapScene extends Phaser.Scene {
     c.add(txt(this, 12, y, `Zákazníků: ${def.customers}   Trpělivost: ${def.patience} s`, { size: 'xs', color: C.grey }));
     const rec = G.data.nights[n];
     if (rec) c.add(txt(this, pw - 12, y, `nejlépe: ${rec.stars}★  ${rec.bestCoins}`, { size: 'xs', color: C.yellow, origin: [1, 0] }));
+    if (!boss) {
+      const SEAT_DESC: Record<number, string> = { 2: 'Klidná noc', 3: 'Běžná noc', 4: 'Nával' };
+      const avail = seatsAvailable(G.data.nights, [BOSS_NIGHT]);
+      let seats = avail.includes(G.data.settings.seats) ? G.data.settings.seats : DEFAULT_SEATS;
+      const sy = ph - 74;
+      c.add(txt(this, 12, sy - 4, 'Míst u pultu:', { size: 's', color: C.light }));
+      const desc = txt(this, pw / 2, sy + 30, '', { size: 'xs', color: C.yellow, origin: [0.5, 0] });
+      const setDesc = () => { desc.setText(`${SEAT_DESC[seats]} · mince ×${seatMultiplier(seats).toLocaleString('cs-CZ')}`); snapText(desc); };
+      setDesc();
+      c.add(desc);
+      const opts = [...SEAT_OPTIONS];
+      segmented(this, 12, sy + 18, pw - 24, 20, opts.map(String), opts.indexOf(seats as 2 | 3 | 4), (i) => {
+        seats = opts[i];
+        G.data.settings.seats = seats;
+        G.save.save();
+        G.audio.play('click');
+        setDesc();
+      }, {
+        icon: 'stool',
+        locked: opts.map((o) => !avail.includes(o)),
+        onLocked: () => toast(this, 'Nával se odemkne po první noci se 3★', C.orange, H / 2 + ph / 2 - 30),
+      }).forEach((b) => c.add(b));
+    } else {
+      c.add(txt(this, pw / 2, ph - 50, 'Kritik: vždy 3 místa.', { size: 'xs', color: C.grey, origin: [0.5, 0] }));
+    }
     c.add(button(this, pw / 2, ph - 18, 120, 22, 'Otevřít stánek', () => {
       G.night = n;
-      goto(this, 'Night', { night: n });
+      goto(this, 'Night', { night: n, seats: boss ? BOSS_SEATS : G.data.settings.seats });
     }));
     c.add(button(this, pw - 16, 14, 18, 18, '', () => { c.destroy(); this.popup = undefined; }, { icon: 'close', style: 'wood' }));
     c.setAlpha(0);

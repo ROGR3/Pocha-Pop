@@ -225,9 +225,10 @@ do
     check = { "............", "..........mm", ".........mm.", "........mm..", "mm.....mm...", ".mm...mm....", "..mm.mm.....", "...mmm......", "....m.......", "............", "............", "............" },
     play = { "..t.........", "..ttt.......", "..ttttt.....", "..ttttttt...", "..ttttttttt.", "..tttttttttt", "..ttttttttt.", "..ttttttt...", "..ttttt.....", "..ttt.......", "..t.........", "............" },
     map = { "............", "uu..uuu..uuu", "utuuvvvuuvtu", "uttuvivuvttu", "uttuviivvttu", "utuuvvivvttu", "uuuuvviivtuu", "uttuvvvivttu", "uttuvvvvvttu", "utuuvvvuuvtu", "uu..uuu..uuu", "............" },
+    stool = { "............", "..DDDDDDDD..", ".DiiiiiiiiD.", ".hiiiiiiiih.", "..hhhhhhhh..", "..ih....hi..", "..ih.hh.hi..", "..ih.hh.hi..", "...ih..hi...", "...ih..hi...", "..hhh..hhh..", "............" },
     close = { "............", ".tt......tt.", ".ttt....ttt.", "..ttt..ttt..", "...tttttt...", "....tttt....", "....tttt....", "...tttttt...", "..ttt..ttt..", ".ttt....ttt.", ".tt......tt.", "............" },
   }
-  local order = { "gear", "book", "bag", "back", "help", "pause", "sound", "mute", "fire", "heart", "keyboard", "lock", "check", "play", "map", "close" }
+  local order = { "gear", "book", "bag", "back", "help", "pause", "sound", "mute", "fire", "heart", "keyboard", "lock", "check", "play", "map", "close", "stool" }
   sheet("uiicons", 14, 14, order, function(img, n) L.map(img, 1, 1, ICONS[n]) end, { outline = "g" })
   local f = io.open(L.root .. "/public/assets/uiicons.json", "w")
   local q = {}

@@ -5,7 +5,7 @@ const SHEETS: [string, number, number][] = [
   ['icons', 24, 24], ['uiicons', 14, 14], ['particles', 8, 8],
   ['char_kim', 32, 40], ['char_haeun', 32, 40], ['char_critic', 32, 40], ['char_halmeoni', 32, 40],
   ['char_cust_a', 32, 40], ['char_cust_b', 32, 40], ['char_cust_c', 32, 40], ['char_cust_d', 32, 40],
-  ['chef', 32, 40], ['nabi', 24, 16], ['nabi_fat', 24, 16], ['kitten_a', 12, 10], ['kitten_b', 12, 10], ['kitten_c', 12, 10],
+  ['chef', 32, 40], ['char_kim_helper', 32, 40], ['nabi', 24, 16], ['nabi_fat', 24, 16], ['kitten_a', 12, 10], ['kitten_b', 12, 10], ['kitten_c', 12, 10],
   ['stall_back', 208, 120], ['pot', 28, 36], ['lantern', 12, 18], ['radio', 18, 14],
   ['coin', 10, 10], ['star', 15, 14], ['star_s', 9, 9], ['faces', 11, 11], ['node', 16, 22], ['node_boss', 26, 34], ['logo', 128, 44],
   ['bg_eul_mid', 320, 240], ['bg_eul_near', 320, 40], ['bg_han_mid', 320, 240], ['bg_han_near', 320, 40],
@@ -36,6 +36,7 @@ export class BootScene extends Phaser.Scene {
       a(c, 'idle', 0, 1, 1.6); a(c, 'neutral', 2, 2, 1); a(c, 'angry', 3, 4, 6);
       a(c, 'happy', 5, 6, 5); a(c, 'eat', 7, 8, 5); a(c, 'walk', 9, 12, 8);
     }
+    a('char_kim_helper', 'idle', 0, 1, 1.6); a('char_kim_helper', 'cook', 2, 5, 10); a('char_kim_helper', 'wave', 6, 7, 6);
     a('chef', 'idle', 0, 3, 4); a('chef', 'cook', 4, 9, 14, 0); a('chef', 'serve', 10, 13, 12, 0); a('chef', 'happy', 14, 17, 8, 1);
     for (const n of ['nabi', 'nabi_fat']) { a(n, 'walk', 0, 3, 8); a(n, 'sit', 4, 7, 3); a(n, 'eat', 8, 9, 5); }
     for (const k of ['kitten_a', 'kitten_b', 'kitten_c']) { a(k, 'idle', 0, 1, 2); a(k, 'hop', 2, 3, 6, 0); }
