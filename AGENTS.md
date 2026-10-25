@@ -1,6 +1,6 @@
 # AGENTS.md – Pocha Pop 포차팝
 
-Zadání: `DESIGN.md` (závazné). Uživatelské info: `README.md`.
+Zadání: `DESIGN.md` (etapa 1) a `DESIGN-2.md` (etapa 2, závazné). Uživatelské info: `README.md`.
 
 ## Stack
 Tauri 2 (Rust shell, plugin-store) + Vite 7 + TypeScript 5.9 + **Phaser 3.90.0** (pinned).
@@ -14,21 +14,35 @@ src/
     hangul.ts          rozklad na jamo (keystroke-level), prefix matching, matchAgainst
     difficulty.ts      skóre obtížnosti slova
     srs.ts             mastery 0..5, váhy výběru slov, rng
-    rules.ts           mince, kombo, hvězdy, trpělivost
-    save.ts            SaveData + migrace, backendy (Tauri store / localStorage / memory), streak
+    rules.ts           mince, kombo, hvězdy, trpělivost, místa u pultu (seatMultiplier, spawnInterval)
+    save.ts            SaveData + migrace (v2: refund stool4), backendy (Tauri store / localStorage / memory), streak
+    helper.ts          pomocník 김 대리 (kdy zasáhne)
+    polite.ts          pozdravy/poděkování jako dočasné cíle (matchPolite), reakce, smlouvání (konstanty)
+    cosmetics.ts       Barvírna: stav/koupě barev a čepiček
+    czech.ts           shoda barvy s rodem („červená čepice“, akuzativ)
+    achievements.ts    24 odznáčků (evaluate)
+    daily.ts           denní výzva (seed z data, jeden zapsaný pokus)
+    training.ts        trénink (výběr slov podle SRS váhy)
   data/
     words.json         GENEROVÁNO `npm run words` ze scripts/build-words.ts
-    levels.ts          noci 1–11, upgrady, nightPool()
-    story.ts           všechny texty příběhu (česky)
+    levels.ts          NIGHTS (1–31, bossové 11/116/121/126/131, 약국 201–204, svátky 301–303, denní 900),
+                       DISTRICTS (mechanika, backdrop, generici), prevNight/jamoKnown/nightPool, UPGRADES
+    story.ts           všechny texty příběhu (česky): štamgasti, bossové, pohlednice, finále
+    colors.ts clothes.ts travel.ts pharmacy.ts family.ts reactions.ts   tabulky pro mechaniky čtvrtí
   game/                runtime helpery nad Phaserem
-    state.ts           singleton G (save, audio, ime, layout), WORDS, iconIdx()
+    state.ts           singleton G (save, audio, ime, layout), WORDS, iconTex() (ikony i přebarvené oblečení)
+    orders.ts          stavba objednávek podle mechaniky + věty bossů, alternativní odpovědi (alts)
+    hats.ts            čepička sleduje sprite kočky (kotvy hlavy z nabi_head.json)
+    achievements.ts    vyhodnocení + toast odznáčků
     ime.ts             skrytý <input>, composition eventy, clear() (blur→value=''→focus + stale guard)
     layout.ts          logická šířka 216–320 px, celočíselné měřítko
     street.ts          scéna ulice: pozadí, stánek, upgrady, déšť/světlušky; DEPTH konstanty
     bubble.ts orders.ts typebox.ts dialogue.ts ui.ts audio.ts debug.ts
-  scenes/              Boot Title Setup Story Map Night Result Shop Recipes Settings
+  scenes/              Boot Title Setup Story Map Night Result Shop Recipes Settings Paint(Barvírna) Training Badges
 art/
-  lib.lua              kreslicí knihovna (paleta Endesga 32 jako písmena)
+  lib.lua              kreslicí knihovna (paleta Endesga 32 jako písmena, L.RAMPS pro palette swap)
+  chargen.lua          generátor postav (characters.lua, characters2.lua, characters3.lua)
+  icons/*.lua          části sheetu ikon (+ clothes.lua = přebarvitelné oblečení); _harness.lua = náhled
   src/*.lua            jeden skript = jeden/několik spritů → public/assets
 public/assets/         exportované PNG/JSON (commitované), public/sfx/*.wav, public/fonts/
 tests/                 vitest
@@ -45,7 +59,10 @@ src-tauri/             Rust + gen/android (commitované; AndroidManifest má adj
 | `npm run art` / `bash scripts/build-art.sh <name>` | Aseprite batch |
 | `npm run words` | regenerace slov |
 | `npm run sfx` | regenerace zvuků |
-| `npm run screenshots` | Playwright screenshoty do `screenshots/` |
+| `npm run screenshots` | Playwright screenshoty do `screenshots/` (`ONLY=23,24` = jen některé) |
+| `npm run autoplay` | bot dohraje vybrané noci přes UI (`node scripts/autoplay.mjs 12 116`) |
+| `bash scripts/preview-icons.sh <část>` | izolovaný náhled části ikon (nesahá na public/assets) |
+| `npx vite-node scripts/economy.ts` | simulace ekonomiky (výsledky v README) |
 | `ANDROID_HOME=/opt/android-sdk NDK_HOME=/opt/android-sdk/ndk/27.0.12077973 npm run tauri android build -- --apk` | APK |
 
 ## Konvence
@@ -60,7 +77,13 @@ src-tauri/             Rust + gen/android (commitované; AndroidManifest má adj
 - Nová logika patří do `src/logic/` + test. Scény drží jen prezentaci.
 - Scény reagují na `game.events 'layout'` (resize, Android klávesnice): Night přepočítá rozložení,
   ostatní scény se restartují.
-- Debug v prohlížeči: `__pocha.G` (stav), `__pocha.typeKorean('김치')` emuluje IME vč. mezistavů.
+- Debug v prohlížeči: `__pocha.G` (stav), `__pocha.typeKorean('김치')` emuluje IME vč. mezistavů, `__pocha.levels`.
+- Nová čtvrť = řádky v `NIGHTS` + `DISTRICTS`, backdrop `bg_<prefix>_far/_mid/_near/_sky` (+ `BG_PREFIX` ve street.ts,
+  `NEW_BG` v Boot.ts), `stall_back_<prefix>`, generici `char_cust_*`, texty ve story.ts, sekce v Map.ts `sections()`.
+- Jamo pro noc = keystroke jamo (`jamoSet`) **i** složené / Shift samohlásky (`Night.ready()`): slovo s ㅝ se
+  nabídne až po nocí, která ㅝ představila.
+- Přebarvitelné věci kreslit rampou `{hi, main, shade, dark}` z `L.RAMPS`, nikdy runtime tint.
+- Scény s klávesnicí (Night, Training, Paint, Setup) se při změně výšky **nerestartují**, jen přepočítají rozložení.
 
 ## Testování desktopového okna
 **Nikdy neotevírej Tauri okno na uživatelově ploše.** Použij `scripts/xvfb-tauri.sh start` (virtuální

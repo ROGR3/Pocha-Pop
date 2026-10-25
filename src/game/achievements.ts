@@ -46,7 +46,8 @@ function badgeToast(scene: Phaser.Scene, id: string) {
   if (!scene.sys.isActive()) return;
   const def = ACHIEVEMENTS.find((a) => a.id === id)!;
   const W = scene.scale.width;
-  const c = scene.add.container(Math.round(W / 2), -40).setDepth(5000);
+  const H = scene.scale.height;
+  const c = scene.add.container(Math.round(W / 2), H + 40).setDepth(5000);
   const name = txt(scene, 0, -6, def.name, { size: 's', color: C.yellow, origin: [0.5, 0.5] });
   const sub = txt(scene, 0, 6, 'Nový odznáček!', { size: 'xs', color: C.cream, origin: [0.5, 0.5] });
   const w = Math.max(name.width, sub.width) + 44;
@@ -55,6 +56,6 @@ function badgeToast(scene: Phaser.Scene, id: string) {
   name.x = sub.x = 12;
   c.add([bg, icon, name, sub]);
   G.audio.play('star', { detune: 400 });
-  scene.tweens.add({ targets: c, y: 40, duration: 380, ease: 'Back.easeOut', hold: 1100, yoyo: true, onComplete: () => c.destroy() });
+  scene.tweens.add({ targets: c, y: H - 70, duration: 380, ease: 'Back.easeOut', hold: 1100, yoyo: true, onComplete: () => c.destroy() });
   scene.tweens.add({ targets: icon, angle: { from: -20, to: 0 }, scale: { from: 1.6, to: 1 }, duration: 500, ease: 'Back.easeOut' });
 }

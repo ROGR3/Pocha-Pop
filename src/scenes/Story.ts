@@ -19,7 +19,7 @@ export class StoryScene extends Phaser.Scene {
     const H = this.scale.height;
     const finale = this.kind === 'finale';
     const ending = this.kind === 'ending' || finale;
-    this.street = new Street(this, { backdrop: finale ? 'euljiro' : ending ? 'hangang' : 'euljiro' });
+    this.street = new Street(this, { backdrop: finale ? 'euljiro' : ending ? 'hangang' : 'euljiro', rain: !finale, festive: finale });
     const gy = Math.max(230, H - 100);
     this.street.layout(gy);
     G.audio.setAmbient(ending && !finale ? 'river' : 'rain');

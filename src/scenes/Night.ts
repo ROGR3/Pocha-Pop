@@ -366,7 +366,8 @@ export class NightScene extends Phaser.Scene {
     const b = c.bubble!;
     const W = this.scale.width;
     const row = c.kind === 'boss' ? 1 : c.seat % 2;
-    const rowGap = DISTRICTS[homeDistrict(this.def)].mechanic === 'colorItem' ? 76 : 56;
+    const mech = this.def.mechanic ?? DISTRICTS[homeDistrict(this.def)].mechanic;
+    const rowGap = mech === 'colorItem' ? 76 : mech === 'symptom' || mech === 'destination' ? 74 : 56;
     const anchorY = this.street.wy(c.kind === 'nabi' ? -58 : -82) - row * rowGap;
     const cx = this.street.wx(this.street.seatX[c.seat]);
     let x = Math.round(cx - b.bw / 2);
@@ -396,7 +397,7 @@ export class NightScene extends Phaser.Scene {
       c.tutorial = true;
       this.showTutorial(order);
     }
-    const b = new Bubble(this, order, c.kind === 'boss' ? Math.min(150, this.scale.width - 8) : 66);
+    const b = new Bubble(this, order, c.kind === 'boss' ? Math.min(150, this.scale.width - 8) : this.seats === 4 ? 70 : 96);
     c.bubble = b;
     this.placeBubble(c);
     b.setScale(0.2).setAlpha(0);

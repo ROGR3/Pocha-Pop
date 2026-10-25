@@ -123,7 +123,7 @@ export class RecipesScene extends Phaser.Scene {
     c.add(icon);
     if (known) {
       c.add(txt(this, px + 60, py + 10, w.ko, { size: 'xl', color: C.ink }));
-      c.add(txt(this, px + 60, py + 38, w.cs, { size: 's', color: C.brown, wrap: pw - 70 }));
+      c.add(txt(this, px + 60, py + 38, w.loan ? `${w.cs} · z angl. „${w.loan}“` : w.cs, { size: 's', color: C.brown, wrap: pw - 70 }));
       const st = G.stat(w.id);
       let y = py + 64;
       c.add(txt(this, px + 10, y, 'Klávesy (두벌식):', { size: 's', color: C.brown }));

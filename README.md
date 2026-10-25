@@ -4,8 +4,22 @@ Pixel-art hra na učení psaní korejsky (두벌식) na **systémové** korejsk�
 Babička 할머니 ti předala noční stánek 포장마차 v Soulu – zákazníci objednávají v bublinách,
 ty objednávku napíšeš korejsky a tím je obsloužíš. Linux desktop + Android.
 
-Vertical slice: 2 čtvrti (을지로 noci 1–5, 한강 noci 6–10) + finále s kritikem 미식가 (noc 11),
-54 slov (50 jídel z Recallo balíčku + 4 slova pro věty kritika), štamgasti 김 대리, 하은 a kočka 나비.
+Obsah (etapa 1 + 2, zadání `DESIGN.md` a `DESIGN-2.md`):
+
+| Čtvrť | Noci | Herní prvek | Štamgast · boss |
+|---|---|---|---|
+| 을지로 | 1–5 | jídlo | 김 대리, 하은, kočka 나비 |
+| 한강 | 6–10 + 11 | jídlo, pozdravy | kritik 미식가 (věty) |
+| 동대문 trh | 12–16 + 116 | barva + věc („빨간색 모자“), reakce přídavnými jmény | 이모 · módní blogerka |
+| 홍대 | 17–21 + 121 | přejatá slova (bublina ukáže originál) | 민수 · manažer K-popové skupiny |
+| 용산 | 22–26 + 126 | smlouvání 할인 / 싸다, dlouhá slova | 박 사장 · obchodník |
+| 부산 přístav | 27–31 + 131 | cíl → doprava (+ 표) | 강 이사 · kapitán (finále) |
+| 약국 (vedlejší) | L1–L4 | část těla na obrázku, příznak → lék | lékárnice 약사 |
+| svátky | 추석, 크리스마스, 생일 | „pro koho“, sníh, koťata | babička na návštěvě |
+
+198 slov (Recallo balíček + 12 ručně doplněných: 11 barev a 얘기 kvůli ㅒ), všechna jamo včetně ㅆ ㅑ ㅒ ㅖ ㅚ ㅝ ㅢ ㅙ ㅞ.
+Navíc: volba počtu míst před nocí (2 · 3 · 4), pomocník 김 대리, pozdravy a poděkování, Barvírna (barvy stánku
+a čepičky pro 나비), trénink, denní výzva a 24 odznáčků.
 
 ## Spuštění
 
@@ -28,7 +42,7 @@ npm run tauri android build -- --apk --debug   # debug-podepsané APK, dá se ro
 Release APK z `tauri android build` je **nepodepsané**. Instalovatelné APK:
 
 ```bash
-bash scripts/sign-apk.sh        # build arm64 + podpis lokálním klíčem → release/pocha-pop-0.1.0-arm64.apk (~13 MB)
+bash scripts/sign-apk.sh        # build arm64 + podpis lokálním klíčem → release/pocha-pop-0.2.0-arm64.apk (~13 MB)
 ```
 
 Klíč (`signing/`, heslo v `signing/key.properties`) se vytvoří při prvním běhu a je v `.gitignore`.
@@ -66,13 +80,26 @@ Testy desktopového okna bez otevírání okna na reálné ploše: `scripts/xvfb
 - Mastery slova: 0 = korejština celá v bublině, 1 = jen první slabika, 2+ = jen obrázek + čeština.
   Správně bez chyby +1, chyba −1, slova s chybami chodí častěji (`src/logic/srs.ts`).
 - Tab / tlačítko „?“ ukáže korejštinu (bez spropitného, mastery neroste).
-- Kombo za sérii bez chyby, spropitné za rychlost, 1–3 hvězdy za noc (kritik 1–5).
-- Mince → obchod: lampiony, plachta, rádio (procedurální lo-fi), 4. stolička, menu balíčky slov.
-- Receptář (všechna slova, siluety neznámých, rozklad na klávesy), denní série 🔥, pohledy od babičky.
+- Kombo za sérii bez chyby, spropitné za rychlost, 1–3 hvězdy za noc (bossové 1–5: každá chyba i chybějící
+  pozdrav −1 hvězda).
+- **Místa u pultu** se volí v popupu noci: 2 (klidná, mince ×1,0), 3 (×1,3), 4 (nával ×1,7, po první noci se 3★).
+  Víc míst = víc souběžných objednávek a rychlejší příchody (`spawn × 3/míst`). Bossové mají vždy 3.
+- **Pozdravy:** když si host sedne, ukáže se ruka (napiš 안녕하세요 / 환영해요 / 반가워요 → +15 % trpělivosti, +1 mince),
+  když odchází, dveře (감사합니다 / 또 오세요 / 또 봐요 / 잘 가요 → +2). Pozdravy jsou dočasné cíle v matchingu;
+  když prefix sedí na objednávku i pozdrav, vyhrává objednávka.
+- **Reakce** (od 동대문): po jídle host řekne česky „Pálivé!“ → napiš 맵다 (5 s, +2 mince).
+- Mince → obchod: lampiony, plachta, rádio (2. stanice po opravě u 박 사장), pomocník 김 대리, menu balíčky;
+  **Barvírna** (z obchodu): plachta, cedule, stoličky a lampiony v 11 barvách (barvu „objednáš“ napsáním jejího
+  korejského názvu), čepičky pro 나비.
+- **Trénink** (mapa): 60 s bublin se slovy s nejvyšší SRS vahou, bez mincí. Tady se dají potkat i barvy.
+- **Denní výzva** (nahoře na mapě): stejná noc pro celý den (seed z data), zapisuje se první pokus.
+- **Odznáčky** (mapa → Odznaky): 24 úspěchů, získané jsou připnuté na plachtě stánku.
+- Receptář po kategoriích (siluety neznámých, rozklad na klávesy), denní série 🔥, pohledy od babičky.
 
 ## Přidání slov
 
-1. Uprav `scripts/build-words.ts` (mapa `FOOD` = ko → [česky, ikona, id]; `PHRASE` pro věty kritika).
+1. Uprav `scripts/build-words.ts`: `FOOD` (jídla), `MORE` (ko → [česky, ikona, id, kategorie]), `MORE_BY_ID`
+   (homonyma jako 배 břicho/loď), `EXTRA` (slova mimo balíček – vždy s komentářem proč), `LOAN_ORIGINAL`.
 2. `npm run words` → přegeneruje `src/data/words.json` (obtížnost se počítá skriptem).
 3. Nakresli ikonu (viz níže) se stejným jménem a přidej slovo do noci v `src/data/levels.ts`.
 4. `npm test` – test ohlídá ikony, existenci slov i to, že noc používá jen už představená jamo.
@@ -89,9 +116,27 @@ bash scripts/make-icons.sh           # app ikony (desktop + Android) z public/as
 ```
 
 - `art/lib.lua` – paleta **Endesga 32** (písmena a–z, A–F), ASCII pixel mapy, elipsy se stínováním,
-  automatický obrys, dither, malé hangul glyfy pro neony.
+  automatický obrys, dither, malé hangul glyfy pro neony, barevné rampy `L.RAMPS` (palette swap pro Barvírnu
+  a oblečení).
+- `art/chargen.lua` – generátor postav 32×40 (sdílí `characters*.lua`), `art/icons/*.lua` – části sheetu ikon
+  (`bash scripts/preview-icons.sh <část>` = izolovaný náhled bez zápisu do `public/assets`).
+- Oblečení je ve vlastním sheetu `clothes` (12 snímků na věc: neutrální šedá + 11 barev), ikony v bublinách
+  se odkazují jako `cl:<věc>:<barva>`.
 - Aseprite cesta se bere z `ASEPRITE_PATH` nebo `tools/aseprite-mcp/.env`.
 - MCP server `aseprite` (`.mcp.json`, `tools/aseprite-mcp`) jde použít pro interaktivní kreslení a `export_frame`.
+
+## Ekonomika
+
+`npx vite-node scripts/economy.ts` simuluje tři typy hráčů (všechny noci jednou, v pořadí odemykání):
+
+| Hráč | po 미식가 (11) | po 용산 (126) | po 부산 (131) | má na všechno* |
+|---|---|---|---|---|
+| pomalejší (2★, 2 místa) | 832 | 2 840 | 3 370 | po vedlejší lince / opakováních |
+| normální (2–3★, 3 místa) | 1 409 | 4 445 | 5 287 | po noci 126 (konec 용산) |
+| zkušený (3★, 4 místa) | 3 686 | 10 842 | 13 061 | už v 동대문 |
+
+\* všechno = upgrady a menu balíčky (1 350) + čepičky (220) + každá barva na každé části stánku (2 860) = 4 430.
+Normální hráč má tedy na všechno zhruba na začátku 부산, pomalejší až s opakováním nocí.
 
 ## Zvuk
 
@@ -101,7 +146,9 @@ Déšť / řeka a lo-fi smyčka rádia jsou procedurální WebAudio (`src/game/a
 ## Screenshoty
 
 `npm run screenshots` – build + `vite preview` + Playwright, všechny obrazovky v rozlišení
-mobil 412×915 (@2.625) a desktop 450×800 do `screenshots/`.
+mobil 412×915 (@2.625) a desktop 450×800 do `screenshots/`. Jen část: `ONLY=23,24 npm run screenshots`
+(prefixy názvů). `npm run autoplay` – bot dohraje první noc a bosse každé čtvrti, 약국, svátky a denní výzvu
+přes skutečné UI (emulace IME), `node scripts/autoplay.mjs 12 116` jen vybrané noci.
 
 ## Licence a zdroje
 

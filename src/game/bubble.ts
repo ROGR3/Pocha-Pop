@@ -24,7 +24,11 @@ export class Bubble extends Phaser.GameObjects.Container {
     super(scene, 0, 0);
     this.order = order;
     const critic = order.kind === 'boss';
-    const bw = (this.bw = Math.min(maxW, critic ? 124 : order.tokens.length > 1 ? 92 : 64));
+    // wide enough for the whole Korean on one line (크리스마스), within maxW
+    const probeW = txt(scene, 0, 0, order.target, { size: 'm' });
+    const need = probeW.width + 10;
+    probeW.destroy();
+    const bw = (this.bw = Math.min(maxW, critic ? 124 : Math.max(64, Math.min(order.tokens.length > 1 ? 96 : 84, need))));
     const pad = 4;
     const parts: Phaser.GameObjects.GameObject[] = [];
     let y = pad;
