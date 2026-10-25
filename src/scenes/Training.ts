@@ -128,7 +128,10 @@ export class TrainingScene extends Phaser.Scene {
     const order: Order = { tokens: [{ id, ko: w.ko }], target: w.ko, cs: w.cs, icons: [w.icon], extra: w.loan, hinted: false, mistakes: [false], kind: 'generic' };
     const b = new Bubble(this, order, 66);
     b.setPatience(1);
+    // no patience in training: drop the bar row
     b.bar.setVisible(false); b.barBg.setVisible(false); b.face.setVisible(false);
+    b.bh -= 10;
+    b.bg.setSize(b.bw, b.bh);
     this.slots[i] = { order, bubble: b, dirty: false };
     this.placeBubble(i);
     b.setScale(0.2).setAlpha(0);
