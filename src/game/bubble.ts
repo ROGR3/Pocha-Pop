@@ -19,6 +19,10 @@ export class Bubble extends Phaser.GameObjects.Container {
   bh: number;
   private lastMood = 2;
   private matchState: 'normal' | 'hi' | 'dim' = 'normal';
+  /** Co-op: served by another player – their frame colour + runoff bar. */
+  private taken?: string;
+  private runoffBar?: Phaser.GameObjects.NineSlice;
+  private runoffW = 0;
 
   constructor(scene: Phaser.Scene, order: Order, maxW: number) {
     super(scene, 0, 0);
@@ -102,9 +106,36 @@ export class Bubble extends Phaser.GameObjects.Container {
   setMatch(s: 'normal' | 'hi' | 'dim') {
     if (s === this.matchState) return;
     this.matchState = s;
-    this.bg.setTexture(s === 'hi' ? 'bubble_hi' : 'bubble');
+    this.bg.setTexture(s === 'hi' ? 'bubble_hi' : this.taken ?? 'bubble');
     this.setAlpha(s === 'dim' ? 0.55 : 1);
     if (s === 'hi') this.scene.tweens.add({ targets: this, scale: { from: 1.06, to: 1 }, duration: 140 });
+  }
+
+  /**
+   * Co-op: somebody else served this order first. The frame takes their colour,
+   * their initial sits on the corner, and the patience row becomes the runoff bar.
+   */
+  markTaken(color: string, frame: number, initial: string) {
+    this.taken = `bubble_p_${color}`;
+    if (this.matchState !== 'hi') this.bg.setTexture(this.taken);
+    const badge = this.scene.add.image(3, 3, 'pdot', frame).setScale(2);
+    const t = txt(this.scene, 3, 2, initial, { size: 'xs', color: C.white, origin: [0.5, 0.5], shadow: true });
+    this.face.setVisible(false);
+    this.bar.setVisible(false);
+    this.barBg.setVisible(false);
+    this.runoffW = this.bw - 8;
+    this.runoffBar = this.scene.add.nineslice(4, this.barBg.y - 1, 'ui_runoff', frame, this.runoffW, 6, 3, 3, 2, 2).setOrigin(0, 0);
+    this.add([this.runoffBar, badge, t]);
+    this.scene.tweens.add({ targets: badge, scale: { from: 4, to: 2 }, duration: 220, ease: 'Back.easeOut' });
+    this.scene.tweens.add({ targets: t, scale: { from: 2, to: 1 }, duration: 220, ease: 'Back.easeOut' });
+  }
+
+  /** Runoff left 0..1. */
+  setRunoff(frac: number) {
+    if (!this.runoffBar) return;
+    const w = Math.round(this.runoffW * Math.max(0, Math.min(1, frac)));
+    this.runoffBar.setVisible(w >= 6);
+    if (w >= 6) this.runoffBar.width = w;
   }
 
   shake() {

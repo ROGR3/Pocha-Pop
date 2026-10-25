@@ -12,10 +12,11 @@
     "words": "vite-node scripts/build-words.ts",
     "sfx": "node scripts/gen-sfx.mjs",
     "art": "bash scripts/build-art.sh",
-    "screenshots": "node scripts/screenshots.mjs",
+    "screenshots": "node scripts/screenshots.mjs && NO_BUILD=1 node scripts/mp-e2e.mjs --shots",
     "fonts": "python3 scripts/build-fonts.py",
     "autoplay": "node scripts/autoplay.mjs 1 6 11 12 116 17 121 22 126 201 203 27 29 131 301 302 303 900",
-    "mp-relay": "node scripts/mp-relay.mjs"
+    "mp-relay": "node scripts/mp-relay.mjs",
+    "mp-e2e": "node scripts/mp-e2e.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "2.12.4",

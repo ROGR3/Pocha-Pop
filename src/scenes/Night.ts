@@ -24,6 +24,44 @@ import { TypeBox } from '../game/typebox';
 import { attachHat } from '../game/hats';
 import { IS_ANDROID } from '../game/ime';
 import { C, HEX, button, cssRect, iconFrame, fadeIn, floatText, goto, iconButton, panel, snapText, toast, txt } from '../game/ui';
+import { COOP_SEAT_MUL, COOP_WALK_MS, RUNOFF_MS, patienceFrac } from '../logic/coop';
+import type { CoopSummary, Msg, OrderData, PlayerInfo } from '../logic/netproto';
+import { CoopDirector } from '../game/coopHost';
+import { PFRAME, PCOL, PlayerTag, initial } from '../game/coopui';
+import type { NetSession } from '../game/net';
+
+type StartMsg = Extract<Msg, { t: 'start' }>;
+
+/** Co-op bookkeeping of one customer (cid from the host). */
+interface CoopCust {
+  cid: number;
+  at: number;
+  patienceMs: number;
+  data: OrderData;
+  /** Host clock when someone else served it (runoff running). */
+  runoffAt?: number;
+  /** I finished it myself (first or in the runoff). */
+  mine?: boolean;
+  clean?: boolean;
+  cooked?: boolean;
+  shownAt?: number;
+}
+
+interface CoopCtx {
+  s: NetSession;
+  start: StartMsg;
+  me: number;
+  director?: CoopDirector;
+  tags: Map<number, PlayerTag>;
+  coins: Map<number, number>;
+  lastTick: number;
+  tickAt: number;
+  offs: (() => void)[];
+  paid: boolean;
+  /** Players at the start of the night (names stay when someone leaves). */
+  roster: PlayerInfo[];
+  confirm?: Phaser.GameObjects.Container;
+}
 
 type CState = 'walk' | 'wait' | 'eat' | 'leave';
 
@@ -50,6 +88,7 @@ interface Customer {
   stays?: boolean;
   /** Last item served (for the reaction). */
   lastItem?: string;
+  coop?: CoopCust;
 }
 
 export interface NightSummary {
@@ -134,6 +173,8 @@ export class NightScene extends Phaser.Scene {
   private known = new Set<string>();
   private criticGreeted = false;
   private unsub?: () => void;
+  /** Co-op night (null = single player). */
+  private coop: CoopCtx | null = null;
   // HUD
   private coinText!: Phaser.GameObjects.Text;
   private coinIcon!: Phaser.GameObjects.Sprite;
@@ -148,7 +189,7 @@ export class NightScene extends Phaser.Scene {
 
   constructor() { super('Night'); }
 
-  init(d: { night?: number; seats?: number }) {
+  init(d: { night?: number; seats?: number; coop?: StartMsg }) {
     this.n = d?.night ?? G.night;
     G.night = this.n;
     this.def = nightDef(this.n);
@@ -175,6 +216,14 @@ export class NightScene extends Phaser.Scene {
     this.critic = { mistakes: 0, walkouts: 0, done: false };
     // the daily challenge is the same night for everyone that day
     this.rand = rng(this.n === DAILY_NIGHT ? daySeed(dayKey(new Date())) : Date.now() & 0xffffffff);
+    this.coop = null;
+    if (d?.coop && G.net && !G.net.closed) {
+      const s = G.net;
+      this.seats = d.coop.seats;
+      this.seatMul = COOP_SEAT_MUL;
+      this.rand = rng(d.coop.seed);
+      this.coop = { s, start: d.coop, me: s.pid, tags: new Map(), coins: new Map(), lastTick: 0, tickAt: performance.now(), offs: [], paid: false, roster: [...s.players] };
+    }
   }
 
   create() {
@@ -194,7 +243,7 @@ export class NightScene extends Phaser.Scene {
     G.audio.setAmbient(this.def.weather === 'dry' || this.def.weather === 'snow' ? 'city' : ambientFor(backdrop));
     G.audio.setLofi(G.hasUpgrade('radio'), G.station());
 
-    this.buildQueue();
+    if (!this.coop) this.buildQueue();
     this.buildHud();
     this.box = new TypeBox(this, 4, 0, 10, INPUT_H - 6, 'Napiš objednávku…');
     this.box.root.setDepth(DEPTH.input);
@@ -214,6 +263,11 @@ export class NightScene extends Phaser.Scene {
       G.ime.onKey = null;
       G.ime.deactivate();
       this.game.events.off('layout', this.layout, this);
+      if (this.coop) {
+        this.coop.offs.forEach((f) => f());
+        this.coop.director?.destroy();
+        this.coop.s.onLobby = null;
+      }
     });
     const focusHint = this.time.addEvent({ delay: 400, loop: true, callback: () => {
       if (this.ended) return;
@@ -226,10 +280,11 @@ export class NightScene extends Phaser.Scene {
     this.box.bg.setInteractive().on('pointerdown', () => G.ime.reopen());
 
     this.nextArrival = 1.4;
-    const title = boss ? `Boss · ${NAMES[this.def.boss!]}` : nightTitle(this.n);
+    const title = boss ? `Boss · ${NAMES[this.def.boss!]}` : this.coop ? `Spolu · ${nightTitle(this.n)}` : nightTitle(this.n);
     const banner = txt(this, this.scale.width / 2, this.scale.height / 2 - 60, title, { size: 'l', color: C.yellow, origin: [0.5, 0.5], shadow: true }).setDepth(DEPTH.overlay);
     banner.setScale(2).setAlpha(0);
     this.tweens.add({ targets: banner, scale: 1, alpha: 1, duration: 400, ease: 'Back.easeOut', hold: 900, yoyo: true, onComplete: () => banner.destroy() });
+    if (this.coop) { this.coopSetup(); return; }
     const introLines = boss ? BOSS_INTRO[this.def.boss!]
       : HOLIDAY_INTRO[this.n] ?? (this.n === 201 && !G.data.nights[201] ? PHARMACY_INTRO : null);
     if (introLines) {
@@ -266,7 +321,7 @@ export class NightScene extends Phaser.Scene {
     this.queue = q;
   }
 
-  private totalCustomers() { return this.queue.length + this.arrived; }
+  private totalCustomers() { return this.coop ? this.coop.start.total : this.queue.length + this.arrived; }
 
   // ------------------------------------------------------------- layout
   private layout() {
@@ -283,7 +338,7 @@ export class NightScene extends Phaser.Scene {
 
   /** Whole scene below the HUD (except the hint button) is a tap target for the keyboard. */
   updateTapArea() {
-    if (this.paused || this.intro || this.ended) { G.ime.setTapArea(null); return; }
+    if (this.paused || this.intro || this.ended || this.coop?.confirm) { G.ime.setTapArea(null); return; }
     const W = this.scale.width, H = this.scale.height;
     G.ime.setTapArea(cssRect(this, 30, 24, W - 30, H - 24));
   }
@@ -314,7 +369,8 @@ export class NightScene extends Phaser.Scene {
     const px = Math.max(48, this.titleText.width + 12);
     this.progressBg.setPosition(px, 9).width = W - 76 - px;
     this.progress.setPosition(px + 1, 10);
-    this.comboText.setPosition(Math.round(W / 2), 34);
+    this.comboText.setPosition(Math.round(W / 2), this.coop ? 48 : 34);
+    if (this.coop) this.layoutTags();
     this.updateProgress();
   }
 
@@ -478,6 +534,7 @@ export class NightScene extends Phaser.Scene {
         this.time.delayedCall(600, () => c.state === 'wait' && c.sprite.play(`${c.key}:idle`));
       }
     }
+    if (this.coop) this.coop.s.toHost({ t: 'miss', cid: blamed[0]?.coop?.cid ?? -1 });
     if (!blamed.length) {
       const g = prev ? matchPolite(prev, [], () => '', this.activeGreetings()) : null;
       if (g?.greetPrefix) {
@@ -519,6 +576,7 @@ export class NightScene extends Phaser.Scene {
       const alt = o.alts.find((a) => matchKind(typed, joinTokens(a)) === 'full');
       if (alt && matchKind(typed, o.target) !== 'full') { o.tokens = alt; o.mistakes = alt.map((_, i) => o.mistakes[i] ?? false); }
     }
+    if (this.coop) { this.coopServe(c, o); return; }
     const b = c.bubble;
     const clean = !o.mistakes.some(Boolean);
     if (o.reaction) { this.answerReaction(c, clean); return; }
@@ -600,6 +658,17 @@ export class NightScene extends Phaser.Scene {
   }
 
   private startEating(c: Customer, coins: number, tip: boolean) {
+    if (this.coop) {
+      // co-op: coins were paid by the host's verdict, leaving comes as a message
+      if (c.state === 'leave') return;
+      c.sprite.play(`${c.key}:happy`);
+      this.time.delayedCall(500, () => c.state !== 'leave' && c.sprite.play(`${c.key}:eat`));
+      const cr = this.add.particles(c.sprite.x, c.sprite.y - 24, 'particles', {
+        frame: [particleFrame('crumb'), particleFrame('heart')], lifespan: 700, speedY: { min: -30, max: -10 }, speedX: { min: -15, max: 15 }, gravityY: 40, frequency: 260, alpha: { start: 1, end: 0 },
+      }).setDepth(DEPTH.fx);
+      this.time.delayedCall(1700, () => cr.destroy());
+      return;
+    }
     c.sprite.play(`${c.key}:${c.kind === 'nabi' ? 'eat' : 'happy'}`);
     this.time.delayedCall(c.kind === 'nabi' ? 0 : 500, () => c.state === 'eat' && c.kind !== 'nabi' && c.sprite.play(`${c.key}:eat`));
     const crumbs = this.add.particles(c.sprite.x, c.sprite.y - (c.kind === 'nabi' ? 8 : 24), 'particles', {
@@ -626,7 +695,8 @@ export class NightScene extends Phaser.Scene {
     const n = Math.min(8, Math.max(1, Math.ceil(amount / 4)));
     for (let i = 0; i < n; i++) {
       const coin = this.add.sprite(x, y, 'coin').play('coin:spin').setDepth(DEPTH.fx);
-      const tx = this.coinIcon.x, ty = this.coinIcon.y;
+      const myTag = this.coop?.tags.get(this.coop.me);
+      const tx = myTag ? myTag.x + 7 : this.coinIcon.x, ty = myTag ? myTag.y + 6 : this.coinIcon.y;
       const mx = x + (this.rand() - 0.5) * 50, my = y - 30 - this.rand() * 30;
       const curve = new Phaser.Curves.QuadraticBezier(new Phaser.Math.Vector2(x, y), new Phaser.Math.Vector2(mx, my), new Phaser.Math.Vector2(tx, ty));
       const t = { v: 0 };
@@ -636,6 +706,7 @@ export class NightScene extends Phaser.Scene {
         onComplete: () => {
           coin.destroy();
           G.audio.play('coin', { detune: i * 90, volume: 0.6 });
+          if (myTag) { this.tweens.add({ targets: myTag.dot, scale: { from: 1.8, to: 1 }, duration: 160 }); return; }
           this.coinText.setText(String(this.coins));
           snapText(this.coinText);
           this.tweens.add({ targets: this.coinIcon, scale: { from: 1.5, to: 1 }, duration: 160 });
@@ -665,7 +736,7 @@ export class NightScene extends Phaser.Scene {
     }
     c.order = null;
     this.closeGreeting(c);
-    if (happy && c.kind !== 'nabi') this.openGreeting(c, 'bye');
+    if (happy && c.kind !== 'nabi' && !this.coop) this.openGreeting(c, 'bye');
     this.time.delayedCall(happy ? 0 : 700, () => {
       this.seatsTaken[c.seat] = null;
       c.sprite.play(`${c.key}:walk`);
@@ -722,6 +793,7 @@ export class NightScene extends Phaser.Scene {
   update(_t: number, dtMs: number) {
     this.street.update(dtMs);
     if (this.paused || this.ended) return;
+    if (this.coop) { this.coopUpdate(dtMs); return; }
     const dt = (dtMs / 1000) * G.speed;
     if (!this.intro) {
       this.clock += dt;
@@ -1056,6 +1128,7 @@ export class NightScene extends Phaser.Scene {
   }
 
   private checkEnd() {
+    if (this.coop) return;
     if (this.ended || this.queue.length || this.customers.length) return;
     this.ended = true;
     this.updateTapArea();
@@ -1095,6 +1168,303 @@ export class NightScene extends Phaser.Scene {
     goto(this, 'Result', summary, 500);
   }
 
+  // ------------------------------------------------------------- co-op
+  private coopSetup() {
+    const k = this.coop!;
+    const s = k.s;
+    if (s.isHost) {
+      // the host's own settings decide patience (no personal "relaxed" in co-op)
+      const patMul = patienceMultiplier(G.data.upgrades, false, this.street.raining);
+      k.director = new CoopDirector(s, this.def, k.start.total, k.start.seats, this.pool, rng(k.start.seed + 1), patMul, this.newTonight);
+    }
+    for (const p of s.players) k.coins.set(p.pid, 0);
+    this.coinIcon.setVisible(false);
+    this.coinText.setVisible(false);
+    s.players.forEach((p) => {
+      const tag = new PlayerTag(this, 0, 0, p, 60, '0').setDepth(DEPTH.hud);
+      k.tags.set(p.pid, tag);
+    });
+    this.layoutTags();
+    k.offs.push(s.onMsg((m) => this.onCoopMsg(m)));
+    s.onLobby = () => this.updateTags();
+    s.toHost({ t: 'ready' });
+  }
+
+  private layoutTags() {
+    const k = this.coop;
+    if (!k) return;
+    const W = this.scale.width;
+    const n = Math.max(1, k.tags.size);
+    const w = Math.min(84, Math.floor((W - 8) / n) - 3);
+    let i = 0;
+    for (const tag of k.tags.values()) {
+      tag.setPosition(Math.round(4 + i * (w + 3)), 25);
+      tag.bg.width = w;
+      tag.w = w;
+      tag.value.x = w - 4;
+      i++;
+    }
+  }
+
+  private updateTags() {
+    const k = this.coop;
+    if (!k) return;
+    for (const [pid, tag] of k.tags) {
+      tag.setValue(String(k.coins.get(pid) ?? 0));
+      tag.setGone(!k.s.players.some((p) => p.pid === pid));
+    }
+  }
+
+  private hostNow(): number {
+    const k = this.coop!;
+    if (k.director) return k.director.clock;
+    return k.lastTick + (performance.now() - k.tickAt) * G.speed;
+  }
+
+  private coopUpdate(dtMs: number) {
+    const k = this.coop!;
+    k.director?.update(dtMs * G.speed);
+    const now = this.hostNow();
+    for (const c of this.customers) {
+      if (!c.coop || c.state !== 'wait' || !c.bubble) continue;
+      if (c.coop.runoffAt !== undefined) { c.bubble.setRunoff(1 - (now - c.coop.runoffAt) / RUNOFF_MS); continue; }
+      const f = patienceFrac(c.coop.at, c.coop.patienceMs, now);
+      c.bubble.setPatience(f);
+      if (f < 0.28 && c.sprite.anims.currentAnim?.key !== `${c.key}:angry`) c.sprite.play(`${c.key}:angry`);
+      else if (f >= 0.28 && f < 0.6 && c.sprite.anims.currentAnim?.key === `${c.key}:idle`) c.sprite.play(`${c.key}:neutral`);
+    }
+  }
+
+  private byCid(cid: number): Customer | undefined {
+    return this.customers.find((c) => c.coop?.cid === cid);
+  }
+
+  private player(pid: number) {
+    return this.coop!.roster.find((p) => p.pid === pid) ?? null;
+  }
+
+  private onCoopMsg(m: Msg) {
+    const k = this.coop!;
+    if (this.ended && m.t !== 'end') return;
+    switch (m.t) {
+      case 'tick': if (!k.director) { k.lastTick = m.ms; k.tickAt = performance.now(); } break;
+      case 'spawn': this.coopSpawn(m); break;
+      case 'served': this.coopServed(m.cid, m.pid, m.coins); break;
+      case 'runoff': this.coopRunoff(m.cid, m.pid, m.coins); break;
+      case 'close': {
+        const c = this.byCid(m.cid);
+        if (c && c.state === 'wait' && c.bubble) {
+          this.dropTyping(c);
+          const b = c.bubble;
+          c.bubble = null;
+          c.order = null;
+          c.state = 'eat';
+          this.tweens.add({ targets: b, alpha: 0, y: b.y - 6, duration: 220, onComplete: () => b.destroy() });
+          this.onInput(G.ime.state.text, G.ime.state.composing, true);
+        }
+        break;
+      }
+      case 'leave': this.coopLeave(m.cid, m.happy); break;
+      case 'end': this.finishCoop(m.summary); break;
+      default: break;
+    }
+  }
+
+  private coopSpawn(m: Extract<Msg, { t: 'spawn' }>) {
+    const sp = this.add.sprite(this.street.wx(140), 0, m.look).setOrigin(0.5, 1).setDepth(DEPTH.customer);
+    const c: Customer = { kind: 'generic', key: m.look, sprite: sp, seat: m.seat, state: 'walk', patience: 1, max: 1, order: null, bubble: null, ordersLeft: 1,
+      coop: { cid: m.cid, at: m.at, patienceMs: m.patienceMs, data: m.order } };
+    this.seatsTaken[m.seat] = c;
+    this.customers.push(c);
+    this.arrived++;
+    this.placeCustomer(c);
+    sp.play(`${m.look}:walk`);
+    // fixed walking time, so every phone opens the order at the same host time
+    this.tweens.add({ targets: sp, x: this.street.wx(this.street.seatX[m.seat]), duration: COOP_WALK_MS, ease: 'Linear', onComplete: () => this.coopSit(c) });
+  }
+
+  private coopSit(c: Customer) {
+    if (c.state !== 'walk' || this.ended) return;
+    const d = c.coop!.data;
+    c.state = 'wait';
+    c.sprite.play(`${c.key}:idle`);
+    G.audio.play('bell', { volume: 0.6 });
+    const order: Order = {
+      tokens: d.tokens.map((t) => ({ ...t })), target: d.target, alts: d.alts?.map((a) => a.map((t) => ({ ...t }))), cs: d.cs, icons: d.icons, extra: d.extra,
+      hinted: false, mistakes: d.tokens.map(() => false), kind: 'generic',
+    };
+    c.order = order;
+    const b = new Bubble(this, order, 70);
+    c.bubble = b;
+    c.coop!.shownAt = performance.now();
+    this.placeBubble(c);
+    b.setScale(0.2).setAlpha(0);
+    this.tweens.add({ targets: b, scale: 1, alpha: 1, duration: 260, ease: 'Back.easeOut' });
+    this.onInput(G.ime.state.text, G.ime.state.composing, true);
+  }
+
+  /** A bubble disappears under the player's fingers: drop what they typed for it, no typo. */
+  private dropTyping(c: Customer) {
+    const text = G.ime.state.text;
+    if (!text || !c.order) return;
+    if (!orderTargets(c.order).some((t) => matchKind(text, t) !== 'none')) return;
+    const others = this.waiting().filter((x) => x !== c && orderTargets(x.order!).some((t) => matchKind(text, t) !== 'none'));
+    if (!others.length) G.ime.clear();
+  }
+
+  /** I finished typing an order (first or in the runoff): tell the host, pop it locally. */
+  private coopServe(c: Customer, o: Order) {
+    const k = this.coop!, cc = c.coop!;
+    const b = c.bubble!;
+    const clean = !o.mistakes.some(Boolean);
+    G.ime.clear();
+    this.box.success();
+    o.tokens.forEach((t, i) => G.setStat(t.id, recordServe(G.stat(t.id), { clean: !o.mistakes[i], hinted: o.hinted, night: this.n })));
+    o.tokens.forEach((t) => this.recent.push(t.id));
+    cc.mine = true;
+    cc.clean = clean;
+    k.s.toHost({ t: 'done', cid: cc.cid, words: o.tokens.map((t) => t.id), ms: Math.round(performance.now() - (cc.shownAt ?? performance.now())), clean, hinted: o.hinted });
+    c.state = 'eat';
+    c.order = null;
+    c.bubble = null;
+    if (cc.runoffAt !== undefined) this.tweens.add({ targets: b, scale: 1.12, alpha: 0, duration: 160, onComplete: () => b.destroy() });
+    else this.popBubble(b);
+    this.onInput('', false, true);
+  }
+
+  private coopServed(cid: number, pid: number, coins: number) {
+    const k = this.coop!;
+    const c = this.byCid(cid);
+    k.coins.set(pid, (k.coins.get(pid) ?? 0) + coins);
+    this.updateTags();
+    this.served++;
+    this.updateProgress();
+    if (!c) return;
+    const p = this.player(pid);
+    if (pid === k.me) {
+      this.coins += coins;
+      this.combo = c.coop!.clean ? this.combo + 1 : 0;
+      this.bestCombo = Math.max(this.bestCombo, this.combo);
+      this.updateCombo(true);
+      this.flyCoins(c.sprite.x, c.sprite.y - 30, coins);
+      floatText(this, c.sprite.x, c.sprite.y - 46, `+${coins}`, C.yellow);
+    } else {
+      if (c.state === 'wait' && c.bubble && p) {
+        c.bubble.markTaken(p.color, PFRAME[p.color], initial(p.name));
+        c.coop!.runoffAt = this.hostNow();
+        G.audio.play('beaten', { volume: 0.7 });
+      }
+      floatText(this, c.sprite.x, c.sprite.y - 46, `${p?.name ?? ''} +${coins}`, p ? PCOL[p.color] : C.yellow);
+    }
+    if (!c.coop!.cooked && c.state !== 'leave') {
+      c.coop!.cooked = true;
+      this.cookAndDeliver(c, { icons: c.coop!.data.icons } as Order, 0, false);
+    }
+  }
+
+  private coopRunoff(cid: number, pid: number, coins: number) {
+    const k = this.coop!;
+    const c = this.byCid(cid);
+    k.coins.set(pid, (k.coins.get(pid) ?? 0) + coins);
+    this.updateTags();
+    if (!c) return;
+    if (pid === k.me) {
+      this.coins += coins;
+      G.audio.play('runoff_ok');
+      this.flyCoins(c.sprite.x, c.sprite.y - 30, coins);
+      floatText(this, c.sprite.x, c.sprite.y - 46, `+${coins} ½`, C.yellow);
+    } else {
+      const p = this.player(pid);
+      floatText(this, c.sprite.x + 10, c.sprite.y - 40, `½ ${p?.name ?? ''}`, p ? PCOL[p.color] : C.grey);
+    }
+  }
+
+  private coopLeave(cid: number, happy: boolean) {
+    const c = this.byCid(cid);
+    if (!c || c.state === 'leave') return;
+    if (c.state === 'walk') this.tweens.killTweensOf(c.sprite);
+    if (c.state === 'wait' && c.order) this.dropTyping(c);
+    if (!happy) {
+      // nobody served them in time
+      if (c.order && c.state === 'wait') c.order.tokens.forEach((t) => {
+        G.setStat(t.id, recordMissed(G.stat(t.id), this.n));
+        this.trouble.set(t.id, (this.trouble.get(t.id) ?? 0) + 1);
+      });
+      this.angry++;
+      this.combo = 0;
+      this.updateCombo();
+      this.updateProgress();
+      G.audio.play('angry');
+      c.sprite.play(`${c.key}:angry`);
+      floatText(this, c.sprite.x, c.sprite.y - 46, 'hmpf!', C.red);
+    }
+    this.leave(c, happy);
+    this.onInput(G.ime.state.text, G.ime.state.composing, true);
+  }
+
+  /** Write my part of the night into my save (coins so far, co-op stats). */
+  private payOut(summary?: CoopSummary) {
+    const k = this.coop!;
+    if (k.paid) return;
+    k.paid = true;
+    const d = G.data;
+    const me = summary?.players.find((p) => p.pid === k.me);
+    d.coins += me?.coins ?? this.coins;
+    d.stats.bestCombo = Math.max(d.stats.bestCombo ?? 0, me?.bestCombo ?? this.bestCombo);
+    if (summary) {
+      d.stats.coopNights = (d.stats.coopNights ?? 0) + 1;
+      d.stats.coopFirst = (d.stats.coopFirst ?? 0) + (me?.first ?? 0);
+      d.stats.served += me?.first ?? 0;
+      d.stats.mistakes += me?.mistakes ?? 0;
+      G.markPlayedToday();
+    }
+    G.save.save();
+  }
+
+  private finishCoop(summary: CoopSummary) {
+    if (this.ended) return;
+    const k = this.coop!;
+    this.ended = true;
+    this.updateTapArea();
+    this.payOut(summary);
+    k.s.phase = 'lobby';
+    G.ime.deactivate();
+    this.time.delayedCall(900, () => goto(this, 'CoopResult', { summary, me: k.me }, 500));
+  }
+
+  /** The host closed the stall (or the connection died). */
+  onNetClosed(why: string) {
+    if (!this.coop || this.ended) return;
+    this.ended = true;
+    this.updateTapArea();
+    this.payOut();
+    G.ime.deactivate();
+    toast(this, why, C.pink);
+    this.time.delayedCall(1800, () => goto(this, 'Coop', { error: `${why} – mince z noci máš připsané.` }));
+  }
+
+  private askLeave() {
+    const k = this.coop!;
+    if (k.confirm) { k.confirm.destroy(); k.confirm = undefined; this.updateTapArea(); G.ime.focus(); return; }
+    const W = this.scale.width, H = this.scale.height;
+    const c = this.add.container(0, 0).setDepth(DEPTH.overlay);
+    c.add(this.add.rectangle(0, 0, W, H, 0x181425, 0.6).setOrigin(0, 0).setInteractive());
+    const pw = 180, ph = 84, px = Math.round((W - pw) / 2), py = Math.round(H / 2 - ph / 2 - 30);
+    c.add(panel(this, px, py, pw, ph));
+    const q = k.s.isHost ? 'Zavřít stánek pro všechny?' : 'Odejít ze stánku?';
+    c.add(txt(this, W / 2, py + 10, q, { size: 's', color: C.cream, origin: [0.5, 0], align: 'center', wrap: pw - 16 }));
+    c.add(txt(this, W / 2, py + 26, 'Noc běží dál, mince z ní ti zůstanou.', { size: 'xs', color: C.grey, origin: [0.5, 0], align: 'center', wrap: pw - 16 }));
+    c.add(button(this, W / 2 - 40, py + ph - 18, 70, 20, 'Ano', () => {
+      this.ended = true;
+      this.payOut();
+      void k.s.close();
+      goto(this, 'Coop');
+    }, { size: 's' }));
+    c.add(button(this, W / 2 + 40, py + ph - 18, 70, 20, 'Ne', () => this.askLeave(), { size: 's', style: 'wood' }));
+    k.confirm = c;
+    this.updateTapArea();
+  }
+
   // ------------------------------------------------------------- pause
   onBack() {
     if (this.intro || this.ended) return;
@@ -1103,6 +1473,7 @@ export class NightScene extends Phaser.Scene {
 
   private togglePause() {
     if (this.ended) return;
+    if (this.coop) { this.askLeave(); return; }
     if (this.pauseLayer) { this.pauseLayer.destroy(); this.pauseLayer = undefined; this.paused = false; this.tweens.resumeAll(); G.ime.focus(); this.updateTapArea(); return; }
     this.paused = true;
     this.updateTapArea();

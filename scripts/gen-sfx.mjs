@@ -130,10 +130,19 @@ const SFX = {
   meow: synth({ wave: 'saw', freq: 700, slide: 900, dslide: -9000, attack: 0.03, sustain: 0.18, decay: 0.12, lpf: 0.18, vib: 0.02, vibSpeed: 10, volume: 0.45 }),
   // page turn / postcard
   paper: synth({ wave: 'noise', freq: 2500, slide: -1500, attack: 0.04, sustain: 0.06, decay: 0.15, lpf: 0.3, hpf: 0.1, volume: 0.3 }),
+  // co-op: finished an order in the runoff (shorter, quieter pop)
+  runoff_ok: mix(
+    synth({ wave: 'sine', freq: 420, slide: 7000, sustain: 0.02, decay: 0.05, punch: 0.3, volume: 0.35 }),
+    synth({ wave: 'triangle', freq: note(84), sustain: 0.02, decay: 0.08, volume: 0.15 }), 0.02),
+  // co-op: someone else was faster (soft "pfff")
+  beaten: synth({ wave: 'noise', freq: 1800, slide: -2500, attack: 0.02, sustain: 0.08, decay: 0.2, lpf: 0.12, volume: 0.28 }),
 };
 
 mkdirSync(new URL('../public/sfx/', import.meta.url), { recursive: true });
+// npm run sfx -- runoff_ok beaten   regenerates only those (noise is not seeded)
+const only = process.argv.slice(2);
 for (const [name, s] of Object.entries(SFX)) {
+  if (only.length && !only.includes(name)) continue;
   writeFileSync(new URL(`../public/sfx/${name}.wav`, import.meta.url), wav(s));
   console.log(name.padEnd(10), (s.length / RATE).toFixed(2) + 's');
 }

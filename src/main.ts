@@ -21,6 +21,7 @@ import { TrainingScene } from './scenes/Training';
 import { BadgesScene } from './scenes/Badges';
 import { CoopScene } from './scenes/Coop';
 import { CoopJoinScene } from './scenes/CoopJoin';
+import { CoopResultScene } from './scenes/CoopResult';
 
 async function start() {
   const fonts = ['Galmuri11', 'Galmuri9', 'Galmuri7', 'Galmuri14'];
@@ -45,7 +46,7 @@ async function start() {
     scale: { mode: Phaser.Scale.NONE, zoom: G.layout.scale / dpr },
     input: { activePointers: 2 },
     disableContextMenu: true,
-    scene: [BootScene, TitleScene, SetupScene, StoryScene, MapScene, NightScene, ResultScene, ShopScene, RecipesScene, SettingsScene, PaintScene, TrainingScene, BadgesScene, CoopScene, CoopJoinScene],
+    scene: [BootScene, TitleScene, SetupScene, StoryScene, MapScene, NightScene, ResultScene, ShopScene, RecipesScene, SettingsScene, PaintScene, TrainingScene, BadgesScene, CoopScene, CoopJoinScene, CoopResultScene],
   });
   G.audio.attach(game);
   setupBack(game);
