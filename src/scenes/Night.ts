@@ -6,6 +6,11 @@ import { CRITIC_INTRO } from '../data/story';
 import { matchAgainst } from '../logic/hangul';
 import { BOSS_SEATS, DEFAULT_SEATS, comboMultiplier, criticStars, nightStars, patienceMultiplier, seatMultiplier, serveCoins, spawnInterval } from '../logic/rules';
 import { helperPick } from '../logic/helper';
+import { BOSS_GREET_WINDOW, BYE_COINS, BYE_WORDS, GREET_WINDOW, HELLO_COINS, HELLO_PATIENCE, HELLO_WORDS, REACTIONS, REACTIONS_FROM, REACTION_CHANCE, REACTION_COINS, REACTION_TIME, matchPolite, pickReaction, type GreetKind, type Greeting, type ReactionId } from '../logic/polite';
+import { ITEM_REACTIONS } from '../data/reactions';
+import { jamoKnown } from '../data/levels';
+import { jamoSet } from '../logic/hangul';
+import { hintLevel } from '../logic/srs';
 import { recordMissed, recordMistake, recordServe, rng } from '../logic/srs';
 import { Bubble } from '../game/bubble';
 import { playDialogue } from '../game/dialogue';
@@ -14,7 +19,7 @@ import { G, iconIdx, word } from '../game/state';
 import { DEPTH, Street, particleFrame } from '../game/street';
 import { TypeBox } from '../game/typebox';
 import { IS_ANDROID } from '../game/ime';
-import { C, HEX, button, cssRect, fadeIn, floatText, goto, iconButton, panel, snapText, toast, txt } from '../game/ui';
+import { C, HEX, button, cssRect, iconFrame, fadeIn, floatText, goto, iconButton, panel, snapText, toast, txt } from '../game/ui';
 
 type CState = 'walk' | 'wait' | 'eat' | 'leave';
 
@@ -31,6 +36,10 @@ interface Customer {
   ordersLeft: number;
   /** First order of the whole game: patience paused until typed. */
   tutorial?: boolean;
+  /** Greeting window (hand when seated, door when leaving). */
+  greet?: { kind: GreetKind; until: number; tag: Phaser.GameObjects.Container };
+  /** Last item served (for the reaction). */
+  lastItem?: string;
 }
 
 export interface NightSummary {
@@ -51,6 +60,8 @@ export interface NightSummary {
   seats: number;
   /** Orders 김 대리 served for the player. */
   helped: number;
+  greetings: number;
+  reactions: number;
 }
 
 const GENERIC = ['char_cust_a', 'char_cust_b', 'char_cust_c', 'char_cust_d'];
@@ -93,6 +104,12 @@ export class NightScene extends Phaser.Scene {
   private seats = DEFAULT_SEATS;
   private seatMul = 1;
   private helped = 0;
+  private greetings = 0;
+  private reactions = 0;
+  /** A mistake happened while typing a greeting (no mastery for it). */
+  private greetDirty = false;
+  private known = new Set<string>();
+  private criticGreeted = false;
   private unsub?: () => void;
   // HUD
   private coinText!: Phaser.GameObjects.Text;
@@ -113,7 +130,9 @@ export class NightScene extends Phaser.Scene {
     this.def = nightDef(this.n);
     this.seats = this.n === BOSS_NIGHT ? BOSS_SEATS : (d?.seats ?? G.data.settings.seats ?? DEFAULT_SEATS);
     this.seatMul = seatMultiplier(this.seats);
-    this.helped = 0;
+    this.helped = this.greetings = this.reactions = 0;
+    this.greetDirty = this.criticGreeted = false;
+    this.known = jamoKnown(this.n);
     this.customers = [];
     this.queue = [];
     this.clock = 0;
@@ -322,6 +341,7 @@ export class NightScene extends Phaser.Scene {
     c.sprite.play(`${c.key}:${c.kind === 'nabi' ? 'sit' : 'idle'}`);
     if (c.kind === 'nabi') G.audio.play('meow'); else G.audio.play('bell', { volume: 0.6 });
     this.newOrder(c);
+    if (c.kind !== 'nabi' && !c.tutorial) this.openGreeting(c, 'hello');
   }
 
   private newOrder(c: Customer) {
@@ -371,14 +391,16 @@ export class NightScene extends Phaser.Scene {
       G.ime.clear();
       return;
     }
-    const r = matchAgainst(text, ws, (c) => c.order!.target);
+    const m = matchPolite(text, ws, (c) => c.order!.target, this.activeGreetings());
+    const r = m.orders;
     for (const c of ws) c.bubble!.setMatch(text.length === 0 ? 'normal' : r.prefix.includes(c) ? 'hi' : 'dim');
-    if (text.length === 0) { this.setError(false); return; }
-    if (r.error) {
+    if (text.length === 0) { this.setError(false); this.greetDirty = false; return; }
+    if (m.error) {
       if (!this.inError) this.mistake(text);
       return;
     }
     this.setError(false);
+    if (m.greet) { this.greet(m.greet); return; }
     if (r.full) {
       const target = r.full;
       // 김치 vs 김치찌개: if it's also a prefix of another order, wait a moment
@@ -415,7 +437,14 @@ export class NightScene extends Phaser.Scene {
         this.time.delayedCall(600, () => c.state === 'wait' && c.sprite.play(`${c.key}:idle`));
       }
     }
-    if (!blamed.length) this.waiting().forEach((c) => c.bubble!.shake());
+    if (!blamed.length) {
+      const g = prev ? matchPolite(prev, [], () => '', this.activeGreetings()) : null;
+      if (g?.greetPrefix) {
+        this.greetDirty = true;
+        for (const gr of this.activeGreetings()) if (matchPolite(prev, [], () => '', [gr]).greetPrefix) G.setStat(gr.id, recordMistake(G.stat(gr.id)));
+        for (const c of this.customers) if (c.greet) this.tweens.add({ targets: c.greet.tag, x: { from: c.greet.tag.x - 2, to: c.greet.tag.x }, duration: 200, ease: 'Elastic.easeOut' });
+      } else this.waiting().forEach((c) => c.bubble!.shake());
+    }
     this.errorTimer?.remove();
     this.errorTimer = this.time.delayedCall(900, () => { if (this.inError) G.ime.clear(); });
   }
@@ -446,6 +475,8 @@ export class NightScene extends Phaser.Scene {
     const o = c.order;
     const b = c.bubble;
     const clean = !o.mistakes.some(Boolean);
+    if (o.reaction) { this.answerReaction(c, clean); return; }
+    c.lastItem = o.tokens[0].id;
     G.ime.clear();
     this.box.success();
     this.tutorialText?.destroy();
@@ -531,6 +562,7 @@ export class NightScene extends Phaser.Scene {
         return;
       }
       if (c.kind === 'critic') this.critic.done = true;
+      if (!this.ended && this.maybeReact(c)) return;
       this.leave(c, true);
     });
   }
@@ -577,13 +609,16 @@ export class NightScene extends Phaser.Scene {
       this.tweens.add({ targets: b, alpha: 0, y: b.y - 6, duration: 200, onComplete: () => b.destroy() });
     }
     c.order = null;
+    this.closeGreeting(c);
+    if (happy && c.kind !== 'nabi') this.openGreeting(c, 'bye');
     this.time.delayedCall(happy ? 0 : 700, () => {
       this.seatsTaken[c.seat] = null;
       c.sprite.play(`${c.key}:walk`);
       if (c.kind === 'nabi') c.sprite.setFlipX(true);
       const tx = this.street.wx(150);
       this.tweens.add({
-        targets: c.sprite, x: tx, duration: (Math.abs(tx - c.sprite.x) / 60) * 1000, onComplete: () => {
+        targets: c.sprite, x: tx, duration: (Math.abs(tx - c.sprite.x) / (happy ? 45 : 60)) * 1000, onComplete: () => {
+          this.closeGreeting(c);
           c.sprite.destroy();
           this.customers = this.customers.filter((o) => o !== c);
           this.checkEnd();
@@ -594,6 +629,13 @@ export class NightScene extends Phaser.Scene {
 
   private walkOut(c: Customer) {
     const o = c.order!;
+    if (o.reaction) {
+      const b = c.bubble!;
+      c.bubble = null;
+      this.tweens.add({ targets: b, alpha: 0, y: b.y - 6, duration: 200, onComplete: () => b.destroy() });
+      this.leave(c, true);
+      return;
+    }
     o.tokens.forEach((t) => {
       G.setStat(t.id, recordMissed(G.stat(t.id), this.n));
       this.trouble.set(t.id, (this.trouble.get(t.id) ?? 0) + 1);
@@ -647,11 +689,13 @@ export class NightScene extends Phaser.Scene {
         c.patience -= dt;
         const f = c.patience / c.max;
         c.bubble.setPatience(f);
+        if (c.order?.reaction) { if (c.patience <= 0) this.walkOut(c); continue; }
         if (f < 0.28 && c.kind !== 'nabi' && c.sprite.anims.currentAnim?.key !== `${c.key}:angry`) c.sprite.play(`${c.key}:angry`);
         else if (f >= 0.28 && f < 0.6 && c.kind !== 'nabi' && c.sprite.anims.currentAnim?.key === `${c.key}:idle`) c.sprite.play(`${c.key}:neutral`);
         if (c.patience <= 0) this.walkOut(c);
       }
       this.checkHelper();
+      this.updateGreetings();
     }
   }
 
@@ -659,12 +703,13 @@ export class NightScene extends Phaser.Scene {
   private checkHelper() {
     const ws = this.waiting();
     if (!ws.length || !this.street.helper) return;
-    const pick = helperPick(ws.map((c) => ({ frac: c.patience / c.max, eligible: c.kind !== 'critic' && !c.tutorial })), this.helped, this.seats, G.hasUpgrade('helper'));
+    const pick = helperPick(ws.map((c) => ({ frac: c.patience / c.max, eligible: c.kind !== 'critic' && !c.tutorial && !c.order!.reaction })), this.helped, this.seats, G.hasUpgrade('helper'));
     if (pick >= 0) this.helperServe(ws[pick]);
   }
 
   private helperServe(c: Customer) {
     const o = c.order!, b = c.bubble!;
+    c.lastItem = o.tokens[0].id;
     this.helped++;
     c.state = 'eat';
     c.order = null;
@@ -716,6 +761,161 @@ export class NightScene extends Phaser.Scene {
     return c;
   }
 
+  // ------------------------------------------------------------- politeness
+  /** Greeting words the player can type tonight (all their jamo introduced). */
+  private greetWords(kind: GreetKind): string[] {
+    return (kind === 'hello' ? HELLO_WORDS : BYE_WORDS).filter((id) => this.ready(id));
+  }
+
+  private ready(id: string): boolean {
+    return jamoSet(word(id).ko).every((j) => this.known.has(j));
+  }
+
+  private activeGreetings(): Greeting[] {
+    const out: Greeting[] = [];
+    for (const kind of ['hello', 'bye'] as GreetKind[]) {
+      if (!this.customers.some((c) => c.greet?.kind === kind)) continue;
+      for (const id of this.greetWords(kind)) out.push({ id, ko: word(id).ko, kind });
+    }
+    return out;
+  }
+
+  private openGreeting(c: Customer, kind: GreetKind) {
+    const ids = this.greetWords(kind);
+    if (!ids.length) return;
+    // suggest the least practised word; hint like orders (by mastery)
+    const id = [...ids].sort((a, b) => G.stat(a).mastery - G.stat(b).mastery || this.rand() - 0.5)[0];
+    const w = word(id);
+    const lvl = hintLevel(G.stat(id).mastery);
+    const label = lvl === 'full' ? w.ko : lvl === 'partial' ? [...w.ko][0] + '…' : '';
+    const tag = this.add.container(0, 0).setDepth(DEPTH.bubble + 2);
+    const icon = this.add.image(0, 0, 'uiicons', iconFrame(kind === 'hello' ? 'hand' : 'door')).setOrigin(0, 0.5);
+    const t = txt(this, 15, 0, label, { size: 'xs', color: C.ink, origin: [0, 0.5] });
+    const bw = label ? t.width + 19 : 16;
+    const bg = this.add.nineslice(-2, 0, 'bubble', undefined, bw, 14, 5, 5, 5, 5).setOrigin(0, 0.5);
+    tag.add([bg, icon, t]);
+    tag.setSize(bw, 14);
+    const window = c.kind === 'critic' && kind === 'hello' ? BOSS_GREET_WINDOW : GREET_WINDOW;
+    c.greet?.tag.destroy();
+    c.greet = { kind, until: this.clock + window, tag };
+    this.placeGreeting(c);
+    tag.setScale(0.2);
+    this.tweens.add({ targets: tag, scale: 1, duration: 220, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: icon, angle: { from: -12, to: 12 }, yoyo: true, repeat: -1, duration: 260, ease: 'Sine.easeInOut' });
+  }
+
+  private placeGreeting(c: Customer) {
+    const g = c.greet;
+    if (!g) return;
+    const W = this.scale.width;
+    let x: number, y: number;
+    if (c.bubble) { x = c.bubble.x - 3; y = c.bubble.y - 3; }
+    else { x = c.sprite.x - 8; y = c.sprite.y - 48; }
+    g.tag.setPosition(Math.round(Math.max(3, Math.min(W - g.tag.width, x))), Math.round(Math.max(30, y)));
+  }
+
+  private closeGreeting(c: Customer, ok = false) {
+    const g = c.greet;
+    if (!g) return;
+    c.greet = undefined;
+    this.tweens.killTweensOf(g.tag);
+    if (ok) this.tweens.add({ targets: g.tag, scale: 1.4, alpha: 0, duration: 200, onComplete: () => g.tag.destroy() });
+    else this.tweens.add({ targets: g.tag, alpha: 0, duration: 200, onComplete: () => g.tag.destroy() });
+  }
+
+  private updateGreetings() {
+    for (const c of this.customers) {
+      if (!c.greet) continue;
+      this.placeGreeting(c);
+      const left = c.greet.until - this.clock;
+      if (left < 1.2) c.greet.tag.setAlpha(Math.floor(this.clock * 6) % 2 ? 0.4 : 1);
+      if (left <= 0) {
+        if (c.kind === 'critic' && c.greet.kind === 'hello' && !this.criticGreeted) {
+          this.critic.mistakes++;
+          floatText(this, c.sprite.x, c.sprite.y - 44, '−★ bez pozdravu', C.red);
+          c.sprite.play(`${c.key}:neutral`);
+          this.time.delayedCall(700, () => c.state === 'wait' && c.sprite.play(`${c.key}:idle`));
+          G.audio.play('angry', { volume: 0.6 });
+        }
+        this.closeGreeting(c);
+      }
+    }
+  }
+
+  private greet(g: Greeting) {
+    G.ime.clear();
+    this.box.success();
+    const targets = this.customers.filter((c) => c.greet?.kind === g.kind);
+    G.setStat(g.id, recordServe(G.stat(g.id), { clean: !this.greetDirty, hinted: false, night: this.n }));
+    this.greetDirty = false;
+    this.greetings++;
+    G.audio.play(g.kind === 'hello' ? 'bell' : 'coin', { detune: 400 });
+    for (const c of targets) {
+      this.closeGreeting(c, true);
+      const coins = g.kind === 'hello' ? HELLO_COINS : BYE_COINS;
+      this.coins += coins;
+      this.flyCoins(c.sprite.x, c.sprite.y - 30, coins);
+      floatText(this, c.sprite.x, c.sprite.y - 46, `+${coins} ♥`, C.pink);
+      if (g.kind === 'hello') {
+        if (c.kind === 'critic') this.criticGreeted = true;
+        c.patience = Math.min(c.max, c.patience + c.max * HELLO_PATIENCE);
+        if (c.state === 'wait') {
+          c.sprite.play(`${c.key}:happy`);
+          this.time.delayedCall(700, () => { if (c.state === 'wait') c.sprite.play(`${c.key}:idle`); });
+        }
+      }
+      const hearts = this.add.particles(c.sprite.x, c.sprite.y - 34, 'particles', {
+        frame: particleFrame('heart'), lifespan: 700, speedY: { min: -40, max: -20 }, speedX: { min: -20, max: 20 }, alpha: { start: 1, end: 0 }, emitting: false,
+      }).setDepth(DEPTH.fx);
+      hearts.explode(4);
+      this.time.delayedCall(800, () => hearts.destroy());
+    }
+    this.onInput('', false, true);
+  }
+
+  /** After the meal: maybe a reaction bubble the player answers with an adjective. */
+  private maybeReact(c: Customer): boolean {
+    if (this.n < REACTIONS_FROM || c.kind === 'nabi' || c.kind === 'critic' || !c.lastItem) return false;
+    if (this.rand() >= REACTION_CHANCE) return false;
+    const r = pickReaction(c.lastItem, ITEM_REACTIONS, this.rand, (x) => this.ready(REACTIONS[x].word));
+    if (!r) return false;
+    this.react(c, r);
+    return true;
+  }
+
+  private react(c: Customer, r: ReactionId) {
+    const w = word(REACTIONS[r].word);
+    c.order = { tokens: [{ id: w.id, ko: w.ko }], target: w.ko, cs: REACTIONS[r].cs, icons: [w.icon], hinted: false, mistakes: [false], kind: c.kind, reaction: r };
+    c.state = 'wait';
+    c.max = c.patience = REACTION_TIME;
+    c.sprite.play(`${c.key}:happy`);
+    const b = new Bubble(this, c.order, 66);
+    c.bubble = b;
+    this.placeBubble(c);
+    b.setScale(0.2).setAlpha(0);
+    this.tweens.add({ targets: b, scale: 1, alpha: 1, duration: 220, ease: 'Back.easeOut' });
+    G.audio.play('hint', { detune: 200 });
+    this.onInput(G.ime.state.text, G.ime.state.composing, true);
+  }
+
+  private answerReaction(c: Customer, clean: boolean) {
+    const o = c.order!, b = c.bubble!;
+    G.ime.clear();
+    this.box.success();
+    G.setStat(o.tokens[0].id, recordServe(G.stat(o.tokens[0].id), { clean, hinted: o.hinted, night: this.n }));
+    this.reactions++;
+    c.order = null;
+    c.bubble = null;
+    this.popBubble(b);
+    this.coins += REACTION_COINS;
+    this.flyCoins(c.sprite.x, c.sprite.y - 30, REACTION_COINS);
+    floatText(this, c.sprite.x, c.sprite.y - 46, `+${REACTION_COINS} 네!`, C.green);
+    c.state = 'eat';
+    c.sprite.play(`${c.key}:happy`);
+    this.time.delayedCall(500, () => this.leave(c, true));
+    this.onInput('', false, true);
+  }
+
   private checkEnd() {
     if (this.ended || this.queue.length || this.customers.length) return;
     this.ended = true;
@@ -744,7 +944,7 @@ export class NightScene extends Phaser.Scene {
     G.save.save();
     const summary: NightSummary = {
       night: this.n, stars, total, served: this.served, angry: this.angry, mistakes: this.mistakes, coins: this.coins, tips: this.tips,
-      bestCombo: this.bestCombo, newWords, trouble, regularsSeen: this.regularsSeen, clean: this.cleanServes, seats: this.seats, helped: this.helped,
+      bestCombo: this.bestCombo, newWords, trouble, regularsSeen: this.regularsSeen, clean: this.cleanServes, seats: this.seats, helped: this.helped, greetings: this.greetings, reactions: this.reactions,
       critic: boss ? { stars, mistakes: this.critic.mistakes, walkouts: this.critic.walkouts } : undefined,
     };
     G.ime.deactivate();

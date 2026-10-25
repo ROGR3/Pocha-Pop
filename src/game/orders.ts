@@ -3,6 +3,7 @@ import { hintLevel } from '../logic/srs';
 import { pickWord } from '../logic/srs';
 import { matchedJamo, toJamo } from '../logic/hangul';
 import { G, word } from './state';
+import type { ReactionId } from '../logic/polite';
 
 export type Kind = 'generic' | 'kim' | 'haeun' | 'nabi' | 'critic';
 
@@ -18,6 +19,8 @@ export interface Order {
   /** Per-token mistake flags. */
   mistakes: boolean[];
   kind: Kind;
+  /** Post-meal reaction (adjective) instead of a real order. */
+  reaction?: ReactionId;
 }
 
 const CAT_FOOD = ['uyu', 'mul', 'gogi', 'chikin', 'dubu', 'mandu', 'gimbap'];

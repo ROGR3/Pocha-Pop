@@ -6,6 +6,21 @@ import { MAX_MASTERY } from '../logic/srs';
 import { G, WORDS, iconIdx, type Word } from '../game/state';
 import { C, button, fadeIn, goto, iconButton, panel, txt } from '../game/ui';
 
+/** Recipe book sections (word categories). */
+const SECTIONS: { name: string; cats: string[] }[] = [
+  { name: 'Jídlo a pití', cats: ['food'] },
+  { name: 'Fráze', cats: ['expr', 'phrase'] },
+  { name: 'Přídavná jména', cats: ['adj'] },
+  { name: 'Barvy', cats: ['color'] },
+  { name: 'Oblečení', cats: ['clothes'] },
+  { name: 'Hudba a zábava', cats: ['music'] },
+  { name: 'Elektronika', cats: ['tech'] },
+  { name: 'Tělo a lékárna', cats: ['body'] },
+  { name: 'Cestování', cats: ['travel'] },
+  { name: 'Rodina', cats: ['family'] },
+  { name: 'Svátky', cats: ['holiday'] },
+];
+
 export class RecipesScene extends Phaser.Scene {
   private list!: Phaser.GameObjects.Container;
   private scrollY = 0;
@@ -30,10 +45,19 @@ export class RecipesScene extends Phaser.Scene {
     const ch = 60;
     const top = 30, viewH = H - 30 - 38;
     this.list = this.add.container(6, top);
-    const sorted = [...WORDS].sort((a, b) => (a.category === b.category ? a.difficulty - b.difficulty : a.category === 'food' ? -1 : 1));
-    sorted.forEach((w, i) => this.card(w, (i % cols) * cw, Math.floor(i / cols) * ch, cw - 2, ch - 2));
-    const rows = Math.ceil(sorted.length / cols);
-    this.maxScroll = Math.max(0, rows * ch - viewH + 6);
+    let y = 0;
+    for (const sec of SECTIONS) {
+      const ws = WORDS.filter((w) => sec.cats.includes(w.category)).sort((a, b) => a.difficulty - b.difficulty);
+      if (!ws.length) continue;
+      const k = ws.filter((w) => (G.data.words[w.id]?.seen ?? 0) > 0).length;
+      this.list.add(this.add.rectangle(0, y + 1, W - 12, 14, 0xb86f50, 0.35).setOrigin(0, 0));
+      this.list.add(txt(this, 4, y + 8, sec.name, { size: 's', color: C.ink, origin: [0, 0.5] }));
+      this.list.add(txt(this, W - 16, y + 8, `${k}/${ws.length}`, { size: 'xs', color: C.brown, origin: [1, 0.5] }));
+      y += 17;
+      ws.forEach((w, i) => this.card(w, (i % cols) * cw, y + Math.floor(i / cols) * ch, cw - 2, ch - 2));
+      y += Math.ceil(ws.length / cols) * ch + 4;
+    }
+    this.maxScroll = Math.max(0, y - viewH + 6);
     const maskG = this.make.graphics({}, false).fillRect(0, top, W, viewH);
     this.list.setMask(maskG.createGeometryMask());
 
@@ -113,8 +137,8 @@ export class RecipesScene extends Phaser.Scene {
       for (let i = 0; i < MAX_MASTERY; i++) c.add(this.add.image(px + 70 + i * 10, y + 20, 'star_s', i < st.mastery ? 0 : 1));
       c.add(txt(this, px + 10, y + 30, st.mastery >= 2 ? 'Bublina už korejštinu neukazuje – vybavuješ si.' : st.mastery === 1 ? 'Bublina ukazuje jen první slabiku.' : 'Bublina ukazuje celé slovo – opisuješ.', { size: 'xs', color: C.grey, wrap: pw - 20 }));
     } else {
-      c.add(txt(this, px + 60, py + 18, 'Tohle jídlo ještě neznáš.', { size: 's', color: C.brown, wrap: pw - 70 }));
-      c.add(txt(this, px + 60, py + 36, 'Objeví se v dalších nocích nebo v menu z obchodu.', { size: 'xs', color: C.grey, wrap: pw - 70 }));
+      c.add(txt(this, px + 60, py + 18, 'Tohle slovo ještě neznáš.', { size: 's', color: C.brown, wrap: pw - 70 }));
+      c.add(txt(this, px + 60, py + 36, 'Objeví se v dalších nocích, v menu z obchodu nebo v tréninku.', { size: 'xs', color: C.grey, wrap: pw - 70 }));
     }
     const close = () => { c.destroy(); this.popup = undefined; };
     c.add(button(this, px + pw / 2, py + ph - 14, 80, 18, 'Zavřít', close, { size: 's', style: 'wood' }));

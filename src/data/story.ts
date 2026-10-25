@@ -54,17 +54,17 @@ export const POSTCARDS: Record<number, Postcard> = {
   },
   5: {
     title: 'Stěhujeme se k řece',
-    text: 'Stánek se přesouvá k 한강 – v létě tam jsou pikniky. Zákazníci chtějí ovoce a pití. Nové jamo: ㅍ a ㅋ.',
-    tip: 'Tip: u řeky fouká, tak drž víčka na hrncích.',
+    text: 'Stánek se přesouvá k 한강 – v létě tam jsou pikniky. Zákazníci chtějí ovoce a pití. Nové jamo: ㅍ, ㅋ a ㅎ.',
+    tip: 'Zdvořilost: když host odchází (ikonka dveří), napiš 감사합니다 = děkuji. Dostaneš mince navíc!',
   },
   6: {
     title: 'Ryby na trhu',
-    text: 'Dnes jsem na trhu smlouvala o mandarinky jako za mlada. U tebe přibude ㅌ a ㅛ – třeba v 음료수 a 파스타.',
+    text: 'Dnes jsem na trhu smlouvala o mandarinky jako za mlada. U tebe přibude ㅌ a ㅛ – třeba v 음료수 a 파스타. A s ㅛ i pozdravy: když si host sedne (ikonka ruky), napiš 환영해요 = vítejte. Při odchodu 또 봐요 nebo 잘 가요.',
     tip: 'Tip: 버블티 – perly vař, dokud nejsou průsvitné.',
   },
   7: {
     title: 'Mosty v noci',
-    text: 'Jsou ty mosty pořád tak barevné? Nové samohlásky: ㅔ (멜론) a ㅟ = ㅜ + ㅣ (샌드위치).',
+    text: 'Jsou ty mosty pořád tak barevné? Nové samohlásky: ㅔ (멜론) a ㅟ = ㅜ + ㅣ (샌드위치). S ㅔ umíš i 안녕하세요 a 또 오세요 (přijďte zas).',
     tip: 'Tip: 치킨 a pivo 맥주 – „치맥“ je u řeky povinnost.',
   },
   8: {
@@ -156,6 +156,7 @@ export const REGULARS: Record<RegularId, { name: string; who: Line['who']; chapt
 export const CRITIC_INTRO: Line[] = [
   { who: 'critic', text: 'Dobrý večer. Jsem 미식가. Neusmívám se a nepiju sladké.' },
   { who: 'critic', text: 'Objednám si pětkrát. Každá chyba se objeví v mé recenzi.' },
+  { who: 'critic', text: 'A slušný kuchař hosta nejdřív pozdraví: 안녕하세요. Bez pozdravu hvězda dolů.' },
 ];
 
 export const CRITIC_REVIEW: Record<number, string> = {

@@ -26,7 +26,7 @@ export const NIGHTS: NightDef[] = [
   { n: 3, district: 'euljiro', newWords: ['gimbap', 'ppang', 'tteok', 'danmuji'], newJamo: ['ㅈ', 'ㅓ', 'ㄸ', 'ㅃ'], customers: 10, patience: 26, spawn: [5.5, 8], regulars: ['nabi', 'kim', 'haeun'] },
   { n: 4, district: 'euljiro', newWords: ['jjigae', 'japchae', 'galbi', 'gansik', 'eumsik'], newJamo: ['ㅅ', 'ㅡ', 'ㅉ', 'ㅐ'], customers: 11, patience: 25, spawn: [5, 7.5], regulars: ['nabi', 'kim', 'haeun'] },
   { n: 5, district: 'euljiro', newWords: ['gwaja', 'naengmyeon', 'bibimbap', 'kimchijjigae', 'jjajangmyeon', 'tteokbokki', 'maekju'], newJamo: ['ㅘ', 'ㄲ'], customers: 12, patience: 25, spawn: [5, 7], regulars: ['nabi', 'kim', 'haeun'] },
-  { n: 6, district: 'hangang', newWords: ['podo', 'juseu', 'keopi', 'gyul', 'banana'], newJamo: ['ㅍ', 'ㅋ'], customers: 10, patience: 25, spawn: [5, 7.5], regulars: ['nabi', 'kim', 'haeun'] },
+  { n: 6, district: 'hangang', newWords: ['podo', 'juseu', 'keopi', 'gyul', 'banana'], newJamo: ['ㅍ', 'ㅋ', 'ㅎ'], customers: 10, patience: 25, spawn: [5, 7.5], regulars: ['nabi', 'kim', 'haeun'] },
   { n: 7, district: 'hangang', newWords: ['sagwa', 'kolla', 'paseuta', 'eumnyosu', 'beobeulti'], newJamo: ['ㅌ', 'ㅛ'], customers: 11, patience: 24, spawn: [5, 7], regulars: ['nabi', 'kim', 'haeun'] },
   { n: 8, district: 'hangang', newWords: ['chikin', 'popkon', 'ttalgi', 'mellon', 'saendeuwichi'], newJamo: ['ㅔ', 'ㅟ'], customers: 12, patience: 23, spawn: [4.5, 7], regulars: ['nabi', 'kim', 'haeun'] },
   { n: 9, district: 'hangang', newWords: ['bingsu', 'gwail', 'aiseukeurim'], newJamo: [], customers: 13, patience: 22, spawn: [4.5, 6.5], regulars: ['nabi', 'kim', 'haeun'] },
@@ -81,4 +81,14 @@ export function nightPool(n: number, upgrades: string[]): string[] {
     if (!u.district || u.district === def.district || def.district === 'boss' || (u.district === 'euljiro' && n >= 5)) u.words.forEach((w) => ids.add(w));
   }
   return [...ids];
+}
+
+/** Jamo the player has been introduced to by night n (order of NIGHTS). */
+export function jamoKnown(n: number): Set<string> {
+  const known = new Set<string>();
+  for (const d of NIGHTS) {
+    d.newJamo.forEach((j) => known.add(j));
+    if (d.n === n) break;
+  }
+  return known;
 }

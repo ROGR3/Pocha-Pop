@@ -41,6 +41,12 @@ for (const [idx, n] of nights.entries()) {
       // dismiss dialogues (critic intro)
       const dlg = night?.children?.list.find((o) => o.type === 'Container' && o.depth === 2000);
       if (dlg) { dlg.list[0].emit('pointerup'); await sleep(150); continue; }
+      const gr = night?.activeGreetings?.() ?? [];
+      if (gr.length && !night.ended) {
+        for (const st of P.imeStates(gr[0].ko)) { el.value = st; el.dispatchEvent(new InputEvent('input')); await sleep(30); }
+        await sleep(200);
+        continue;
+      }
       const c = night?.customers?.find((x) => x.state === 'wait' && x.order && x.bubble);
       if (c) {
         // one deliberate typo per night to exercise the error path
@@ -54,9 +60,9 @@ for (const [idx, n] of nights.entries()) {
     const r = P.game.scene.getScene('Result');
     return { night: n, typed, scenes: P.game.scene.getScenes(true).map((s) => s.scene.key), summary: r?.s, saved: P.G.data.nights[n], coins: P.G.data.coins, words: Object.keys(P.G.data.words).length };
   }, [n, seats]);
-  const ok = res.scenes.includes('Result') && res.summary && res.saved?.plays >= 1;
+  const ok = res.scenes.includes('Result') && res.summary && res.saved?.plays >= 1 && (n < 6 || res.summary.greetings > 0);
   if (!ok) failed = true;
-  console.log(ok ? 'PASS' : 'FAIL', JSON.stringify({ night: res.night, seats: res.summary?.seats, typed: res.typed, stars: res.summary?.stars, served: res.summary?.served, total: res.summary?.total, mistakes: res.summary?.mistakes, critic: res.summary?.critic, coins: res.coins, words: res.words, scenes: res.scenes }));
+  console.log(ok ? 'PASS' : 'FAIL', JSON.stringify({ night: res.night, seats: res.summary?.seats, typed: res.typed, stars: res.summary?.stars, served: res.summary?.served, total: res.summary?.total, mistakes: res.summary?.mistakes, greetings: res.summary?.greetings, critic: res.summary?.critic, coins: res.coins, words: res.words, scenes: res.scenes }));
   await page.screenshot({ path: `/tmp/pocha-autoplay-${n}.png` });
 }
 const stored = await page.evaluate(() => localStorage.getItem('pocha-pop-save')?.length ?? 0);

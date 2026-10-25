@@ -927,6 +927,13 @@ icon("phrase", function(img)
   })
 end)
 
+-- ---------------------------------------------------------------- stage 2 parts
+-- art/icons/<part>.lua returns function(icon, L, H) and appends icons.
+local H = { steam = steam, bowl = bowl, contents = contents, plate = plate, ttuk = ttuk }
+for _, part in ipairs({ "expr", "adj" }) do
+  dofile(L.root .. "/art/icons/" .. part .. ".lua")(icon, L, H)
+end
+
 -- ---------------------------------------------------------------- build
 local spr = L.new(W, W, #ICONS)
 local names = {}
@@ -936,7 +943,7 @@ for i, ic in ipairs(ICONS) do
   L.outline(img, OUT)
   names[#names + 1] = '"' .. ic.name .. '"'
 end
-L.save(spr, "icons", { sheet = true })
+L.save(spr, "icons", { sheet = true, columns = 16 })
 local f = io.open(L.root .. "/public/assets/icons.json", "w")
 f:write('{ "size": 24, "names": [' .. table.concat(names, ", ") .. "] }\n")
 f:close()

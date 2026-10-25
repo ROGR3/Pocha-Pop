@@ -67,6 +67,35 @@ const PHRASE: Record<string, [string, string]> = {
   주세요: ['prosím, dejte mi', 'juseyo'],
 };
 
+/**
+ * Stage 2 words: ko → [czech, icon, id, category]. Categories group the
+ * recipe book: expr (greetings), adj (reactions), color, clothes, music,
+ * tech, body, travel, family, holiday.
+ */
+const MORE: Record<string, [string, string, string, string]> = {
+  // §2.1 greetings & farewells
+  안녕하세요: ['dobrý den', 'annyeonghaseyo', 'annyeonghaseyo', 'expr'],
+  환영해요: ['vítejte', 'hwanyeonghaeyo', 'hwanyeonghaeyo', 'expr'],
+  감사합니다: ['děkuji', 'gamsahamnida', 'gamsahamnida', 'expr'],
+  '또 오세요': ['přijďte zas', 'tto_oseyo', 'tto_oseyo', 'expr'],
+  '또 봐요': ['zase někdy', 'tto_bwayo', 'tto_bwayo', 'expr'],
+  '잘 가요': ['mějte se', 'jal_gayo', 'jal_gayo', 'expr'],
+  // §2.2 reactions (adjectives, dictionary form)
+  맵다: ['pálivý', 'maepda', 'maepda', 'adj'],
+  뜨겁다: ['horký', 'tteugeopda', 'tteugeopda', 'adj'],
+  달다: ['sladký', 'dalda', 'dalda', 'adj'],
+  맛있다: ['chutný', 'masitda', 'masitda', 'adj'],
+  비싸다: ['drahý', 'bissada', 'bissada', 'adj'],
+  싸다: ['levný', 'ssada', 'ssada', 'adj'],
+  예쁘다: ['hezký', 'yeppeuda', 'yeppeuda', 'adj'],
+  크다: ['velký', 'keuda', 'keuda', 'adj'],
+  작다: ['malý', 'jakda', 'jakda', 'adj'],
+  좋다: ['dobrý', 'jota', 'jota', 'adj'],
+};
+
+/** Words not in the deck, added by hand (with the reason). ko → [czech, icon, id, category, english]. */
+const EXTRA: Record<string, [string, string, string, string, string]> = {};
+
 const rows = existsSync(SRC)
   ? readFileSync(SRC, 'utf8').split('\n').filter(Boolean).map((l) => l.split('\t'))
   : [];
@@ -83,6 +112,17 @@ for (const [ko, [cs, id]] of Object.entries(PHRASE)) {
   const r = inDeck.get(ko);
   out.push({ id, ko, cs, en: r?.[1] ?? '', category: 'phrase', icon: 'phrase', difficulty: difficulty(ko) });
 }
+for (const [ko, [cs, icon, id, category]] of Object.entries(MORE)) {
+  const r = inDeck.get(ko);
+  if (rows.length && !r) throw new Error(`${ko} missing from deck (add it to EXTRA with a reason)`);
+  out.push({ id, ko, cs, en: r?.[1] ?? '', category, icon, difficulty: difficulty(ko) });
+}
+for (const [ko, [cs, icon, id, category, en]] of Object.entries(EXTRA)) {
+  if (inDeck.has(ko)) throw new Error(`${ko} is in the deck, move it to MORE`);
+  out.push({ id, ko, cs, en, category, icon, difficulty: difficulty(ko) });
+}
+const seen = new Set<string>();
+for (const w of out) { if (seen.has(w.id)) throw new Error('duplicate id ' + w.id); seen.add(w.id); }
 if (rows.length) {
   const missing = rows.filter((r) => r[2]?.trim() === 'Food' && !FOOD[r[0].trim()]);
   if (missing.length) throw new Error('untranslated food: ' + missing.map((m) => m[0]).join(', '));

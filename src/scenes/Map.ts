@@ -149,7 +149,7 @@ export class MapScene extends Phaser.Scene {
       c.add(txt(this, 12, y, 'Opakování všeho, co už umíš – rychleji!', { size: 's', color: C.light, wrap: pw - 24 }));
       y += 26;
     } else {
-      c.add(txt(this, 12, y, 'Objednává celými větami. Každá chyba = −1 hvězda v recenzi.', { size: 's', color: C.light, wrap: pw - 24 }));
+      c.add(txt(this, 12, y, 'Objednává celými větami a čeká pozdrav. Každá chyba i chybějící pozdrav = −1 hvězda.', { size: 's', color: C.light, wrap: pw - 24 }));
       y += 26;
     }
     c.add(txt(this, 12, y, `Zákazníků: ${def.customers}   Trpělivost: ${def.patience} s`, { size: 'xs', color: C.grey }));

@@ -81,6 +81,15 @@
   "difficulty": 3
  },
  {
+  "id": "keuda",
+  "ko": "크다",
+  "cs": "velký",
+  "en": "to be big",
+  "category": "adj",
+  "icon": "keuda",
+  "difficulty": 3
+ },
+ {
   "id": "mul",
   "ko": "물",
   "cs": "voda",
@@ -252,12 +261,57 @@
   "difficulty": 4.8
  },
  {
+  "id": "maepda",
+  "ko": "맵다",
+  "cs": "pálivý",
+  "en": "to be spicy",
+  "category": "adj",
+  "icon": "maepda",
+  "difficulty": 4.8
+ },
+ {
+  "id": "dalda",
+  "ko": "달다",
+  "cs": "sladký",
+  "en": "to be sweet",
+  "category": "adj",
+  "icon": "dalda",
+  "difficulty": 4.8
+ },
+ {
+  "id": "jakda",
+  "ko": "작다",
+  "cs": "malý",
+  "en": "to be small",
+  "category": "adj",
+  "icon": "jakda",
+  "difficulty": 4.8
+ },
+ {
+  "id": "jota",
+  "ko": "좋다",
+  "cs": "dobrý",
+  "en": "to be good",
+  "category": "adj",
+  "icon": "jota",
+  "difficulty": 4.8
+ },
+ {
   "id": "jjigae",
   "ko": "찌개",
   "cs": "hustá polévka",
   "en": "stew",
   "category": "food",
   "icon": "jjigae",
+  "difficulty": 5
+ },
+ {
+  "id": "ssada",
+  "ko": "싸다",
+  "cs": "levný",
+  "en": "to be cheap",
+  "category": "adj",
+  "icon": "ssada",
   "difficulty": 5
  },
  {
@@ -324,6 +378,15 @@
   "difficulty": 6.3
  },
  {
+  "id": "jal_gayo",
+  "ko": "잘 가요",
+  "cs": "mějte se",
+  "en": "Take care",
+  "category": "expr",
+  "icon": "jal_gayo",
+  "difficulty": 6.3
+ },
+ {
   "id": "gimbap",
   "ko": "김밥",
   "cs": "rýžové rolky",
@@ -378,6 +441,15 @@
   "difficulty": 6.5
  },
  {
+  "id": "bissada",
+  "ko": "비싸다",
+  "cs": "drahý",
+  "en": "to be expensive",
+  "category": "adj",
+  "icon": "bissada",
+  "difficulty": 6.5
+ },
+ {
   "id": "ttalgi",
   "ko": "딸기",
   "cs": "jahoda",
@@ -423,6 +495,42 @@
   "difficulty": 8
  },
  {
+  "id": "tto_oseyo",
+  "ko": "또 오세요",
+  "cs": "přijďte zas",
+  "en": "Please come again",
+  "category": "expr",
+  "icon": "tto_oseyo",
+  "difficulty": 8
+ },
+ {
+  "id": "yeppeuda",
+  "ko": "예쁘다",
+  "cs": "hezký",
+  "en": "to be pretty",
+  "category": "adj",
+  "icon": "yeppeuda",
+  "difficulty": 8
+ },
+ {
+  "id": "tteugeopda",
+  "ko": "뜨겁다",
+  "cs": "horký",
+  "en": "to be hot (to touch)",
+  "category": "adj",
+  "icon": "tteugeopda",
+  "difficulty": 8.3
+ },
+ {
+  "id": "tto_bwayo",
+  "ko": "또 봐요",
+  "cs": "zase někdy",
+  "en": "See you again",
+  "category": "expr",
+  "icon": "tto_bwayo",
+  "difficulty": 8.8
+ },
+ {
   "id": "aiseukeurim",
   "ko": "아이스크림",
   "cs": "zmrzlina",
@@ -466,6 +574,42 @@
   "category": "food",
   "icon": "saendeuwichi",
   "difficulty": 10
+ },
+ {
+  "id": "masitda",
+  "ko": "맛있다",
+  "cs": "chutný",
+  "en": "to be delicious",
+  "category": "adj",
+  "icon": "masitda",
+  "difficulty": 10
+ },
+ {
+  "id": "annyeonghaseyo",
+  "ko": "안녕하세요",
+  "cs": "dobrý den",
+  "en": "Hello (formal)",
+  "category": "expr",
+  "icon": "annyeonghaseyo",
+  "difficulty": 11
+ },
+ {
+  "id": "gamsahamnida",
+  "ko": "감사합니다",
+  "cs": "děkuji",
+  "en": "Thank you (formal)",
+  "category": "expr",
+  "icon": "gamsahamnida",
+  "difficulty": 11
+ },
+ {
+  "id": "hwanyeonghaeyo",
+  "ko": "환영해요",
+  "cs": "vítejte",
+  "en": "Welcome!",
+  "category": "expr",
+  "icon": "hwanyeonghaeyo",
+  "difficulty": 11.8
  },
  {
   "id": "tteokbokki",

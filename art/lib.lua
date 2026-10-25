@@ -348,7 +348,8 @@ function L.save(spr, name, opts)
     app.command.ExportSpriteSheet {
       ui = false,
       askOverwrite = false,
-      type = SpriteSheetType.HORIZONTAL,
+      type = opts.columns and SpriteSheetType.ROWS or SpriteSheetType.HORIZONTAL,
+      columns = opts.columns or 0,
       textureFilename = out,
       dataFilename = L.root .. "/public/assets/" .. name .. ".json",
       dataFormat = SpriteSheetDataFormat.JSON_HASH,
