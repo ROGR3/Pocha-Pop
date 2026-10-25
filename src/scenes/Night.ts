@@ -69,6 +69,7 @@ export interface NightSummary {
   helped: number;
   greetings: number;
   reactions: number;
+  haggles: number;
 }
 
 /** Ambient sound per backdrop. */
@@ -1052,7 +1053,7 @@ export class NightScene extends Phaser.Scene {
     G.save.save();
     const summary: NightSummary = {
       night: this.n, stars, total, served: this.served, angry: this.angry, mistakes: this.mistakes, coins: this.coins, tips: this.tips,
-      bestCombo: this.bestCombo, newWords, trouble, regularsSeen: this.regularsSeen, clean: this.cleanServes, seats: this.seats, helped: this.helped, greetings: this.greetings, reactions: this.reactions,
+      bestCombo: this.bestCombo, newWords, trouble, regularsSeen: this.regularsSeen, clean: this.cleanServes, seats: this.seats, helped: this.helped, greetings: this.greetings, reactions: this.reactions, haggles: this.haggles,
       critic: boss ? { stars, mistakes: this.critic.mistakes, walkouts: this.critic.walkouts } : undefined,
     };
     G.ime.deactivate();

@@ -86,6 +86,13 @@ export const NIGHTS: NightDef[] = [
   { n: 20, district: 'hongdae', newWords: ['pissibang', 'kaerikteo', 'tenteu', 'kaemping'], newJamo: [], customers: 13, patience: 23, spawn: [4.5, 7], regulars: ['nabi', 'minsu', 'haeun', 'imo'] },
   { n: 21, district: 'hongdae', newWords: [], newJamo: [], customers: 14, patience: 22, spawn: [4.5, 6.5], regulars: ['nabi', 'minsu', 'kim', 'haeun'] },
   { n: 121, district: 'boss', boss: 'manager', newWords: [], newJamo: [], customers: 8, patience: 26, spawn: [5, 7], regulars: ['minsu', 'nabi'] },
+  // 용산: haggling, long words
+  { n: 22, district: 'yongsan', newWords: ['haendeupon', 'kamera', 'kadeu', 'bolpen', 'harin'], newJamo: ['ㅝ'], customers: 11, patience: 27, spawn: [5.5, 8], regulars: ['nabi', 'park'] },
+  { n: 23, district: 'yongsan', newWords: ['noteubuk', 'keompyuteo', 'inteonet', 'gojangnasseoyo'], newJamo: ['ㅙ'], customers: 12, patience: 27, spawn: [5.5, 7.5], regulars: ['nabi', 'park', 'kim'] },
+  { n: 24, district: 'yongsan', newWords: ['tellebijeon', 'naengjanggo', 'setakgi', 'gochida'], newJamo: [], customers: 12, patience: 27, spawn: [5, 7.5], regulars: ['nabi', 'park', 'minsu'] },
+  { n: 25, district: 'yongsan', newWords: ['eeokeon', 'seonpunggi', 'boksagi'], newJamo: [], customers: 13, patience: 26, spawn: [5, 7], regulars: ['nabi', 'park', 'haeun', 'imo'] },
+  { n: 26, district: 'yongsan', newWords: [], newJamo: [], customers: 14, patience: 25, spawn: [4.5, 7], regulars: ['nabi', 'park', 'kim', 'minsu'] },
+  { n: 126, district: 'boss', boss: 'trader', newWords: ['neomu', 'jeongmal'], newJamo: [], customers: 8, patience: 28, spawn: [5, 7], regulars: ['park', 'nabi'] },
 ];
 
 /** Districts a boss night belongs to (for backdrop, pool and map). */

@@ -20,4 +20,8 @@ export const ITEM_REACTIONS: Record<string, ReactionId[]> = {
   ot: ['pretty', 'cheap'], chima: ['pretty', 'small'], baji: ['big', 'small'], moja: ['pretty', 'big'], gudu: ['pricey', 'pretty'],
   undonghwa: ['good', 'big'], tisyeocheu: ['cheap', 'small'], hanbok: ['pretty', 'pricey'], gabang: ['pricey', 'big'], jigap: ['small', 'pricey'],
   angyeong: ['pretty', 'small'], sigye: ['pricey', 'good'], mokgeori: ['pretty', 'pricey'], usan: ['big', 'cheap'],
+  // 용산 electronics
+  haendeupon: ['small', 'pricey', 'good'], kamera: ['pricey', 'good'], kadeu: ['small', 'okay'], bolpen: ['cheap', 'small'],
+  noteubuk: ['pricey', 'small'], keompyuteo: ['big', 'pricey'], tellebijeon: ['big', 'pricey'], naengjanggo: ['big', 'okay'],
+  setakgi: ['big', 'good'], eeokeon: ['pricey', 'good'], seonpunggi: ['cheap', 'okay'], boksagi: ['big', 'okay'],
 };

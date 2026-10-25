@@ -95,6 +95,8 @@ const SHOTS = [
   ['24-night-blogger', async (p) => { await ev(p, "P.seed(10); P.night2(116, 5000)"); await p.waitForTimeout(8000); }],
   ['25-night-hongdae', async (p) => { await ev(p, "P.seed(10); P.night2(19, 9000)"); await p.waitForTimeout(10600); }],
   ['26-night-manager', async (p) => { await ev(p, "P.seed(10); P.night2(121, 5000)"); await p.waitForTimeout(8000); }],
+  ['27-night-yongsan', async (p) => { await ev(p, "P.seed(10); P.night2(24, 7000)"); await p.waitForTimeout(8600); await ev(p, "(()=>{const n=P.night(); const c=n.customers.find(x=>x.state==='wait'&&x.bubble&&!x.haggle); if(c){ n.rand=()=>0; n.maybeHaggle(c);} })()"); await p.waitForTimeout(1800); }],
+  ['28-night-trader', async (p) => { await ev(p, "P.seed(10); P.night2(126, 5000)"); await p.waitForTimeout(8000); }],
   ['13-result', async (p) => { await ev(p, "P.start('Result',{night:4,stars:3,total:11,served:11,angry:0,mistakes:2,coins:132,tips:30,bestCombo:7,newWords:['jjigae','japchae','galbi','gansik','eumsik'],trouble:['jjigae','gwaja'],regularsSeen:[],clean:{}})"); await p.waitForTimeout(3200); }],
   ['14-postcard', async (p) => { await ev(p, "P.game.scene.getScene('Result').postcard()"); await p.waitForTimeout(1300); }],
   ['15-result-boss', async (p) => { await ev(p, "P.start('Result',{night:11,stars:4,total:11,served:10,angry:1,mistakes:1,coins:210,tips:40,bestCombo:5,newWords:['hana','juseyo'],trouble:[],regularsSeen:[],clean:{},critic:{stars:4,mistakes:1,walkouts:0}})"); await p.waitForTimeout(3200); }],
