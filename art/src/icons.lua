@@ -930,7 +930,7 @@ end)
 -- ---------------------------------------------------------------- stage 2 parts
 -- art/icons/<part>.lua returns function(icon, L, H) and appends icons.
 local H = { steam = steam, bowl = bowl, contents = contents, plate = plate, ttuk = ttuk }
-for _, part in ipairs({ "expr", "adj" }) do
+for _, part in ipairs({ "expr", "adj", "color" }) do
   dofile(L.root .. "/art/icons/" .. part .. ".lua")(icon, L, H)
 end
 

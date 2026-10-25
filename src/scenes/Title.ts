@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { G } from '../game/state';
+import { attachHat } from '../game/hats';
 import { Street, DEPTH } from '../game/street';
 import { button, fadeIn, goto, txt, C } from '../game/ui';
 
@@ -20,6 +21,7 @@ export class TitleScene extends Phaser.Scene {
     const kim = this.add.sprite(this.street.wx(this.street.seatX[1]), this.street.wy(-40), 'char_kim').setOrigin(0.5, 1).setDepth(DEPTH.customer).play('char_kim:idle');
     const cat = this.add.sprite(this.street.wx(this.street.seatX[2]), this.street.wy(-41), G.data.friends.nabi?.chapter >= 2 ? 'nabi_fat' : 'nabi').setOrigin(0.5, 1).setDepth(DEPTH.customer + 1);
     cat.play(`${cat.texture.key}:sit`);
+    attachHat(this, cat);
     void kim;
     // logo
     const big = W >= 262 && groundY > 300;

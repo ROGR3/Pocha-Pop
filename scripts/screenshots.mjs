@@ -81,6 +81,10 @@ const SHOTS = [
   ['15-result-boss', async (p) => { await ev(p, "P.start('Result',{night:11,stars:4,total:11,served:10,angry:1,mistakes:1,coins:210,tips:40,bestCombo:5,newWords:['hana','juseyo'],trouble:[],regularsSeen:[],clean:{},critic:{stars:4,mistakes:1,walkouts:0}})"); await p.waitForTimeout(3200); }],
   ['16-shop', async (p) => { await ev(p, "P.seed(4); P.G.data.coins=170; P.start('Shop')"); await p.waitForTimeout(900); }],
   ['17-shop-upgraded', async (p) => { await ev(p, "P.seed(9); P.G.data.upgrades=['lanterns','radio','awning','helper']; P.G.data.friends.kim.chapter=3; P.start('Shop')"); await p.waitForTimeout(900); }],
+  ['16b-paint', async (p) => { await ev(p, "P.seed(9); P.G.data.coins=300; ['ppalgansaek','paransaek','noransaek','choroksaek','bunhongsaek'].forEach((w,i)=>P.G.data.words[w]={mastery:i%3,seen:2,correct:1,errors:0,lapses:0,lastNight:12}); P.G.data.cosmetics={roof:'blue',sign:'yellow',stools:'yellow',lanterns:'green',hat:'crown',owned:['roof:blue','sign:yellow','stools:yellow','lanterns:green','hat:crown']}; P.G.data.upgrades=['lanterns','awning']; P.start('Paint')"); await p.waitForTimeout(900); }],
+  ['16c-paint-typing', async (p) => { await ev(p, "(()=>{const sc=P.game.scene.getScene('Paint'); const c=sc.cells().find(x=>x.id==='red'); sc.select(c);})()"); await p.waitForTimeout(400);
+    await ev(p, "(async()=>{const el=P.G.ime.el; for(const s of P.imeStates('빨간').slice(0,-1)){el.value=s;el.dispatchEvent(new InputEvent('input'));await P.sleep(40);}})()"); await p.waitForTimeout(500); }],
+  ['16d-paint-hats', async (p) => { await ev(p, "P.start('Paint',{tab:'hat'})"); await p.waitForTimeout(900); }],
   ['18-recipes', async (p) => { await ev(p, "P.seed(6); P.start('Recipes')"); await p.waitForTimeout(900); }],
   ['19-recipe-detail', async (p) => { await ev(p, "P.game.scene.getScene('Recipes').detail(P.WORDS.find(w=>w.id==='tteokbokki'), true)"); await p.waitForTimeout(400); }],
   ['20-settings', async (p) => { await ev(p, "P.start('Settings',{from:'Map'})"); await p.waitForTimeout(700); }],

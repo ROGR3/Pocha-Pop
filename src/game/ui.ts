@@ -170,7 +170,7 @@ export class Button extends Phaser.GameObjects.Container {
  * call onLocked instead. Returns the buttons.
  */
 export function segmented(scene: Phaser.Scene, x: number, y: number, w: number, h: number, labels: string[], value: number,
-  onChange: (i: number) => void, o: { locked?: boolean[]; onLocked?: (i: number) => void; icon?: string } = {}) {
+  onChange: (i: number) => void, o: { locked?: boolean[]; onLocked?: (i: number) => void; icon?: string; size?: Size } = {}) {
   const n = labels.length;
   const sw = Math.floor(w / n);
   const btns: Button[] = [];
@@ -183,7 +183,7 @@ export function segmented(scene: Phaser.Scene, x: number, y: number, w: number, 
       btns.forEach((bb, k) => bb.setStyle(k === i ? 'red' : 'wood'));
       scene.tweens.add({ targets: b, scale: { from: 1.12, to: 1 }, duration: 180, ease: 'Back.easeOut' });
       onChange(i);
-    }, { style: i === value ? 'red' : 'wood', size: 's', icon: locked ? 'lock' : o.icon });
+    }, { style: i === value ? 'red' : 'wood', size: o.size ?? 's', icon: locked ? 'lock' : o.icon });
     if (locked) {
       b.setEnabled(false);
       b.setInteractive({ useHandCursor: true });

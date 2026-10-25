@@ -1,0 +1,58 @@
+{ "frames": {
+   "0": {
+    "frame": { "x": 0, "y": 0, "w": 14, "h": 10 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 14, "h": 10 },
+    "sourceSize": { "w": 14, "h": 10 },
+    "duration": 100
+   },
+   "1": {
+    "frame": { "x": 14, "y": 0, "w": 14, "h": 10 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 14, "h": 10 },
+    "sourceSize": { "w": 14, "h": 10 },
+    "duration": 100
+   },
+   "2": {
+    "frame": { "x": 28, "y": 0, "w": 14, "h": 10 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 14, "h": 10 },
+    "sourceSize": { "w": 14, "h": 10 },
+    "duration": 100
+   },
+   "3": {
+    "frame": { "x": 42, "y": 0, "w": 14, "h": 10 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 14, "h": 10 },
+    "sourceSize": { "w": 14, "h": 10 },
+    "duration": 100
+   },
+   "4": {
+    "frame": { "x": 56, "y": 0, "w": 14, "h": 10 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 14, "h": 10 },
+    "sourceSize": { "w": 14, "h": 10 },
+    "duration": 100
+   }
+ },
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.3.17.2-x64",
+  "image": "hats.png",
+  "format": "RGBA8888",
+  "size": { "w": 70, "h": 10 },
+  "scale": "1",
+  "frameTags": [
+  ],
+  "layers": [
+   { "name": "art", "opacity": 255, "blendMode": "normal" }
+  ],
+  "slices": [
+  ]
+ }
+}

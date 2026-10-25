@@ -91,10 +91,26 @@ const MORE: Record<string, [string, string, string, string]> = {
   크다: ['velký', 'keuda', 'keuda', 'adj'],
   작다: ['malý', 'jakda', 'jakda', 'adj'],
   좋다: ['dobrý', 'jota', 'jota', 'adj'],
+  // §3.1
+  색: ['barva', 'saek', 'saek', 'color'],
 };
 
 /** Words not in the deck, added by hand (with the reason). ko → [czech, icon, id, category, english]. */
-const EXTRA: Record<string, [string, string, string, string, string]> = {};
+const EXTRA: Record<string, [string, string, string, string, string]> = {
+  // §3.1 colours: the deck only has 색 (colour); the Barvírna and the 동대문
+  // orders (colour + thing) need the colour names themselves.
+  빨간색: ['červená', 'ppalgansaek', 'ppalgansaek', 'color', 'red'],
+  파란색: ['modrá', 'paransaek', 'paransaek', 'color', 'blue'],
+  노란색: ['žlutá', 'noransaek', 'noransaek', 'color', 'yellow'],
+  초록색: ['zelená', 'choroksaek', 'choroksaek', 'color', 'green'],
+  하얀색: ['bílá', 'hayansaek', 'hayansaek', 'color', 'white'],
+  검은색: ['černá', 'geomeunsaek', 'geomeunsaek', 'color', 'black'],
+  분홍색: ['růžová', 'bunhongsaek', 'bunhongsaek', 'color', 'pink'],
+  보라색: ['fialová', 'borasaek', 'borasaek', 'color', 'purple'],
+  주황색: ['oranžová', 'juhwangsaek', 'juhwangsaek', 'color', 'orange'],
+  갈색: ['hnědá', 'galsaek', 'galsaek', 'color', 'brown'],
+  회색: ['šedá', 'hoesaek', 'hoesaek', 'color', 'grey'],
+};
 
 const rows = existsSync(SRC)
   ? readFileSync(SRC, 'utf8').split('\n').filter(Boolean).map((l) => l.split('\t'))

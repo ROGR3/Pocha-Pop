@@ -1,6 +1,7 @@
 // Persistent game state. Backend: @tauri-apps/plugin-store inside Tauri,
 // localStorage in a plain browser (Vite dev / Playwright), memory in tests.
 import type { WordStat } from './srs';
+import { defaultCosmetics, mergeCosmetics, type Cosmetics } from './cosmetics';
 
 export const SAVE_VERSION = 2;
 /** Coins refunded for the removed "4th stool" upgrade (stage 1 → 2). */
@@ -40,6 +41,7 @@ export interface SaveData {
   friends: Record<string, FriendState>;
   streak: { count: number; lastDay: string };
   stats: { served: number; mistakes: number; nightsPlayed: number };
+  cosmetics: Cosmetics;
 }
 
 export function defaultSave(): SaveData {
@@ -53,6 +55,7 @@ export function defaultSave(): SaveData {
     friends: {},
     streak: { count: 0, lastDay: '' },
     stats: { served: 0, mistakes: 0, nightsPlayed: 0 },
+    cosmetics: defaultCosmetics(),
   };
 }
 
@@ -73,6 +76,7 @@ export function migrate(raw: unknown): SaveData {
     streak: { ...d.streak, ...(r.streak ?? {}) },
     stats: { ...d.stats, ...(r.stats ?? {}) },
     coins: typeof r.coins === 'number' && isFinite(r.coins) ? r.coins : 0,
+    cosmetics: mergeCosmetics(r.cosmetics),
   };
   // v1 → v2: the 4th stool is no longer an upgrade but a choice before each night
   if (out.upgrades.includes('stool4')) {

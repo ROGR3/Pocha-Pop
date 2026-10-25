@@ -361,4 +361,23 @@ function L.save(spr, name, opts)
   print("saved " .. name .. " (" .. spr.width .. "x" .. spr.height .. ", " .. #spr.frames .. "f)")
 end
 
+-- Cosmetic colours (Barvírna): 4-tone ramps { hi, main, shade, dark }.
+-- Order = frame index 1..11 in every colour sheet (frame 0 = original look).
+L.COLORS = { "red", "orange", "yellow", "green", "blue", "purple", "pink", "white", "grey", "black", "brown" }
+L.RAMPS = {
+  red = { "D", "i", "h", "g" },
+  orange = { "k", "j", "b", "a" },
+  yellow = { "t", "l", "k", "j" },
+  green = { "m", "n", "o", "p" },
+  blue = { "s", "r", "q", "x" },
+  purple = { "C", "B", "x", "z" },
+  pink = { "t", "D", "C", "B" },
+  white = { "t", "t", "u", "v" },
+  grey = { "u", "v", "w", "x" },
+  black = { "w", "x", "y", "z" },
+  brown = { "d", "e", "f", "g" },
+}
+-- Colours light enough to need dark text on top.
+L.LIGHT = { yellow = true, white = true, pink = true, grey = true, orange = true }
+
 return L

@@ -2,6 +2,7 @@
 // the stall with its upgrades, chef, pot, rain or fireflies.
 import Phaser from 'phaser';
 import { G } from './state';
+import { colorFrame } from '../data/colors';
 
 export type Backdrop = 'euljiro' | 'hangang';
 
@@ -64,6 +65,9 @@ export class Street {
     this.near = s.add.sprite(0, 0, `bg_${pre}_near`).setOrigin(0.5, 0).setDepth(DEPTH.near).play(`bg_${pre}_near:${pre === 'eul' ? 'shimmer' : 'twinkle'}`);
     this.stall = s.add.sprite(0, 0, 'stall_back').setOrigin(0.5, 1).setDepth(DEPTH.stall).play('stall_back:glow');
     this.place(this.stall, 0, -6);
+    const cos = G.data.cosmetics;
+    if (cos.roof) this.place(s.add.image(0, 0, 'stall_roof', colorFrame(cos.roof)).setOrigin(0.5, 0).setDepth(DEPTH.stall + 0.2), 0, -126);
+    if (cos.sign) this.place(s.add.image(0, 0, 'stall_sign', colorFrame(cos.sign)).setOrigin(0, 0).setDepth(DEPTH.stall + 0.3), -18, -112);
     this.counter = s.add.image(0, 0, 'counter').setOrigin(0.5, 0).setDepth(DEPTH.counter);
     this.place(this.counter, 0, -42);
 
@@ -79,8 +83,9 @@ export class Street {
     }
     if (up.includes('lanterns')) {
       [-78, -39, 0, 39, 78].forEach((x, i) => {
-        const l = s.add.sprite(0, 0, 'lantern').setOrigin(0.5, 0).setDepth(DEPTH.lantern);
-        l.play({ key: 'lantern:blink', startFrame: i % 4 });
+        const lc = colorFrame(cos.lanterns);
+        const l = s.add.sprite(0, 0, 'lanterns', lc * 4).setOrigin(0.5, 0).setDepth(DEPTH.lantern);
+        l.play({ key: `lanterns:blink:${lc}`, startFrame: i % 4 });
         this.place(l, x, -100);
         this.lanterns.push(l);
         s.tweens.add({ targets: l, angle: { from: -4, to: 4 }, yoyo: true, repeat: -1, duration: 1400 + i * 170, ease: 'Sine.easeInOut' });
@@ -91,13 +96,13 @@ export class Street {
       this.place(this.radio, 66, -76);
     }
     if (up.includes('awning')) {
-      this.awning = s.add.image(0, 0, 'awning').setOrigin(0.5, 0).setDepth(DEPTH.awning);
+      this.awning = s.add.image(0, 0, 'awnings', colorFrame(cos.roof)).setOrigin(0.5, 0).setDepth(DEPTH.awning);
       this.place(this.awning, 0, -104);
     }
     const seats = o.seats ?? 3;
     this.seatX = SEAT_X[seats] ?? SEAT_X[3];
     this.seatX.forEach((x) => {
-      const st = s.add.image(0, 0, 'stool').setOrigin(0.5, 1).setDepth(DEPTH.stool);
+      const st = s.add.image(0, 0, 'stools', colorFrame(cos.stools)).setOrigin(0.5, 1).setDepth(DEPTH.stool);
       this.place(st, x, 2);
       this.stools.push(st);
     });

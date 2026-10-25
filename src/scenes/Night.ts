@@ -18,6 +18,7 @@ import { makeOrder, tokenAt, type Kind, type Order } from '../game/orders';
 import { G, iconIdx, word } from '../game/state';
 import { DEPTH, Street, particleFrame } from '../game/street';
 import { TypeBox } from '../game/typebox';
+import { attachHat } from '../game/hats';
 import { IS_ANDROID } from '../game/ime';
 import { C, HEX, button, cssRect, iconFrame, fadeIn, floatText, goto, iconButton, panel, snapText, toast, txt } from '../game/ui';
 
@@ -294,7 +295,7 @@ export class NightScene extends Phaser.Scene {
     const key = kind === 'generic' ? GENERIC[Math.floor(this.rand() * GENERIC.length)]
       : kind === 'nabi' ? (G.data.friends.nabi?.chapter >= 2 ? 'nabi_fat' : 'nabi') : `char_${kind === 'critic' ? 'critic' : kind}`;
     const sp = this.add.sprite(this.street.wx(140), 0, key).setOrigin(0.5, 1).setDepth(DEPTH.customer);
-    if (kind === 'nabi') sp.setFlipX(false);
+    if (kind === 'nabi') { sp.setFlipX(false); attachHat(this, sp); }
     const c: Customer = { kind, key, sprite: sp, seat, state: 'walk', patience: 1, max: 1, order: null, bubble: null, ordersLeft: kind === 'critic' ? CRITIC_ORDERS : 1 };
     this.seatsTaken[seat] = c;
     this.customers.push(c);

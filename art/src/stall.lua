@@ -2,6 +2,65 @@
 -- Upgrades are separate sprites: lantern, awning, radio, stool.
 local L = dofile(app.params.root .. "/art/lib.lua")
 local R = L.rng(11)
+local roof, sign
+
+-- ------------------------------------------------------------ roof / valance / sign (colourable)
+-- ramp = { hi, main, shade, dark } or nil for the original orange + red look.
+roof = function(img, ramp)
+  local W = 208
+  local top, main, fold, edge = "k", "j", "b", "a"
+  local vtop, vmain, vdark = "k", "i", "h"
+  if ramp then top, main, fold, edge = ramp[1], ramp[2], ramp[3], ramp[4]; vtop, vmain, vdark = ramp[1], ramp[3], ramp[4] end
+  for y = 0, 21 do
+    local inset = math.floor((21 - y) * 0.9)
+    for x = inset, W - 1 - inset do
+      local c = main
+      if (x % 16 == 0) then c = fold end
+      if y < 3 then c = top end
+      if y == 21 then c = edge end
+      L.set(img, x, y, c)
+    end
+  end
+  -- valance with scalloped edge
+  for x = 0, W - 1 do
+    local depth = 26 + ((x % 13 < 7) and 1 or 0) + ((x % 13 == 6) and 1 or 0)
+    for y = 18, depth do
+      local c = (y == 18) and vtop or vmain
+      if y >= depth - 1 then c = vdark end
+      L.set(img, x, y, c)
+    end
+  end
+  L.vline(img, 104, 27, 28, "z") -- bulb wire
+end
+
+-- sign plate 포차 (36x13) at x, y
+sign = function(img, ramp, x, y)
+  local plate, hi, lo, ink = "c", "t", "d", "h"
+  if ramp then
+    plate, hi, lo = ramp[2], ramp[1], ramp[3]
+    ink = L.LIGHT[ramp.name] and "g" or "t"
+    if ramp.name == "white" then lo = "u" end
+  end
+  L.rect(img, x, y, 36, 13, plate); L.rect(img, x, y, 36, 1, hi); L.rect(img, x, y + 12, 36, 1, lo)
+  L.text(img, x + 9, y + 3, "포차", ink, { step = 10 })
+end
+
+local function ramp(name)
+  local r = L.RAMPS[name]
+  return { r[1], r[2], r[3], r[4], name = name }
+end
+
+-- colour sheets: frame 1 = original, frames 2..12 = L.COLORS
+do
+  local spr = L.new(208, 29, 12)
+  for f = 1, 12 do roof(L.img(spr, f), f > 1 and ramp(L.COLORS[f - 1]) or nil) end
+  L.save(spr, "stall_roof", { sheet = true })
+end
+do
+  local spr = L.new(36, 13, 12)
+  for f = 1, 12 do sign(L.img(spr, f), f > 1 and ramp(L.COLORS[f - 1]) or nil, 0, 0) end
+  L.save(spr, "stall_sign", { sheet = true })
+end
 
 -- ------------------------------------------------------------ stall_back 208x120
 do
@@ -53,29 +112,8 @@ do
       for x = 49, 49 + len do if (x + row) % 3 ~= 0 then L.set(img, x, y, "g") end end
       L.hline(img, 92, 100, y, "h")
     end
-    -- roof
-    for y = 0, 21 do
-      local inset = math.floor((21 - y) * 0.9)
-      for x = inset, W - 1 - inset do
-        local c = "j"
-        if (x % 16 == 0) then c = "b" end
-        if y < 3 then c = "k" end
-        if y == 21 then c = "a" end
-        L.set(img, x, y, c)
-      end
-    end
-    -- valance with scalloped edge
-    for x = 0, W - 1 do
-      local depth = 26 + ((x % 13 < 7) and 1 or 0) + ((x % 13 == 6) and 1 or 0)
-      for y = 18, depth do
-        local c = (y == 18) and "k" or "i"
-        if y >= depth - 1 then c = "h" end
-        L.set(img, x, y, c)
-      end
-    end
-    -- sign plate 포차
-    L.rect(img, 86, 14, 36, 13, "c"); L.rect(img, 86, 14, 36, 1, "t"); L.rect(img, 86, 26, 36, 1, "d")
-    L.text(img, 95, 17, "포차", "h", { step = 10 })
+    roof(img, nil)
+    sign(img, nil, 86, 14)
     -- poles
     L.rect(img, 2, 20, 3, 100, "w"); L.vline(img, 2, 20, 119, "u")
     L.rect(img, 203, 20, 3, 100, "w"); L.vline(img, 203, 20, 119, "u")
@@ -165,6 +203,30 @@ do
 end
 
 -- ------------------------------------------------------------ paper lantern 12x18, 4 frames
+-- lantern: original red. lanterns: 12 colours x 4 frames (colour c → frames c*4 .. c*4+3).
+local function lanternFrame(img, f, r)
+  local glow = { "k", "l", "k", "j" }
+  local hi, main, shade, rib = "j", "i", "a", "h"
+  if r then hi, main, shade, rib = r[1], r[2], r[3], r[4] end
+  if r and r.name == "white" then rib = "v" end
+  L.vline(img, 6, 0, 2, "z")
+  L.rect(img, 4, 2, 4, 2, "g")
+  L.ebox(img, 1, 3, 10, 15, function(nx, ny, x, y)
+    if (y - 3) % 3 == 0 then return rib end
+    if math.abs(nx) < 0.35 and math.abs(ny) < 0.5 then return glow[f] end
+    if nx < -0.55 then return hi end
+    if nx > 0.5 then return shade end
+    return main
+  end)
+  L.rect(img, 4, 15, 4, 2, "g")
+  L.vline(img, 6, 17, 17, "k")
+end
+do
+  local spr = L.new(12, 18, 48)
+  for c = 0, 11 do for f = 1, 4 do lanternFrame(L.img(spr, c * 4 + f), f, c > 0 and ramp(L.COLORS[c]) or nil) end end
+  L.durations(spr, 260)
+  L.save(spr, "lanterns", { sheet = true, columns = 12 })
+end
 do
   local spr = L.new(12, 18, 4)
   local glow = { "k", "l", "k", "j" }
@@ -189,21 +251,29 @@ do
 end
 
 -- ------------------------------------------------------------ awning (plachta) 216x12
-do
-  local spr = L.new(216, 12, 1)
-  local img = L.img(spr, 1)
+local function awning(img, r)
+  local main, hi, dark, white, wdark = "q", "r", "y", "t", "u"
+  if r then main, hi, dark = r[2], r[1], r[4] end
+  if r and r.name == "white" then main, hi, dark, white, wdark = "u", "t", "v", "v", "w" end
   for x = 0, 215 do
     local stripe = math.floor(x / 9) % 2 == 0
     local depth = 8 + ((x % 9 < 5) and 1 or 0)
     for y = 0, depth do
-      local c = stripe and "q" or "t"
-      if y == 0 then c = stripe and "r" or "t" end
-      if y >= depth then c = stripe and "y" or "u" end
+      local c = stripe and main or white
+      if y == 0 then c = stripe and hi or white end
+      if y >= depth then c = stripe and dark or wdark end
       L.set(img, x, y, c)
     end
   end
   L.hline(img, 0, 215, 0, "u")
+end
+do
+  local spr = L.new(216, 12, 1)
+  awning(L.img(spr, 1), nil)
   L.save(spr, "awning")
+  local all = L.new(216, 12, 12)
+  for c = 1, 12 do awning(L.img(all, c), c > 1 and ramp(L.COLORS[c - 1]) or nil) end
+  L.save(all, "awnings", { sheet = true, columns = 1 })
 end
 
 -- ------------------------------------------------------------ radio 18x12, 2 frames
@@ -223,7 +293,32 @@ do
   L.save(spr, "radio")
 end
 
--- ------------------------------------------------------------ red plastic stool 16x14
+-- ------------------------------------------------------------ red plastic stool 16x14 (+ 12 colour sheet)
+local function stool(img, r)
+  L.ebox(img, 0, 0, 15, 4, function(nx, ny) return ny < 0 and "D" or "i" end)
+  L.map(img, 1, 4, {
+    "iiiiiiiiiiiiii",
+    ".ih........hi.",
+    ".ih..hiih..hi.",
+    "..ih.h..h.hi..",
+    "..ih.hiih.hi..",
+    "..ih......hi..",
+    "...ih....hi...",
+    "...ih....hi...",
+    "..hhh....hhh..",
+  })
+  if r then
+    local hi, main, shade = r[1], r[2], r[3]
+    if r.name == "white" then hi, main, shade = "t", "u", "v" end
+    L.swap(img, { D = hi, i = main, h = shade })
+  end
+  L.outline(img, "g")
+end
+do
+  local all = L.new(16, 14, 12)
+  for c = 1, 12 do stool(L.img(all, c), c > 1 and ramp(L.COLORS[c - 1]) or nil) end
+  L.save(all, "stools", { sheet = true })
+end
 do
   local spr = L.new(16, 14, 1)
   local img = L.img(spr, 1)

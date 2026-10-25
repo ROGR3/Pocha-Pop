@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { CLIFFHANGER, PROLOGUE, type Line } from '../data/story';
 import { playDialogue } from '../game/dialogue';
 import { G } from '../game/state';
+import { attachHat } from '../game/hats';
 import { DEPTH, Street } from '../game/street';
 import { fadeIn, goto, txt, C } from '../game/ui';
 
@@ -31,7 +32,7 @@ export class StoryScene extends Phaser.Scene {
     } else {
       ['char_kim', 'char_haeun'].forEach((k, i) => this.add.sprite(this.street.wx(this.street.seatX[i]), this.street.wy(-40), k).setOrigin(0.5, 1).setDepth(DEPTH.customer).play(`${k}:happy`));
       const cat = G.data.friends.nabi?.chapter >= 2 ? 'nabi_fat' : 'nabi';
-      this.add.sprite(this.street.wx(this.street.seatX[2]), this.street.wy(-41), cat).setOrigin(0.5, 1).setDepth(DEPTH.customer).play(`${cat}:sit`);
+      attachHat(this, this.add.sprite(this.street.wx(this.street.seatX[2]), this.street.wy(-41), cat).setOrigin(0.5, 1).setDepth(DEPTH.customer).play(`${cat}:sit`));
     }
     const W = this.scale.width;
     txt(this, W / 2, 14, ending ? 'Epilog' : 'Prolog', { size: 'l', color: C.yellow, origin: [0.5, 0], shadow: true }).setDepth(DEPTH.hud);

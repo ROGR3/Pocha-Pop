@@ -65,7 +65,8 @@ export class ShopScene extends Phaser.Scene {
       }
     });
     iconButton(this, 16, H - footer / 2, 'back', () => goto(this, 'Map')).setDepth(DEPTH.hud);
-    txt(this, 32, H - footer / 2, 'Upgrady jsou vidět u stánku.', { size: 'xs', color: C.grey, origin: [0, 0.5] }).setDepth(DEPTH.hud);
+    txt(this, 32, H - footer / 2, 'Upgrady jsou vidět u stánku.', { size: 'xs', color: C.grey, origin: [0, 0.5], wrap: W - 130 }).setDepth(DEPTH.hud);
+    button(this, W - 50, H - footer / 2, 88, 20, 'Barvírna', () => goto(this, 'Paint', { from: 'Shop' }), { icon: 'paint', style: 'wood', size: 's' }).setDepth(DEPTH.hud);
     if (this.bought) {
       toast(this, 'Koupeno!', C.green, gy - 90);
       this.street.flash(3);

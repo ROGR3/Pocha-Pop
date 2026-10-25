@@ -126,6 +126,15 @@
   "difficulty": 3.3
  },
  {
+  "id": "saek",
+  "ko": "색",
+  "cs": "barva",
+  "en": "color",
+  "category": "color",
+  "icon": "saek",
+  "difficulty": 3.3
+ },
+ {
   "id": "dijeoteu",
   "ko": "디저트",
   "cs": "dezert",
@@ -387,6 +396,15 @@
   "difficulty": 6.3
  },
  {
+  "id": "borasaek",
+  "ko": "보라색",
+  "cs": "fialová",
+  "en": "purple",
+  "category": "color",
+  "icon": "borasaek",
+  "difficulty": 6.3
+ },
+ {
   "id": "gimbap",
   "ko": "김밥",
   "cs": "rýžové rolky",
@@ -450,6 +468,15 @@
   "difficulty": 6.5
  },
  {
+  "id": "galsaek",
+  "ko": "갈색",
+  "cs": "hnědá",
+  "en": "brown",
+  "category": "color",
+  "icon": "galsaek",
+  "difficulty": 6.5
+ },
+ {
   "id": "ttalgi",
   "ko": "딸기",
   "cs": "jahoda",
@@ -465,6 +492,15 @@
   "en": "fruit",
   "category": "food",
   "icon": "gwail",
+  "difficulty": 7
+ },
+ {
+  "id": "hoesaek",
+  "ko": "회색",
+  "cs": "šedá",
+  "en": "grey",
+  "category": "color",
+  "icon": "hoesaek",
   "difficulty": 7
  },
  {
@@ -513,6 +549,42 @@
   "difficulty": 8
  },
  {
+  "id": "paransaek",
+  "ko": "파란색",
+  "cs": "modrá",
+  "en": "blue",
+  "category": "color",
+  "icon": "paransaek",
+  "difficulty": 8
+ },
+ {
+  "id": "noransaek",
+  "ko": "노란색",
+  "cs": "žlutá",
+  "en": "yellow",
+  "category": "color",
+  "icon": "noransaek",
+  "difficulty": 8
+ },
+ {
+  "id": "choroksaek",
+  "ko": "초록색",
+  "cs": "zelená",
+  "en": "green",
+  "category": "color",
+  "icon": "choroksaek",
+  "difficulty": 8
+ },
+ {
+  "id": "hayansaek",
+  "ko": "하얀색",
+  "cs": "bílá",
+  "en": "white",
+  "category": "color",
+  "icon": "hayansaek",
+  "difficulty": 8
+ },
+ {
   "id": "tteugeopda",
   "ko": "뜨겁다",
   "cs": "horký",
@@ -558,6 +630,24 @@
   "difficulty": 9.8
  },
  {
+  "id": "geomeunsaek",
+  "ko": "검은색",
+  "cs": "černá",
+  "en": "black",
+  "category": "color",
+  "icon": "geomeunsaek",
+  "difficulty": 9.8
+ },
+ {
+  "id": "bunhongsaek",
+  "ko": "분홍색",
+  "cs": "růžová",
+  "en": "pink",
+  "category": "color",
+  "icon": "bunhongsaek",
+  "difficulty": 9.8
+ },
+ {
   "id": "jjajangmyeon",
   "ko": "짜장면",
   "cs": "nudle v černé omáčce",
@@ -585,6 +675,15 @@
   "difficulty": 10
  },
  {
+  "id": "juhwangsaek",
+  "ko": "주황색",
+  "cs": "oranžová",
+  "en": "orange",
+  "category": "color",
+  "icon": "juhwangsaek",
+  "difficulty": 10.3
+ },
+ {
   "id": "annyeonghaseyo",
   "ko": "안녕하세요",
   "cs": "dobrý den",
@@ -609,6 +708,15 @@
   "en": "Welcome!",
   "category": "expr",
   "icon": "hwanyeonghaeyo",
+  "difficulty": 11.8
+ },
+ {
+  "id": "ppalgansaek",
+  "ko": "빨간색",
+  "cs": "červená",
+  "en": "red",
+  "category": "color",
+  "icon": "ppalgansaek",
   "difficulty": 11.8
  },
  {

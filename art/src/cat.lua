@@ -102,3 +102,90 @@ for _, k in ipairs(KIT) do
   L.tag(spr, "idle", 1, 2); L.tag(spr, "hop", 3, 4)
   L.save(spr, k[1])
 end
+
+-- head anchor per frame (for hats): x = head map left, y = head map top
+do
+  local f = io.open(L.root .. "/public/assets/nabi_head.json", "w")
+  local q = {}
+  for _, fr in ipairs(FR) do
+    local hx = fr.sit and 3 or 1
+    local hy = (fr.sit and 1 or 2) + (fr.bob or 0) + (fr.headDown or 0)
+    q[#q + 1] = "[" .. hx .. "," .. hy .. "]"
+  end
+  f:write('{ "frames": [' .. table.concat(q, ",") .. '] }\n')
+  f:close()
+end
+
+-- hats for 나비 14x10, bottom row sits on the head top (head y + 3).
+-- Facing left like the cat. Order: cap, bow, crown, beanie, straw.
+local HATS = {
+  { -- kšiltovka: red cap, brim forward (left)
+    "..............",
+    "..............",
+    "..............",
+    "..............",
+    "......iii.....",
+    ".....iDiii....",
+    "....iDiiiih...",
+    "....iiiiiih...",
+    "hhhhhhhhhhh...",
+    "..............",
+  },
+  { -- mašle: pink bow on the right ear
+    "..............",
+    "..............",
+    "..............",
+    "..............",
+    "..............",
+    "..........C...",
+    "........DDCDD.",
+    "........DtDDC.",
+    ".........C.C..",
+    "..............",
+  },
+  { -- korunka: little gold crown
+    "..............",
+    "..............",
+    "..............",
+    "....l..l..l...",
+    "....ll.l.ll...",
+    "....lllllll...",
+    "....lkiklkk...",
+    "....kkkkkkj...",
+    "..............",
+    "..............",
+  },
+  { -- čepička s bambulí: blue beanie with white pompom
+    "..............",
+    ".......tt.....",
+    "......tttu....",
+    ".......uu.....",
+    "......rrrr....",
+    ".....rsrrrq...",
+    "....rsrrrrrq..",
+    "....rrrrrrrq..",
+    "...ttuttuttu..",
+    "..............",
+  },
+  { -- slaměný klobouk: straw hat with red band, wide brim
+    "..............",
+    "..............",
+    "..............",
+    "......kkk.....",
+    ".....klkkkj...",
+    ".....kkkkkj...",
+    ".....iiiiih...",
+    "..dkkkkkkkkkb.",
+    ".dddddddddddbb",
+    "..............",
+  },
+}
+do
+  local spr = L.new(14, 10, #HATS)
+  for i, h in ipairs(HATS) do
+    local img = L.img(spr, i)
+    L.map(img, 0, 0, h)
+    L.outline(img, "g")
+  end
+  L.save(spr, "hats", { sheet = true })
+end

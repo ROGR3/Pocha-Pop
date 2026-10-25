@@ -6,7 +6,7 @@ const SHEETS: [string, number, number][] = [
   ['char_kim', 32, 40], ['char_haeun', 32, 40], ['char_critic', 32, 40], ['char_halmeoni', 32, 40],
   ['char_cust_a', 32, 40], ['char_cust_b', 32, 40], ['char_cust_c', 32, 40], ['char_cust_d', 32, 40],
   ['chef', 32, 40], ['char_kim_helper', 32, 40], ['nabi', 24, 16], ['nabi_fat', 24, 16], ['kitten_a', 12, 10], ['kitten_b', 12, 10], ['kitten_c', 12, 10],
-  ['stall_back', 208, 120], ['pot', 28, 36], ['lantern', 12, 18], ['radio', 18, 14],
+  ['stall_back', 208, 120], ['stall_roof', 208, 29], ['stall_sign', 36, 13], ['stools', 16, 14], ['lanterns', 12, 18], ['awnings', 216, 12], ['hats', 14, 10], ['pot', 28, 36], ['lantern', 12, 18], ['radio', 18, 14],
   ['coin', 10, 10], ['star', 15, 14], ['star_s', 9, 9], ['faces', 11, 11], ['node', 16, 22], ['node_boss', 26, 34], ['logo', 128, 44],
   ['bg_eul_mid', 320, 240], ['bg_eul_near', 320, 40], ['bg_han_mid', 320, 240], ['bg_han_near', 320, 40],
 ];
@@ -40,6 +40,7 @@ export class BootScene extends Phaser.Scene {
     a('chef', 'idle', 0, 3, 4); a('chef', 'cook', 4, 9, 14, 0); a('chef', 'serve', 10, 13, 12, 0); a('chef', 'happy', 14, 17, 8, 1);
     for (const n of ['nabi', 'nabi_fat']) { a(n, 'walk', 0, 3, 8); a(n, 'sit', 4, 7, 3); a(n, 'eat', 8, 9, 5); }
     for (const k of ['kitten_a', 'kitten_b', 'kitten_c']) { a(k, 'idle', 0, 1, 2); a(k, 'hop', 2, 3, 6, 0); }
+    for (let c = 0; c < 12; c++) a('lanterns', `blink:${c}`, c * 4, c * 4 + 3, 4);
     a('stall_back', 'glow', 0, 3, 4); a('pot', 'boil', 0, 5, 9); a('lantern', 'blink', 0, 3, 4); a('radio', 'play', 0, 1, 3);
     a('coin', 'spin', 0, 5, 14); a('star', 'ding', 2, 5, 14, 0); a('node', 'lit', 0, 1, 3); a('node_boss', 'lit', 1, 2, 3);
     this.anims.create({ key: 'logo:shine', frames: [0, 1, 2, 3].map((f) => ({ key: 'logo', frame: f, duration: f === 3 ? 1800 : 110 })), repeat: -1 });
