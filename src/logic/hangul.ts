@@ -125,11 +125,22 @@ export interface MatchResult<T> {
   error: boolean;
 }
 
-export function matchAgainst<T>(typed: string, items: T[], getTarget: (t: T) => string): MatchResult<T> {
+/** Best match of `typed` against several accepted answers. */
+export function matchAny(typed: string, targets: string | string[]): MatchKind {
+  let best: MatchKind = 'none';
+  for (const t of Array.isArray(targets) ? targets : [targets]) {
+    const k = matchKind(typed, t);
+    if (k === 'full') return 'full';
+    if (k === 'prefix') best = 'prefix';
+  }
+  return best;
+}
+
+export function matchAgainst<T>(typed: string, items: T[], getTarget: (t: T) => string | string[]): MatchResult<T> {
   const res: MatchResult<T> = { prefix: [], full: null, error: false };
   if (toJamo(typed).length === 0) return res;
   for (const it of items) {
-    const k = matchKind(typed, getTarget(it));
+    const k = matchAny(typed, getTarget(it));
     if (k === 'full' && !res.full) res.full = it;
     if (k !== 'none') res.prefix.push(it);
   }

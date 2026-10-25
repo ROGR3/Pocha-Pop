@@ -5,55 +5,10 @@ local W = 24
 local ICONS = {}
 local function icon(name, fn) ICONS[#ICONS + 1] = { name = name, fn = fn } end
 
--- ---------------------------------------------------------------- helpers
-local OUT = "g" -- warm dark outline
-
-local function steam(img, xs, y0)
-  for _, x in ipairs(xs) do
-    L.map(img, x, y0, { ".t", "t.", "t.", ".u", ".u", "u." })
-  end
-end
-
--- White ceramic bowl. rim bbox x0..x1, rim top y, depth d.
-local function bowl(img, x0, x1, y, d, cols)
-  cols = cols or { "t", "u", "v", "w" }
-  local h = 5
-  -- body: lower half ellipse
-  L.ebox(img, x0, y - d + 2, x1, y + d + 2, function(nx, ny)
-    if nx < -0.55 then return cols[1] elseif nx > 0.45 then return cols[3] end
-    return cols[2]
-  end, { y0 = y + 2 })
-  -- foot
-  local cx = math.floor((x0 + x1) / 2)
-  L.hline(img, cx - 3, cx + 4, y + d + 2, cols[3])
-  -- rim ring
-  L.ebox(img, x0, y, x1, y + h, function(nx, ny) return ny < 0 and cols[1] or cols[2] end)
-end
-
--- Contents ellipse inside a bowl rim.
-local function contents(img, x0, x1, y, fn)
-  L.ebox(img, x0 + 1, y + 1, x1 - 1, y + 4, fn)
-end
-
-local function plate(img, x0, x1, y, cols)
-  cols = cols or { "t", "u", "v" }
-  L.ebox(img, x0, y, x1, y + 5, function(nx, ny)
-    if ny > 0.55 then return cols[3] end
-    if nx * nx + ny * ny < 0.45 then return cols[2] end
-    return cols[1]
-  end)
-end
-
--- Earthenware pot (ttukbaegi) used for stews.
-local function ttuk(img, x0, x1, y, broth)
-  L.ebox(img, x0, y - 4, x1, y + 12, function(nx, ny)
-    if nx < -0.5 then return "e" elseif nx > 0.45 then return "g" end
-    return "f"
-  end, { y0 = y + 2, y1 = y + 9 })
-  L.hline(img, x0 + 3, x1 - 3, y + 10, "g")
-  L.ebox(img, x0, y, x1, y + 5, function(nx, ny) return ny < 0 and "e" or "f" end)
-  L.ebox(img, x0 + 1, y + 1, x1 - 1, y + 4, broth)
-end
+-- ---------------------------------------------------------------- helpers (shared with art/icons/*.lua)
+local H = dofile(L.root .. "/art/icons/_helpers.lua")(L)
+local steam, bowl, contents, plate, ttuk = H.steam, H.bowl, H.contents, H.plate, H.ttuk
+local OUT = "g"
 
 -- ---------------------------------------------------------------- icons
 icon("ramyeon", function(img)
@@ -929,9 +884,32 @@ end)
 
 -- ---------------------------------------------------------------- stage 2 parts
 -- art/icons/<part>.lua returns function(icon, L, H) and appends icons.
-local H = { steam = steam, bowl = bowl, contents = contents, plate = plate, ttuk = ttuk }
-for _, part in ipairs({ "expr", "adj", "color" }) do
-  dofile(L.root .. "/art/icons/" .. part .. ".lua")(icon, L, H)
+for _, part in ipairs({ "expr", "adj", "color", "music", "tech", "body", "travel", "family", "holiday", "extra" }) do
+  local path = L.root .. "/art/icons/" .. part .. ".lua"
+  local fh = io.open(path, "r")
+  if fh then fh:close(); dofile(path)(icon, L, H) end
+end
+
+-- clothes: separate sheet, 12 frames per item (0 = neutral grey, 1..11 = L.COLORS)
+do
+  local set = dofile(L.root .. "/art/icons/clothes.lua")
+  local spr = L.new(W, W, #set.items * 12)
+  local names, defaults = {}, {}
+  for k, it in ipairs(set.items) do
+    for c = 0, 11 do
+      local cname = c == 0 and "grey" or L.COLORS[c]
+      local r = L.RAMPS[cname]
+      local img = L.img(spr, (k - 1) * 12 + c + 1)
+      it[3](img, { r[1], r[2], r[3], r[4], name = cname })
+      L.outline(img, OUT)
+    end
+    names[#names + 1] = '"' .. it[1] .. '"'
+    defaults[#defaults + 1] = '"' .. it[1] .. '": "' .. it[2] .. '"'
+  end
+  L.save(spr, "clothes", { sheet = true, columns = 12 })
+  local f = io.open(L.root .. "/public/assets/clothes.json", "w")
+  f:write('{ "size": 24, "names": [' .. table.concat(names, ", ") .. '], "defaults": { ' .. table.concat(defaults, ", ") .. " } }\n")
+  f:close()
 end
 
 -- ---------------------------------------------------------------- build

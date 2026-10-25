@@ -10,6 +10,15 @@ const PORTRAIT: Record<string, { key: string; frame: number } | null> = {
   haeun: { key: 'char_haeun', frame: 5 },
   nabi: { key: 'nabi', frame: 4 },
   critic: { key: 'char_critic', frame: 0 },
+  imo: { key: 'char_imo', frame: 5 },
+  minsu: { key: 'char_minsu', frame: 0 },
+  park: { key: 'char_park', frame: 0 },
+  kang: { key: 'char_kang', frame: 2 },
+  yaksa: { key: 'char_yaksa', frame: 5 },
+  blogger: { key: 'char_blogger', frame: 5 },
+  manager: { key: 'char_manager', frame: 2 },
+  trader: { key: 'char_trader', frame: 3 },
+  captain: { key: 'char_captain', frame: 0 },
   narrator: null,
 };
 

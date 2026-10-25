@@ -229,9 +229,10 @@ do
     hand = { "...E.E......", "..EEFEFE....", "..EFEFEFE...", "..EFEFEFE...", "E.EEEEEFE...", "EEEEEEEEF...", ".EEEEEEEF...", "..EEEEEEF...", "..EEEEEF....", "...FEEEF....", "...jjjj.....", "...jkkj....." },
     door = { "..ffffffff..", "..fbbbbbbf..", "..fbeeeebf..", "..fbeeeebf..", "..fbbbbbbf..", "..fbeeeebf..", "..fbeeekbf..", "..fbeeeebf..", "..fbeeeebf..", "..fbbbbbbf..", "..ffffffff..", ".dddddddddd." },
     paint = { "..........ff", ".........fef", "........fef.", ".......fef..", "......fef...", ".....uvu....", "....uvvu....", "...iiiv.....", "..iDii......", ".iiih.......", "iiih........", "hhh........." },
+    stool_s = { "............", "............", "............", "............", "....DDDD....", "...iiiiii...", "....h..h....", "....h..h....", "...hh..hh...", "............", "............", "............" },
     close = { "............", ".tt......tt.", ".ttt....ttt.", "..ttt..ttt..", "...tttttt...", "....tttt....", "....tttt....", "...tttttt...", "..ttt..ttt..", ".ttt....ttt.", ".tt......tt.", "............" },
   }
-  local order = { "gear", "book", "bag", "back", "help", "pause", "sound", "mute", "fire", "heart", "keyboard", "lock", "check", "play", "map", "close", "stool", "hand", "door", "paint" }
+  local order = { "gear", "book", "bag", "back", "help", "pause", "sound", "mute", "fire", "heart", "keyboard", "lock", "check", "play", "map", "close", "stool", "hand", "door", "paint", "stool_s" }
   sheet("uiicons", 14, 14, order, function(img, n) L.map(img, 1, 1, ICONS[n]) end, { outline = "g" })
   local f = io.open(L.root .. "/public/assets/uiicons.json", "w")
   local q = {}
@@ -254,9 +255,10 @@ do
     note = { "...ll...", "...lkl..", "...l.k..", "...l....", ".lll....", "lkkl....", ".ll.....", "........" },
     dot = { "tt......", "tt......", "........", "........", "........", "........", "........", "........" },
     crumb = { "kj......", "jb......", "........", "........", "........", "........", "........", "........" },
+    snow = { "...t....", ".t.u.t..", "..tut...", "tuu.uut.", "..tut...", ".t.u.t..", "...t....", "........" },
     zz = { "zzzz....", "...z....", "..z.....", ".z......", "zzzz....", "........", "........", "........" },
   }
-  local order = { "pop1", "pop2", "spark", "puff", "puff2", "drop", "splash", "heart", "note", "dot", "crumb", "zz" }
+  local order = { "pop1", "pop2", "spark", "puff", "puff2", "drop", "splash", "heart", "note", "dot", "crumb", "zz", "snow" }
   sheet("particles", 8, 8, order, function(img, n) L.map(img, 0, 0, P[n]) end)
   local f = io.open(L.root .. "/public/assets/particles.json", "w")
   local q = {}

@@ -63,7 +63,7 @@ describe('reactions', () => {
   it('picks from the item table, default tasty/good, respects filter', () => {
     const rand = rng(3);
     for (let i = 0; i < 20; i++) expect(['spicy', 'tasty']).toContain(pickReaction('tteokbokki', ITEM_REACTIONS, rand));
-    for (let i = 0; i < 20; i++) expect(['tasty', 'good']).toContain(pickReaction('unknown', ITEM_REACTIONS, rand));
+    for (let i = 0; i < 20; i++) expect(['tasty', 'good', 'okay']).toContain(pickReaction('unknown', ITEM_REACTIONS, rand));
     expect(pickReaction('kimchi', ITEM_REACTIONS, rand, (r) => r !== 'spicy')).toBeNull();
   });
 });

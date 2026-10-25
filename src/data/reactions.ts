@@ -16,4 +16,8 @@ export const ITEM_REACTIONS: Record<string, ReactionId[]> = {
   chikin: ['big', 'tasty'], galbi: ['pricey', 'tasty'], gimbap: ['cheap', 'good'], gyul: ['small', 'sweet'],
   mellon: ['big', 'sweet'], sagwa: ['big', 'good'], banana: ['sweet', 'cheap'], maekju: ['good'], kolla: ['cheap'],
   mul: ['cheap', 'good'], popkon: ['big', 'cheap'], saendeuwichi: ['big', 'good'], paseuta: ['tasty', 'pricey'],
+  // 동대문 clothes
+  ot: ['pretty', 'cheap'], chima: ['pretty', 'small'], baji: ['big', 'small'], moja: ['pretty', 'big'], gudu: ['pricey', 'pretty'],
+  undonghwa: ['good', 'big'], tisyeocheu: ['cheap', 'small'], hanbok: ['pretty', 'pricey'], gabang: ['pricey', 'big'], jigap: ['small', 'pricey'],
+  angyeong: ['pretty', 'small'], sigye: ['pricey', 'good'], mokgeori: ['pretty', 'pricey'], usan: ['big', 'cheap'],
 };

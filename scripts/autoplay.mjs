@@ -27,7 +27,10 @@ for (const [idx, n] of nights.entries()) {
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     P.G.data.settings.firstRunDone = true;
     P.G.speed = 3;
-    if (n === 11) for (let k = 1; k <= 10; k++) P.G.data.nights[k] = P.G.data.nights[k] ?? { stars: 2, bestCoins: 50, plays: 1 };
+    // unlock everything on the way to n (and words those nights introduce)
+    const chain = []; let cur = P.levels.prevNight(n);
+    while (cur) { chain.push(cur); cur = P.levels.prevNight(cur); }
+    for (const k of chain) P.G.data.nights[k] = P.G.data.nights[k] ?? { stars: 2, bestCoins: 50, plays: 1 };
     if (!P.G.data.upgrades.includes('helper')) P.G.data.upgrades.push('helper');
     P.game.scene.getScenes(true)[0].scene.start('Night', { night: n, seats });
     await sleep(800);

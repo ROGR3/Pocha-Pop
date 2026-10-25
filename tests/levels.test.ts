@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import words from '../src/data/words.json';
 import icons from '../public/assets/icons.json';
+import clothes from '../public/assets/clothes.json';
 import { NIGHTS, UPGRADES, nightPool } from '../src/data/levels';
 import { jamoSet } from '../src/logic/hangul';
 import { comboMultiplier, criticStars, nightStars, serveCoins } from '../src/logic/rules';
@@ -14,7 +15,7 @@ describe('word data', () => {
       expect(w.cs.length).toBeGreaterThan(0);
       expect(ids.has(w.id)).toBe(false);
       ids.add(w.id);
-      expect(icons.names).toContain(w.icon);
+      expect([...icons.names, ...clothes.names], w.id).toContain(w.icon);
     }
   });
 });

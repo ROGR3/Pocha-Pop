@@ -1,7 +1,7 @@
 // Upgrades shop with a live preview of the stall.
 import Phaser from 'phaser';
 import { UPGRADES } from '../data/levels';
-import { G, iconIdx, word } from '../game/state';
+import { G, iconTex, word } from '../game/state';
 import { DEPTH, Street } from '../game/street';
 import { C, button, iconFrame, fadeIn, goto, iconButton, panel, toast, txt } from '../game/ui';
 
@@ -23,7 +23,7 @@ export class ShopScene extends Phaser.Scene {
     this.street = new Street(this, { backdrop: 'euljiro', weather: false });
     this.street.layout(gy);
     G.audio.setAmbient('rain');
-    G.audio.setLofi(G.hasUpgrade('radio'));
+    G.audio.setLofi(G.hasUpgrade('radio'), G.station());
     // HUD
     this.add.rectangle(0, 0, W, 24, 0x181425, 0.9).setOrigin(0, 0).setDepth(DEPTH.hud);
     txt(this, 8, 12, 'Obchod', { size: 'l', color: C.yellow, origin: [0, 0.5] }).setDepth(DEPTH.hud);
@@ -44,7 +44,7 @@ export class ShopScene extends Phaser.Scene {
       else if (u.id === 'awning') icon = this.add.image(ix, iy, 'awning').setCrop(0, 0, 22, 12).setOrigin(0.05, 0.5);
       else if (u.id === 'radio') icon = this.add.sprite(ix, iy, 'radio').play('radio:play');
       else if (u.id === 'helper') icon = this.add.image(ix, iy + 3, 'char_kim_helper', 6).setCrop(4, 2, 24, 22);
-      else icon = this.add.image(ix, iy, 'icons', iconIdx(word(u.words![0]).icon));
+      else icon = this.add.image(ix, iy, ...iconTex(word(u.words![0]).icon));
       (icon as any).setDepth(DEPTH.hud);
       txt(this, 36, y + 3, u.name, { size: 's', color: owned ? C.green : C.white }).setDepth(DEPTH.hud);
       txt(this, 36, y + 14, locked ? 'Odemkne se v příběhu 김 대리.' : u.desc, { size: 'xs', color: C.light, wrap: W - 100, lineSpacing: 0 }).setCrop(0, 0, W, 21).setDepth(DEPTH.hud);

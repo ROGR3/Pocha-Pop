@@ -4,9 +4,15 @@ import Phaser from 'phaser';
 import { G } from './state';
 import { colorFrame } from '../data/colors';
 
-export type Backdrop = 'euljiro' | 'hangang';
+export type { Backdrop } from '../data/levels';
+import type { Backdrop } from '../data/levels';
 
 export const DEPTH = { far: 0, mid: 1, rainBack: 2, near: 3, stall: 10, lantern: 11, customer: 20, chef: 21, counter: 30, pot: 31, stool: 32, dish: 33, awning: 35, bubble: 40, rain: 45, fx: 50, hud: 100, input: 110, overlay: 1000 };
+
+/** Texture prefix per backdrop (bg_<prefix>_far / _mid / _near / _sky). */
+export const BG_PREFIX: Record<string, string> = { euljiro: 'eul', hangang: 'han', dongdaemun: 'ddm', hongdae: 'hgd', yongsan: 'ysn', busan: 'bsn', pharmacy: 'phm' };
+/** Animation names of the mid / near layers (stage 1 names; new backdrops use 'loop'). */
+const LAYER_ANIM: Record<string, [string, string]> = { eul: ['neon', 'shimmer'], han: ['lights', 'twinkle'] };
 
 /** Stool x offsets (from the stall centre) for 2–4 seats. */
 const SEAT_X: Record<number, number[]> = { 2: [10, 62], 3: [-12, 32, 76], 4: [-22, 14, 50, 86] };
@@ -20,6 +26,8 @@ export interface StreetOpts {
   /** Show the chef & pot (title shows them too). */
   chef?: boolean;
   weather?: boolean;
+  /** Snow instead of rain / fireflies (크리스마스). */
+  snow?: boolean;
 }
 
 export class Street {
@@ -50,20 +58,23 @@ export class Street {
   notes?: Phaser.GameObjects.Particles.ParticleEmitter;
   seatX: number[] = [];
   raining: boolean;
+  snowing = false;
   private t = 0;
 
   constructor(scene: Phaser.Scene, o: StreetOpts) {
     this.scene = scene;
     this.backdrop = o.backdrop;
-    this.raining = o.backdrop === 'euljiro' && o.weather !== false;
+    this.raining = o.backdrop === 'euljiro' && o.weather !== false && !o.snow;
     const up = o.upgrades ?? G.data.upgrades;
     const s = scene;
-    const pre = o.backdrop === 'euljiro' ? 'eul' : 'han';
+    const pre = BG_PREFIX[o.backdrop];
+    const [midAnim, nearAnim] = LAYER_ANIM[pre] ?? ['loop', 'loop'];
     this.sky = s.add.image(0, 0, `bg_${pre}_sky`).setOrigin(0.5, 1).setDepth(DEPTH.far);
     this.far = s.add.image(0, 0, `bg_${pre}_far`).setOrigin(0.5, 1).setDepth(DEPTH.far);
-    this.mid = s.add.sprite(0, 0, `bg_${pre}_mid`).setOrigin(0.5, 1).setDepth(DEPTH.mid).play(`bg_${pre}_mid:${pre === 'eul' ? 'neon' : 'lights'}`);
-    this.near = s.add.sprite(0, 0, `bg_${pre}_near`).setOrigin(0.5, 0).setDepth(DEPTH.near).play(`bg_${pre}_near:${pre === 'eul' ? 'shimmer' : 'twinkle'}`);
-    this.stall = s.add.sprite(0, 0, 'stall_back').setOrigin(0.5, 1).setDepth(DEPTH.stall).play('stall_back:glow');
+    this.mid = s.add.sprite(0, 0, `bg_${pre}_mid`).setOrigin(0.5, 1).setDepth(DEPTH.mid).play(`bg_${pre}_mid:${midAnim}`);
+    this.near = s.add.sprite(0, 0, `bg_${pre}_near`).setOrigin(0.5, 0).setDepth(DEPTH.near).play(`bg_${pre}_near:${nearAnim}`);
+    const stallKey = pre === 'eul' || pre === 'han' ? 'stall_back' : `stall_back_${pre}`;
+    this.stall = s.add.sprite(0, 0, stallKey).setOrigin(0.5, 1).setDepth(DEPTH.stall).play(`${stallKey}:glow`);
     this.place(this.stall, 0, -6);
     const cos = G.data.cosmetics;
     if (cos.roof) this.place(s.add.image(0, 0, 'stall_roof', colorFrame(cos.roof)).setOrigin(0.5, 0).setDepth(DEPTH.stall + 0.2), 0, -126);
@@ -93,8 +104,19 @@ export class Street {
     }
     if (up.includes('radio')) {
       this.radio = s.add.sprite(0, 0, 'radio').setOrigin(0.5, 1).setDepth(DEPTH.stall + 1).play('radio:play');
+      if ((G.data.friends.park?.chapter ?? 0) >= 3) {
+        // repaired by 박 사장: tap to switch station
+        this.radio.setInteractive({ useHandCursor: true }).on('pointerup', () => {
+          G.data.settings.station = G.station() === 2 ? 1 : 2;
+          G.save.save();
+          G.audio.setLofi(true, G.station());
+          G.audio.play('click');
+          s.tweens.add({ targets: this.radio, scale: { from: 1.4, to: 1 }, duration: 200, ease: 'Back.easeOut' });
+        });
+      }
       this.place(this.radio, 66, -76);
     }
+    if (up.includes('mug')) this.place(s.add.sprite(0, 0, 'mug').setOrigin(0.5, 1).setDepth(DEPTH.pot).play('mug:steam'), -98, -41);
     if (up.includes('awning')) {
       this.awning = s.add.image(0, 0, 'awnings', colorFrame(cos.roof)).setOrigin(0.5, 0).setDepth(DEPTH.awning);
       this.place(this.awning, 0, -104);
@@ -142,9 +164,20 @@ export class Street {
         frame: P('splash'), lifespan: 220, quantity: 1, frequency: 90, alpha: { start: 0.8, end: 0 }, x: { min: 0, max: W }, y: 0,
       }).setDepth(DEPTH.near + 1);
     }
-    if (o.backdrop === 'hangang' && o.weather !== false) {
+    const FLY_TINT: Record<string, number[]> = {
+      hangang: [0xfee761, 0xfeae34, 0x63c74d], dongdaemun: [0xf6757a, 0x2ce8f5, 0xfee761], hongdae: [0xb55088, 0x2ce8f5, 0xff0044, 0xfee761],
+      yongsan: [0x2ce8f5, 0x63c74d, 0xffffff], busan: [0xc0cbdc, 0xffffff, 0x2ce8f5],
+    };
+    if (o.snow && o.weather !== false) {
+      this.snowing = true;
+      const W = s.scale.width;
+      this.rain = s.add.particles(0, 0, 'particles', {
+        frame: [P('dot'), P('snow')], x: { min: -20, max: W + 20 }, y: -10, lifespan: 9000, speedY: { min: 14, max: 26 }, speedX: { min: -8, max: 4 },
+        quantity: 1, frequency: 140, alpha: { start: 0.95, end: 0.6 }, scale: { min: 0.5, max: 1 },
+      }).setDepth(DEPTH.rain);
+    } else if (FLY_TINT[o.backdrop] && o.weather !== false) {
       this.flies = s.add.particles(0, 0, 'particles', {
-        frame: P('dot'), lifespan: 4000, speedX: { min: -5, max: 5 }, speedY: { min: -6, max: 2 }, tint: [0xfee761, 0xfeae34, 0x63c74d],
+        frame: P('dot'), lifespan: 4000, speedX: { min: -5, max: 5 }, speedY: { min: -6, max: 2 }, tint: FLY_TINT[o.backdrop],
         x: { min: 0, max: s.scale.width }, y: { min: -150, max: -30 }, alpha: { start: 1, end: 0 }, frequency: 500, scale: 0.5,
       }).setDepth(DEPTH.rain);
     }
@@ -173,7 +206,7 @@ export class Street {
     if (this.notes) this.notes.setPosition(this.wx(66), this.wy(-90));
     if (this.rain) {
       this.rain.setPosition(0, 0);
-      this.rain.setParticleLifespan(Math.max(300, ((this.gy - 8) / 255) * 1000));
+      this.rain.setParticleLifespan(this.snowing ? (this.gy / 18) * 1000 : Math.max(300, ((this.gy - 8) / 255) * 1000));
     }
     if (this.splash) this.splash.setPosition(0, this.gy - 12);
     if (this.flies) {

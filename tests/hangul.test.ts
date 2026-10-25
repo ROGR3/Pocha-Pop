@@ -136,3 +136,13 @@ describe('hasRawJamo', () => {
     expect(hasRawJamo('과', 'ㅏ')).toBe(false);
   });
 });
+
+import { matchAny } from '../src/logic/hangul';
+describe('alternative answers', () => {
+  it('matches any of several targets', () => {
+    expect(matchAny('버스', ['버스', '지하철'])).toBe('full');
+    expect(matchAny('지하', ['버스', '지하철'])).toBe('prefix');
+    expect(matchAny('기', ['버스', '지하철'])).toBe('none');
+    expect(matchAny('기차표', '기차 표')).toBe('full');
+  });
+});

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { G, WORDS } from './game/state';
+import * as levels from './data/levels';
 import { Ime } from './game/ime';
 import { imeStates, typeKorean } from './game/debug';
 import { setupBack } from './game/back';
@@ -68,7 +69,7 @@ async function start() {
   document.addEventListener('pointerdown', unlock);
   document.addEventListener('keydown', unlock);
 
-  (window as any).__pocha = { G, game, typeKorean, imeStates, WORDS };
+  (window as any).__pocha = { G, game, typeKorean, imeStates, WORDS, levels };
 }
 
 start();

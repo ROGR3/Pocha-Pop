@@ -3,7 +3,7 @@ import Phaser from 'phaser';
 import { JAMO_TIPS } from '../data/story';
 import { hasRawJamo, toJamo } from '../logic/hangul';
 import { MAX_MASTERY } from '../logic/srs';
-import { G, WORDS, iconIdx, type Word } from '../game/state';
+import { G, WORDS, iconTex, type Word } from '../game/state';
 import { C, button, fadeIn, goto, iconButton, panel, txt } from '../game/ui';
 
 /** Recipe book sections (word categories). */
@@ -95,7 +95,7 @@ export class RecipesScene extends Phaser.Scene {
     const c = this.add.container(x, y);
     const bg = this.add.rectangle(0, 0, cw, ch, known ? 0xead4aa : 0xc28569, 1).setOrigin(0, 0).setStrokeStyle(1, 0xb86f50);
     c.add(bg);
-    const icon = this.add.image(Math.round(cw / 2), 15, 'icons', iconIdx(w.icon));
+    const icon = this.add.image(Math.round(cw / 2), 15, ...iconTex(w.icon));
     if (!known) icon.setTintFill(0x3e2731).setAlpha(0.8);
     c.add(icon);
     c.add(txt(this, cw / 2, 29, known ? w.ko : '???', { size: 'm', color: known ? C.ink : C.brown, origin: [0.5, 0] }));
@@ -118,7 +118,7 @@ export class RecipesScene extends Phaser.Scene {
     const pw = Math.min(W - 20, 230), ph = 176;
     const px = Math.round((W - pw) / 2), py = Math.round((H - ph) / 2);
     c.add(panel(this, px, py, pw, ph, 'paper'));
-    const icon = this.add.image(px + 30, py + 30, 'icons', iconIdx(w.icon)).setScale(2);
+    const icon = this.add.image(px + 30, py + 30, ...iconTex(w.icon)).setScale(2);
     if (!known) icon.setTintFill(0x3e2731);
     c.add(icon);
     if (known) {

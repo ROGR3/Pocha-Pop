@@ -2,6 +2,7 @@
 // localStorage in a plain browser (Vite dev / Playwright), memory in tests.
 import type { WordStat } from './srs';
 import { defaultCosmetics, mergeCosmetics, type Cosmetics } from './cosmetics';
+import type { DailyRecord } from './daily';
 
 export const SAVE_VERSION = 2;
 /** Coins refunded for the removed "4th stool" upgrade (stage 1 → 2). */
@@ -14,6 +15,8 @@ export interface Settings {
   firstRunDone: boolean;
   /** Last seat count picked on the map (2..4). */
   seats: number;
+  /** Radio station (2 = night jazz, unlocked by 박 사장). */
+  station: number;
 }
 
 export interface NightRecord {
@@ -40,14 +43,31 @@ export interface SaveData {
   words: Record<string, WordStat>;
   friends: Record<string, FriendState>;
   streak: { count: number; lastDay: string };
-  stats: { served: number; mistakes: number; nightsPlayed: number };
+  stats: Stats;
   cosmetics: Cosmetics;
+  /** Unlocked achievement ids. */
+  achievements: string[];
+  /** Daily challenge results by day key. */
+  daily: Record<string, DailyRecord>;
+  training: { sessions: number; best: number };
+}
+
+export interface Stats {
+  served: number;
+  mistakes: number;
+  nightsPlayed: number;
+  /** Orders served without a mistake (all time). */
+  cleanServed?: number;
+  bestCombo?: number;
+  greetings?: number;
+  /** Clean serves of words containing each Shift jamo. */
+  shiftClean?: Record<string, number>;
 }
 
 export function defaultSave(): SaveData {
   return {
     version: SAVE_VERSION,
-    settings: { sfx: 0.8, ambient: 0.5, relaxed: false, firstRunDone: false, seats: 3 },
+    settings: { sfx: 0.8, ambient: 0.5, relaxed: false, firstRunDone: false, seats: 3, station: 1 },
     coins: 0,
     upgrades: [],
     nights: {},
@@ -56,6 +76,9 @@ export function defaultSave(): SaveData {
     streak: { count: 0, lastDay: '' },
     stats: { served: 0, mistakes: 0, nightsPlayed: 0 },
     cosmetics: defaultCosmetics(),
+    achievements: [],
+    daily: {},
+    training: { sessions: 0, best: 0 },
   };
 }
 
@@ -77,6 +100,9 @@ export function migrate(raw: unknown): SaveData {
     stats: { ...d.stats, ...(r.stats ?? {}) },
     coins: typeof r.coins === 'number' && isFinite(r.coins) ? r.coins : 0,
     cosmetics: mergeCosmetics(r.cosmetics),
+    achievements: Array.isArray(r.achievements) ? [...r.achievements] : [],
+    daily: { ...(r.daily ?? {}) },
+    training: { ...d.training, ...(r.training ?? {}) },
   };
   // v1 → v2: the 4th stool is no longer an upgrade but a choice before each night
   if (out.upgrades.includes('stool4')) {

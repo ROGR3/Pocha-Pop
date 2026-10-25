@@ -6,6 +6,9 @@ import Phaser from 'phaser';
 export const SFX_KEYS = ['type', 'syllable', 'error', 'pop', 'coin', 'combo', 'angry', 'star', 'serve', 'sizzle', 'click', 'buy', 'bell', 'hint', 'fanfare', 'fail', 'meow', 'paper'] as const;
 export type SfxKey = (typeof SFX_KEYS)[number];
 
+/** rain = 을지로, river = 한강, city = distant crowd/traffic, sea = harbour waves. */
+export type AmbientKind = 'rain' | 'river' | 'city' | 'sea';
+
 export class Audio {
   sfxVolume = 0.8;
   ambientVolume = 0.5;
@@ -13,8 +16,9 @@ export class Audio {
   private ctx: AudioContext | null = null;
   private ambientGain: GainNode | null = null;
   private ambientNodes: AudioNode[] = [];
-  private ambientKind: 'rain' | 'river' | null = null;
+  private ambientKind: AmbientKind | null = null;
   private lofi: { stop: () => void } | null = null;
+  private lofiStation: 1 | 2 = 1;
   private lastPlay: Record<string, number> = {};
 
   attach(game: Phaser.Game) {
@@ -39,7 +43,7 @@ export class Audio {
     return this.ctx;
   }
 
-  setAmbient(kind: 'rain' | 'river' | null) {
+  setAmbient(kind: AmbientKind | null) {
     if (kind === this.ambientKind) { this.updateAmbientGain(); return; }
     this.stopAmbient();
     this.ambientKind = kind;
@@ -51,21 +55,22 @@ export class Audio {
     let last = 0;
     for (let i = 0; i < len; i++) {
       const w = Math.random() * 2 - 1;
-      last = kind === 'river' ? last * 0.97 + w * 0.03 : w; // brown-ish for water
-      d[i] = kind === 'river' ? last * 8 : w;
+      const brown = kind !== 'rain';
+      last = brown ? last * 0.97 + w * 0.03 : w; // brown-ish for water / city
+      d[i] = brown ? last * 8 : w;
     }
     const src = ctx.createBufferSource();
     src.buffer = buf;
     src.loop = true;
     const filter = ctx.createBiquadFilter();
     filter.type = kind === 'rain' ? 'bandpass' : 'lowpass';
-    filter.frequency.value = kind === 'rain' ? 2400 : 500;
+    filter.frequency.value = kind === 'rain' ? 2400 : kind === 'city' ? 380 : kind === 'sea' ? 650 : 500;
     filter.Q.value = kind === 'rain' ? 0.4 : 0.7;
     // slow swell
     const lfo = ctx.createOscillator();
     const lfoGain = ctx.createGain();
-    lfo.frequency.value = 0.08;
-    lfoGain.gain.value = kind === 'rain' ? 500 : 150;
+    lfo.frequency.value = kind === 'sea' ? 0.12 : 0.08; // sea: slow surf swell
+    lfoGain.gain.value = kind === 'rain' ? 500 : kind === 'sea' ? 450 : 150;
     lfo.connect(lfoGain).connect(filter.frequency);
     const gain = ctx.createGain();
     gain.gain.value = 0;
@@ -79,7 +84,7 @@ export class Audio {
 
   updateAmbientGain() {
     if (this.ambientGain && this.ctx) {
-      const base = this.ambientKind === 'rain' ? 0.09 : 0.12;
+      const base = this.ambientKind === 'rain' ? 0.09 : this.ambientKind === 'city' ? 0.1 : 0.12;
       this.ambientGain.gain.setTargetAtTime(base * this.ambientVolume, this.ctx.currentTime, 0.5);
     }
   }
@@ -93,9 +98,11 @@ export class Audio {
   }
 
   /** Procedural lo-fi loop: soft chords + vinyl crackle + lazy beat (radio upgrade). */
-  setLofi(on: boolean) {
-    if (!on) { this.lofi?.stop(); this.lofi = null; return; }
-    if (this.lofi) return;
+  setLofi(on: boolean, station: 1 | 2 = 1) {
+    if (!on || (this.lofi && this.lofiStation !== station)) { this.lofi?.stop(); this.lofi = null; }
+    if (!on || this.lofi) return;
+    this.lofiStation = station;
+    if (station === 2) { this.startJazz(); return; }
     const ctx = this.ensureCtx();
     if (!ctx) return;
     const out = ctx.createGain();
@@ -150,6 +157,66 @@ export class Audio {
           noiseHit(t + beat / 2, 0.15, 7000); // hat
         }
         if (bar % 2 === 1) tone(ch[3] + 12, next + beat * 1.5, beat * 1.5, 0.12, 'sine');
+        next += beat * 4;
+        bar++;
+      }
+    };
+    schedule();
+    const id = window.setInterval(schedule, 500);
+    this.lofi = { stop: () => { clearInterval(id); out.gain.setTargetAtTime(0, ctx.currentTime, 0.2); setTimeout(() => out.disconnect(), 800); } };
+  }
+
+  /** Station 2: brushed night jazz – ii–V–I with walking bass and a swung ride. */
+  private startJazz() {
+    const ctx = this.ensureCtx();
+    if (!ctx) return;
+    const out = ctx.createGain();
+    out.gain.value = 0.05 * Math.max(0.2, this.ambientVolume) * 2;
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 1800;
+    out.connect(lp).connect(ctx.destination);
+    // Dm9 – G13 – Cmaj9 – A7b9 (rootless voicings)
+    const chords = [[53, 57, 60, 64], [53, 57, 59, 64], [52, 55, 59, 62], [55, 58, 61, 64]];
+    const roots = [38, 43, 36, 45];
+    const bpm = 84, beat = 60 / bpm, swing = beat * 0.62;
+    let next = ctx.currentTime + 0.1;
+    let bar = 0;
+    const freq = (n: number) => 440 * Math.pow(2, (n - 69) / 12);
+    const tone = (n: number, t: number, dur: number, vol: number, type: OscillatorType) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = type;
+      o.frequency.value = freq(n);
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(vol, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+      o.connect(g).connect(out);
+      o.start(t);
+      o.stop(t + dur + 0.05);
+    };
+    const brush = (t: number, vol: number) => {
+      const b = ctx.createBuffer(1, ctx.sampleRate * 0.15, ctx.sampleRate);
+      const d = b.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (d.length * 0.3));
+      const s = ctx.createBufferSource();
+      s.buffer = b;
+      const fl = ctx.createBiquadFilter();
+      fl.type = 'highpass';
+      fl.frequency.value = 5000;
+      const g = ctx.createGain();
+      g.gain.value = vol;
+      s.connect(fl).connect(g).connect(out);
+      s.start(t);
+    };
+    const schedule = () => {
+      while (next < ctx.currentTime + 1.5) {
+        const ch = chords[bar % 4];
+        ch.forEach((n, i) => tone(n, next + beat * 1.5 + i * 0.015, beat * 1.6, 0.18, 'triangle'));
+        // walking bass: root, 3rd-ish, 5th, approach
+        const r = roots[bar % 4];
+        [0, 3, 7, (roots[(bar + 1) % 4] - r) - 1].forEach((iv, k) => tone(r + iv, next + k * beat, beat * 0.9, 0.45, 'sine'));
+        for (let k = 0; k < 4; k++) { brush(next + k * beat, 0.35); if (k % 2 === 1) brush(next + k * beat + swing, 0.2); }
         next += beat * 4;
         bar++;
       }

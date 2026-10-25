@@ -7,7 +7,7 @@ import { buyAndEquip, itemState, unequip, type ShopState, type Slot } from '../l
 import { matchKind } from '../logic/hangul';
 import { hintLevel, recordMistake, recordServe } from '../logic/srs';
 import { attachHat } from '../game/hats';
-import { G, iconIdx, word } from '../game/state';
+import { G, iconTex, word } from '../game/state';
 import { DEPTH, Street } from '../game/street';
 import { TypeBox } from '../game/typebox';
 import { Button, C, button, cssRect, fadeIn, floatText, goto, iconButton, iconFrame, panel, segmented, snapText, toast, txt } from '../game/ui';
@@ -167,9 +167,9 @@ export class PaintScene extends Phaser.Scene {
       const idx = HATS.findIndex((hh) => hh.id === cell.id);
       icon = idx >= 0 ? this.add.image(cx, y + 13, 'hats', idx).setScale(2) : this.add.image(cx, y + 13, 'uiicons', iconFrame('close')).setAlpha(0.6);
     } else if (cell.id) {
-      icon = this.add.image(cx, y + 14, 'icons', iconIdx(word(COLORS.find((c) => c.id === cell.id)!.word).icon));
+      icon = this.add.image(cx, y + 14, ...iconTex(word(COLORS.find((c) => c.id === cell.id)!.word).icon));
     } else {
-      icon = this.add.image(cx, y + 14, 'icons', iconIdx('saek'));
+      icon = this.add.image(cx, y + 14, ...iconTex('saek'));
     }
     if (locked) icon.setTintFill(0x3a4466);
     this.ui.add(icon);

@@ -1,11 +1,12 @@
 // End of night: stars, coins, new words → grandma's postcard → regulars' stories.
 import Phaser from 'phaser';
-import { BOSS_NIGHT } from '../data/levels';
-import { CRITIC_REVIEW, JAMO_TIPS, POSTCARDS, REGULARS } from '../data/story';
+import { BOSS_NIGHT, DISTRICTS, FINAL_NIGHT, PHARMACY_LAST, homeDistrict, nightDef } from '../data/levels';
+import { BOSS_REVIEW, JAMO_TIPS, NAMES, PHARMACY_OUTRO, POSTCARDS, REGULARS } from '../data/story';
 import { hasRawJamo } from '../logic/hangul';
 import { seatMultiplier } from '../logic/rules';
 import { playDialogue } from '../game/dialogue';
-import { G, iconIdx, word } from '../game/state';
+import { G, iconTex, word } from '../game/state';
+import { BG_PREFIX } from '../game/street';
 import { C, button, fadeIn, goto, panel, snapText, toast, txt } from '../game/ui';
 import type { NightSummary } from './Night';
 import type { RegularId } from '../data/levels';
@@ -23,7 +24,7 @@ export class ResultScene extends Phaser.Scene {
     fadeIn(this, 400);
     G.ime.deactivate();
     const W = this.scale.width, H = this.scale.height;
-    const far = this.add.image(Math.round(W / 2), H, this.s.night >= 6 ? 'bg_han_far' : 'bg_eul_far').setOrigin(0.5, 1);
+    const far = this.add.image(Math.round(W / 2), H, `bg_${BG_PREFIX[DISTRICTS[homeDistrict(nightDef(this.s.night))].backdrop]}_far`).setOrigin(0.5, 1);
     far.setAlpha(0.5);
     this.add.rectangle(0, 0, W, H, 0x181425, 0.5).setOrigin(0, 0);
     this.layer = this.add.container(0, 0);
@@ -34,10 +35,11 @@ export class ResultScene extends Phaser.Scene {
   private stats() {
     const s = this.s;
     const W = this.scale.width, H = this.scale.height;
-    const boss = s.night === BOSS_NIGHT;
+    const def = nightDef(s.night);
+    const boss = !!def.boss;
     const L = this.layer;
     const failed = !boss && s.stars === 0;
-    L.add(txt(this, W / 2, 14, boss ? 'Recenze kritika 미식가' : failed ? 'Stánek zavírá…' : `Noc ${s.night} – hotovo!`, { size: 'l', color: failed ? C.pink : C.yellow, origin: [0.5, 0], shadow: true }));
+    L.add(txt(this, W / 2, 14, boss ? (def.boss === 'critic' ? 'Recenze kritika 미식가' : `Hodnocení: ${NAMES[def.boss!]}`) : failed ? 'Stánek zavírá…' : `Noc ${s.night} – hotovo!`, { size: 'l', color: failed ? C.pink : C.yellow, origin: [0.5, 0], shadow: true }));
     // stars
     const of = boss ? 5 : 3;
     const big = !boss && W >= 220;
@@ -61,7 +63,7 @@ export class ResultScene extends Phaser.Scene {
     else this.time.delayedCall(500 + s.stars * 380, () => G.audio.play('fanfare'));
     let y = sy + (big ? 30 : 20);
     if (boss) {
-      const review = txt(this, W / 2, y, CRITIC_REVIEW[s.stars], { size: 's', color: C.cream, origin: [0.5, 0], align: 'center', wrap: W - 24 });
+      const review = txt(this, W / 2, y, BOSS_REVIEW[def.boss!][s.stars], { size: 's', color: C.cream, origin: [0.5, 0], align: 'center', wrap: W - 24 });
       L.add(review);
       y += review.height + 8;
     } else if (failed) {
@@ -100,7 +102,7 @@ export class ResultScene extends Phaser.Scene {
       s.newWords.slice(0, n).forEach((id, i) => {
         const w = word(id);
         const x = Math.round(W / 2 + (i - (n - 1) / 2) * 30);
-        const ic = this.add.image(x, y + 12, 'icons', iconIdx(w.icon)).setScale(0);
+        const ic = this.add.image(x, y + 12, ...iconTex(w.icon)).setScale(0);
         L.add(ic);
         L.add(txt(this, x, y + 26, w.ko, { size: 'xs', color: C.white, origin: [0.5, 0] }));
         this.time.delayedCall(1200 + i * 120, () => { this.tweens.add({ targets: ic, scale: 1, duration: 260, ease: 'Back.easeOut' }); G.audio.play('pop', { volume: 0.4, detune: i * 100 }); });
@@ -119,7 +121,7 @@ export class ResultScene extends Phaser.Scene {
     const old = this.layer;
     this.tweens.add({ targets: old, alpha: 0, duration: 200, onComplete: () => old.destroy() });
     this.layer = this.add.container(0, 0);
-    const pc = POSTCARDS[s.night];
+    const pc = POSTCARDS[s.night] ?? { title: 'Pozdrav z Jeju', text: 'Další noc za tebou! Jsem na tebe pyšná.', tip: 'Tip: opakování je matka moudrosti.' };
     const c = this.add.container(0, H);
     const cw = Math.min(W - 12, 240);
     const cx = Math.round((W - cw) / 2);
@@ -165,26 +167,35 @@ export class ResultScene extends Phaser.Scene {
   private async stories(btnY: number) {
     const s = this.s;
     const unlocked: RegularId[] = [];
-    for (const r of ['kim', 'haeun', 'nabi'] as RegularId[]) {
+    for (const r of Object.keys(REGULARS) as RegularId[]) {
       const f = G.data.friends[r] ?? { clean: 0, chapter: 0 };
-      const ch = REGULARS[r].chapters[f.chapter];
+      const ch = REGULARS[r]?.chapters[f.chapter];
       if (ch && f.clean >= ch.need && s.night >= ch.minNight && s.regularsSeen.includes(r)) unlocked.push(r);
     }
     const W = this.scale.width, H = this.scale.height;
     const by = Math.min(H - 16, btnY + 12);
     const buttons = () => {
-      const boss = s.night === BOSS_NIGHT;
+      const boss = !!nightDef(s.night).boss;
       const failed = !boss && s.stars === 0;
       this.layer.add(button(this, W / 2 - 52, by, 96, 22, failed ? 'Zkusit znovu' : 'Znovu', () => goto(this, 'Night', { night: s.night, seats: s.seats }), { style: failed ? 'red' : 'wood', size: 's' }));
-      if (boss) this.layer.add(button(this, W / 2 + 52, by, 96, 22, 'Epilog', () => goto(this, 'Story', { kind: 'ending' }), { size: 's' }));
+      if (s.night === BOSS_NIGHT) this.layer.add(button(this, W / 2 + 52, by, 96, 22, 'Epilog', () => goto(this, 'Story', { kind: 'ending' }), { size: 's' }));
+      else if (s.night === FINAL_NIGHT) this.layer.add(button(this, W / 2 + 52, by, 96, 22, 'Finále', () => goto(this, 'Story', { kind: 'finale' }), { size: 's' }));
       else this.layer.add(button(this, W / 2 + 52, by, 96, 22, 'Na mapu', () => goto(this, 'Map'), { style: failed ? 'wood' : 'red', size: 's' }));
     };
+    // 약국 done for the first time: the pharmacist's thanks + grandma's mug
+    if (s.night === PHARMACY_LAST && s.stars > 0 && !G.hasUpgrade('mug')) {
+      await new Promise((r) => this.time.delayedCall(600, r));
+      await playDialogue(this, PHARMACY_OUTRO);
+      G.data.upgrades.push('mug');
+      G.save.save();
+      toast(this, 'Nový hrnek na pultu!', C.green, 40);
+    }
     if (!unlocked.length) { buttons(); return; }
     await new Promise((r) => this.time.delayedCall(700, r));
     for (const r of unlocked) {
       const f = G.data.friends[r] ?? { clean: 0, chapter: 0 };
-      const ch = REGULARS[r].chapters[f.chapter];
-      const banner = txt(this, W / 2, 10, `${REGULARS[r].name} – kapitola ${f.chapter + 1}/3`, { size: 'm', color: C.yellow, origin: [0.5, 0], shadow: true }).setDepth(2001);
+      const ch = REGULARS[r]!.chapters[f.chapter];
+      const banner = txt(this, W / 2, 10, `${REGULARS[r]!.name} – kapitola ${f.chapter + 1}/3`, { size: 'm', color: C.yellow, origin: [0.5, 0], shadow: true }).setDepth(2001);
       await playDialogue(this, ch.lines);
       banner.destroy();
       G.data.friends[r] = { ...f, chapter: f.chapter + 1 };

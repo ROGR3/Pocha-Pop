@@ -9,6 +9,33 @@
   "difficulty": 1.5
  },
  {
+  "id": "bae_belly",
+  "ko": "배",
+  "cs": "břicho",
+  "en": "stomach",
+  "category": "body",
+  "icon": "bae_belly",
+  "difficulty": 1.5
+ },
+ {
+  "id": "pyo",
+  "ko": "표",
+  "cs": "lístek",
+  "en": "ticket",
+  "category": "travel",
+  "icon": "pyo",
+  "difficulty": 1.5
+ },
+ {
+  "id": "bae_boat",
+  "ko": "배",
+  "cs": "loď",
+  "en": "boat (homonym: stomach)",
+  "category": "travel",
+  "icon": "bae_boat",
+  "difficulty": 1.5
+ },
+ {
   "id": "uyu",
   "ko": "우유",
   "cs": "mléko",
@@ -51,7 +78,8 @@
   "en": "juice",
   "category": "food",
   "icon": "juseu",
-  "difficulty": 3
+  "difficulty": 3,
+  "loan": "juice"
  },
  {
   "id": "keopi",
@@ -60,7 +88,8 @@
   "en": "coffee",
   "category": "food",
   "icon": "keopi",
-  "difficulty": 3
+  "difficulty": 3,
+  "loan": "coffee"
  },
  {
   "id": "hana",
@@ -87,6 +116,162 @@
   "en": "to be big",
   "category": "adj",
   "icon": "keuda",
+  "difficulty": 3
+ },
+ {
+  "id": "chima",
+  "ko": "치마",
+  "cs": "sukně",
+  "en": "skirt",
+  "category": "clothes",
+  "icon": "chima",
+  "difficulty": 3
+ },
+ {
+  "id": "baji",
+  "ko": "바지",
+  "cs": "kalhoty",
+  "en": "pants",
+  "category": "clothes",
+  "icon": "baji",
+  "difficulty": 3
+ },
+ {
+  "id": "moja",
+  "ko": "모자",
+  "cs": "čepice",
+  "en": "hat",
+  "category": "clothes",
+  "icon": "moja",
+  "difficulty": 3
+ },
+ {
+  "id": "gudu",
+  "ko": "구두",
+  "cs": "boty",
+  "en": "dress shoes",
+  "category": "clothes",
+  "icon": "gudu",
+  "difficulty": 3
+ },
+ {
+  "id": "norae",
+  "ko": "노래",
+  "cs": "píseň",
+  "en": "song",
+  "category": "music",
+  "icon": "norae",
+  "difficulty": 3
+ },
+ {
+  "id": "gasu",
+  "ko": "가수",
+  "cs": "zpěvák",
+  "en": "singer",
+  "category": "music",
+  "icon": "gasu",
+  "difficulty": 3
+ },
+ {
+  "id": "jaejeu",
+  "ko": "재즈",
+  "cs": "jazz",
+  "en": "jazz",
+  "category": "music",
+  "icon": "jaejeu",
+  "difficulty": 3,
+  "loan": "jazz"
+ },
+ {
+  "id": "pati",
+  "ko": "파티",
+  "cs": "večírek",
+  "en": "party",
+  "category": "music",
+  "icon": "pati",
+  "difficulty": 3,
+  "loan": "party"
+ },
+ {
+  "id": "kadeu",
+  "ko": "카드",
+  "cs": "karta",
+  "en": "card",
+  "category": "tech",
+  "icon": "kadeu",
+  "difficulty": 3,
+  "loan": "card"
+ },
+ {
+  "id": "neomu",
+  "ko": "너무",
+  "cs": "moc, příliš",
+  "en": "too / very",
+  "category": "phrase",
+  "icon": "phrase",
+  "difficulty": 3
+ },
+ {
+  "id": "meori",
+  "ko": "머리",
+  "cs": "hlava",
+  "en": "head / hair",
+  "category": "body",
+  "icon": "meori",
+  "difficulty": 3
+ },
+ {
+  "id": "dari",
+  "ko": "다리",
+  "cs": "noha",
+  "en": "leg",
+  "category": "body",
+  "icon": "dari",
+  "difficulty": 3
+ },
+ {
+  "id": "gicha",
+  "ko": "기차",
+  "cs": "vlak",
+  "en": "train",
+  "category": "travel",
+  "icon": "gicha",
+  "difficulty": 3
+ },
+ {
+  "id": "beoseu",
+  "ko": "버스",
+  "cs": "autobus",
+  "en": "bus",
+  "category": "travel",
+  "icon": "beoseu",
+  "difficulty": 3
+ },
+ {
+  "id": "bada",
+  "ko": "바다",
+  "cs": "moře",
+  "en": "ocean",
+  "category": "travel",
+  "icon": "bada",
+  "difficulty": 3
+ },
+ {
+  "id": "imo",
+  "ko": "이모",
+  "cs": "teta",
+  "en": "aunt (mother's sister)",
+  "category": "family",
+  "icon": "imo",
+  "difficulty": 3
+ },
+ {
+  "id": "nuna",
+  "ko": "누나",
+  "cs": "starší sestra (pro něj)",
+  "en": "older sister (used by males)",
+  "category": "family",
+  "icon": "nuna",
   "difficulty": 3
  },
  {
@@ -135,13 +320,114 @@
   "difficulty": 3.3
  },
  {
+  "id": "ot",
+  "ko": "옷",
+  "cs": "oblečení",
+  "en": "clothes",
+  "category": "clothes",
+  "icon": "ot",
+  "difficulty": 3.3
+ },
+ {
+  "id": "raep",
+  "ko": "랩",
+  "cs": "rap",
+  "en": "rap",
+  "category": "music",
+  "icon": "raep",
+  "difficulty": 3.3,
+  "loan": "rap"
+ },
+ {
+  "id": "son",
+  "ko": "손",
+  "cs": "ruka",
+  "en": "hand",
+  "category": "body",
+  "icon": "son",
+  "difficulty": 3.3
+ },
+ {
+  "id": "bal",
+  "ko": "발",
+  "cs": "chodidlo",
+  "en": "foot",
+  "category": "body",
+  "icon": "bal",
+  "difficulty": 3.3
+ },
+ {
+  "id": "nun_eye",
+  "ko": "눈",
+  "cs": "oko",
+  "en": "eye",
+  "category": "body",
+  "icon": "nun_eye",
+  "difficulty": 3.3
+ },
+ {
+  "id": "mom",
+  "ko": "몸",
+  "cs": "tělo",
+  "en": "body",
+  "category": "body",
+  "icon": "mom",
+  "difficulty": 3.3
+ },
+ {
+  "id": "yak",
+  "ko": "약",
+  "cs": "lék",
+  "en": "medicine",
+  "category": "body",
+  "icon": "yak",
+  "difficulty": 3.3
+ },
+ {
+  "id": "yeok",
+  "ko": "역",
+  "cs": "nádraží",
+  "en": "station",
+  "category": "travel",
+  "icon": "yeok",
+  "difficulty": 3.3
+ },
+ {
+  "id": "hyeong",
+  "ko": "형",
+  "cs": "starší bratr (pro něj)",
+  "en": "older brother (used by males)",
+  "category": "family",
+  "icon": "hyeong",
+  "difficulty": 3.3
+ },
+ {
+  "id": "nun_snow",
+  "ko": "눈",
+  "cs": "sníh",
+  "en": "snow",
+  "category": "holiday",
+  "icon": "nun_snow",
+  "difficulty": 3.3
+ },
+ {
+  "id": "gwi",
+  "ko": "귀",
+  "cs": "ucho",
+  "en": "ear",
+  "category": "body",
+  "icon": "gwi",
+  "difficulty": 3.8
+ },
+ {
   "id": "dijeoteu",
   "ko": "디저트",
   "cs": "dezert",
   "en": "dessert",
   "category": "food",
   "icon": "dijeoteu",
-  "difficulty": 4.5
+  "difficulty": 4.5,
+  "loan": "dessert"
  },
  {
   "id": "banana",
@@ -150,7 +436,8 @@
   "en": "banana",
   "category": "food",
   "icon": "banana",
-  "difficulty": 4.5
+  "difficulty": 4.5,
+  "loan": "banana"
  },
  {
   "id": "keikeu",
@@ -159,7 +446,8 @@
   "en": "cake",
   "category": "food",
   "icon": "keikeu",
-  "difficulty": 4.5
+  "difficulty": 4.5,
+  "loan": "cake"
  },
  {
   "id": "paseuta",
@@ -168,7 +456,8 @@
   "en": "pasta",
   "category": "food",
   "icon": "paseuta",
-  "difficulty": 4.5
+  "difficulty": 4.5,
+  "loan": "pasta"
  },
  {
   "id": "juseyo",
@@ -177,6 +466,101 @@
   "en": "Please give me",
   "category": "phrase",
   "icon": "phrase",
+  "difficulty": 4.5
+ },
+ {
+  "id": "tisyeocheu",
+  "ko": "티셔츠",
+  "cs": "tričko",
+  "en": "T-shirt",
+  "category": "clothes",
+  "icon": "tisyeocheu",
+  "difficulty": 4.5,
+  "loan": "T-shirt"
+ },
+ {
+  "id": "sigye",
+  "ko": "시계",
+  "cs": "hodinky",
+  "en": "watch",
+  "category": "clothes",
+  "icon": "sigye",
+  "difficulty": 4.5
+ },
+ {
+  "id": "piano",
+  "ko": "피아노",
+  "cs": "klavír",
+  "en": "piano",
+  "category": "music",
+  "icon": "piano",
+  "difficulty": 4.5,
+  "loan": "piano"
+ },
+ {
+  "id": "deurama",
+  "ko": "드라마",
+  "cs": "seriál",
+  "en": "drama (TV series)",
+  "category": "music",
+  "icon": "deurama",
+  "difficulty": 4.5,
+  "loan": "drama"
+ },
+ {
+  "id": "kamera",
+  "ko": "카메라",
+  "cs": "foťák",
+  "en": "camera",
+  "category": "tech",
+  "icon": "kamera",
+  "difficulty": 4.5,
+  "loan": "camera"
+ },
+ {
+  "id": "gochida",
+  "ko": "고치다",
+  "cs": "opravit",
+  "en": "to fix",
+  "category": "tech",
+  "icon": "gochida",
+  "difficulty": 4.5
+ },
+ {
+  "id": "apeuda",
+  "ko": "아프다",
+  "cs": "bolet",
+  "en": "to be sick / hurt",
+  "category": "body",
+  "icon": "apeuda",
+  "difficulty": 4.5
+ },
+ {
+  "id": "geiteu",
+  "ko": "게이트",
+  "cs": "brána",
+  "en": "gate (airport)",
+  "category": "travel",
+  "icon": "geiteu",
+  "difficulty": 4.5,
+  "loan": "gate"
+ },
+ {
+  "id": "jejudo",
+  "ko": "제주도",
+  "cs": "ostrov Čedžu",
+  "en": "Jeju Island",
+  "category": "travel",
+  "icon": "jejudo",
+  "difficulty": 4.5
+ },
+ {
+  "id": "yaegi",
+  "ko": "얘기",
+  "cs": "povídání",
+  "en": "talk, story",
+  "category": "music",
+  "icon": "yaegi",
   "difficulty": 4.5
  },
  {
@@ -249,7 +633,8 @@
   "en": "fried chicken",
   "category": "food",
   "icon": "chikin",
-  "difficulty": 4.8
+  "difficulty": 4.8,
+  "loan": "chicken"
  },
  {
   "id": "maekju",
@@ -267,7 +652,8 @@
   "en": "cola",
   "category": "food",
   "icon": "kolla",
-  "difficulty": 4.8
+  "difficulty": 4.8,
+  "loan": "cola"
  },
  {
   "id": "maepda",
@@ -306,6 +692,181 @@
   "difficulty": 4.8
  },
  {
+  "id": "gabang",
+  "ko": "가방",
+  "cs": "taška",
+  "en": "bag",
+  "category": "clothes",
+  "icon": "gabang",
+  "difficulty": 4.8
+ },
+ {
+  "id": "jigap",
+  "ko": "지갑",
+  "cs": "peněženka",
+  "en": "wallet",
+  "category": "clothes",
+  "icon": "jigap",
+  "difficulty": 4.8
+ },
+ {
+  "id": "usan",
+  "ko": "우산",
+  "cs": "deštník",
+  "en": "umbrella",
+  "category": "clothes",
+  "icon": "usan",
+  "difficulty": 4.8
+ },
+ {
+  "id": "deureom",
+  "ko": "드럼",
+  "cs": "bicí",
+  "en": "drum",
+  "category": "music",
+  "icon": "deureom",
+  "difficulty": 4.8,
+  "loan": "drum"
+ },
+ {
+  "id": "geim",
+  "ko": "게임",
+  "cs": "hra",
+  "en": "game",
+  "category": "music",
+  "icon": "geim",
+  "difficulty": 4.8,
+  "loan": "game"
+ },
+ {
+  "id": "tenteu",
+  "ko": "텐트",
+  "cs": "stan",
+  "en": "tent",
+  "category": "music",
+  "icon": "tenteu",
+  "difficulty": 4.8,
+  "loan": "tent"
+ },
+ {
+  "id": "gamgi",
+  "ko": "감기",
+  "cs": "nachlazení",
+  "en": "cold (illness)",
+  "category": "body",
+  "icon": "gamgi",
+  "difficulty": 4.8
+ },
+ {
+  "id": "sangcheo",
+  "ko": "상처",
+  "cs": "rána",
+  "en": "wound",
+  "category": "body",
+  "icon": "sangcheo",
+  "difficulty": 4.8
+ },
+ {
+  "id": "yaksa",
+  "ko": "약사",
+  "cs": "lékárník",
+  "en": "pharmacist",
+  "category": "body",
+  "icon": "yaksa",
+  "difficulty": 4.8
+ },
+ {
+  "id": "taeksi",
+  "ko": "택시",
+  "cs": "taxi",
+  "en": "taxi",
+  "category": "travel",
+  "icon": "taeksi",
+  "difficulty": 4.8,
+  "loan": "taxi"
+ },
+ {
+  "id": "chulgu",
+  "ko": "출구",
+  "cs": "východ",
+  "en": "exit",
+  "category": "travel",
+  "icon": "chulgu",
+  "difficulty": 4.8
+ },
+ {
+  "id": "seoul",
+  "ko": "서울",
+  "cs": "Soul",
+  "en": "Seoul (capital of Korea)",
+  "category": "travel",
+  "icon": "seoul",
+  "difficulty": 4.8
+ },
+ {
+  "id": "busan",
+  "ko": "부산",
+  "cs": "Pusan",
+  "en": "Busan (city in Korea)",
+  "category": "travel",
+  "icon": "busan",
+  "difficulty": 4.8
+ },
+ {
+  "id": "yeohaeng",
+  "ko": "여행",
+  "cs": "výlet",
+  "en": "trip",
+  "category": "travel",
+  "icon": "yeohaeng",
+  "difficulty": 4.8
+ },
+ {
+  "id": "eomma",
+  "ko": "엄마",
+  "cs": "máma",
+  "en": "mom",
+  "category": "family",
+  "icon": "eomma",
+  "difficulty": 4.8
+ },
+ {
+  "id": "sachon",
+  "ko": "사촌",
+  "cs": "bratranec",
+  "en": "cousin",
+  "category": "family",
+  "icon": "sachon",
+  "difficulty": 4.8
+ },
+ {
+  "id": "eonni",
+  "ko": "언니",
+  "cs": "starší sestra (pro ni)",
+  "en": "older sister (used by females)",
+  "category": "family",
+  "icon": "eonni",
+  "difficulty": 4.8
+ },
+ {
+  "id": "adeul",
+  "ko": "아들",
+  "cs": "syn",
+  "en": "son",
+  "category": "family",
+  "icon": "adeul",
+  "difficulty": 4.8
+ },
+ {
+  "id": "gyeoul",
+  "ko": "겨울",
+  "cs": "zima",
+  "en": "winter",
+  "category": "holiday",
+  "icon": "gyeoul",
+  "difficulty": 4.8
+ },
+ {
   "id": "jjigae",
   "ko": "찌개",
   "cs": "hustá polévka",
@@ -321,6 +882,24 @@
   "en": "to be cheap",
   "category": "adj",
   "icon": "ssada",
+  "difficulty": 5
+ },
+ {
+  "id": "appa",
+  "ko": "아빠",
+  "cs": "táta",
+  "en": "dad",
+  "category": "family",
+  "icon": "appa",
+  "difficulty": 5
+ },
+ {
+  "id": "oppa",
+  "ko": "오빠",
+  "cs": "starší bratr (pro ni)",
+  "en": "oppa (older brother, used by females)",
+  "category": "family",
+  "icon": "oppa",
   "difficulty": 5
  },
  {
@@ -360,6 +939,33 @@
   "difficulty": 5.3
  },
  {
+  "id": "uisa",
+  "ko": "의사",
+  "cs": "lékař",
+  "en": "doctor",
+  "category": "body",
+  "icon": "uisa",
+  "difficulty": 5.3
+ },
+ {
+  "id": "ttal",
+  "ko": "딸",
+  "cs": "dcera",
+  "en": "daughter",
+  "category": "family",
+  "icon": "ttal",
+  "difficulty": 5.3
+ },
+ {
+  "id": "kkot",
+  "ko": "꽃",
+  "cs": "květina",
+  "en": "flower",
+  "category": "holiday",
+  "icon": "kkot",
+  "difficulty": 5.3
+ },
+ {
   "id": "danmuji",
   "ko": "단무지",
   "cs": "nakládaná ředkev",
@@ -384,7 +990,8 @@
   "en": "bubble tea",
   "category": "food",
   "icon": "beobeulti",
-  "difficulty": 6.3
+  "difficulty": 6.3,
+  "loan": "bubble tea"
  },
  {
   "id": "jal_gayo",
@@ -393,6 +1000,130 @@
   "en": "Take care",
   "category": "expr",
   "icon": "jal_gayo",
+  "difficulty": 6.3
+ },
+ {
+  "id": "konseoteu",
+  "ko": "콘서트",
+  "cs": "koncert",
+  "en": "concert",
+  "category": "music",
+  "icon": "konseoteu",
+  "difficulty": 6.3,
+  "loan": "concert"
+ },
+ {
+  "id": "keipap",
+  "ko": "케이팝",
+  "cs": "K-pop",
+  "en": "K-pop",
+  "category": "music",
+  "icon": "keipap",
+  "difficulty": 6.3,
+  "loan": "K-pop"
+ },
+ {
+  "id": "noraebang",
+  "ko": "노래방",
+  "cs": "karaoke",
+  "en": "karaoke room (norebang)",
+  "category": "music",
+  "icon": "noraebang",
+  "difficulty": 6.3
+ },
+ {
+  "id": "kaerikteo",
+  "ko": "캐릭터",
+  "cs": "postavička",
+  "en": "character",
+  "category": "music",
+  "icon": "kaerikteo",
+  "difficulty": 6.3,
+  "loan": "character"
+ },
+ {
+  "id": "noteubuk",
+  "ko": "노트북",
+  "cs": "notebook",
+  "en": "laptop",
+  "category": "tech",
+  "icon": "noteubuk",
+  "difficulty": 6.3,
+  "loan": "notebook"
+ },
+ {
+  "id": "keompyuteo",
+  "ko": "컴퓨터",
+  "cs": "počítač",
+  "en": "computer",
+  "category": "tech",
+  "icon": "keompyuteo",
+  "difficulty": 6.3,
+  "loan": "computer"
+ },
+ {
+  "id": "setakgi",
+  "ko": "세탁기",
+  "cs": "pračka",
+  "en": "washing machine",
+  "category": "tech",
+  "icon": "setakgi",
+  "difficulty": 6.3
+ },
+ {
+  "id": "eeokeon",
+  "ko": "에어컨",
+  "cs": "klimatizace",
+  "en": "air conditioner",
+  "category": "tech",
+  "icon": "eeokeon",
+  "difficulty": 6.3,
+  "loan": "air con"
+ },
+ {
+  "id": "boksagi",
+  "ko": "복사기",
+  "cs": "kopírka",
+  "en": "copier",
+  "category": "tech",
+  "icon": "boksagi",
+  "difficulty": 6.3
+ },
+ {
+  "id": "ganhosa",
+  "ko": "간호사",
+  "cs": "zdravotní sestra",
+  "en": "nurse",
+  "category": "body",
+  "icon": "ganhosa",
+  "difficulty": 6.3
+ },
+ {
+  "id": "jihacheol",
+  "ko": "지하철",
+  "cs": "metro",
+  "en": "subway",
+  "category": "travel",
+  "icon": "jihacheol",
+  "difficulty": 6.3
+ },
+ {
+  "id": "teomineol",
+  "ko": "터미널",
+  "cs": "terminál",
+  "en": "bus terminal",
+  "category": "travel",
+  "icon": "teomineol",
+  "difficulty": 6.3,
+  "loan": "terminal"
+ },
+ {
+  "id": "halmeoni",
+  "ko": "할머니",
+  "cs": "babička",
+  "en": "grandmother",
+  "category": "family",
+  "icon": "halmeoni",
   "difficulty": 6.3
  },
  {
@@ -447,7 +1178,8 @@
   "en": "melon",
   "category": "food",
   "icon": "mellon",
-  "difficulty": 6.5
+  "difficulty": 6.5,
+  "loan": "melon"
  },
  {
   "id": "popkon",
@@ -456,7 +1188,8 @@
   "en": "popcorn",
   "category": "food",
   "icon": "popkon",
-  "difficulty": 6.5
+  "difficulty": 6.5,
+  "loan": "popcorn"
  },
  {
   "id": "bissada",
@@ -465,6 +1198,116 @@
   "en": "to be expensive",
   "category": "adj",
   "icon": "bissada",
+  "difficulty": 6.5
+ },
+ {
+  "id": "hanbok",
+  "ko": "한복",
+  "cs": "hanbok",
+  "en": "hanbok (traditional Korean clothing)",
+  "category": "clothes",
+  "icon": "hanbok",
+  "difficulty": 6.5
+ },
+ {
+  "id": "angyeong",
+  "ko": "안경",
+  "cs": "brýle",
+  "en": "glasses",
+  "category": "clothes",
+  "icon": "angyeong",
+  "difficulty": 6.5
+ },
+ {
+  "id": "kaemping",
+  "ko": "캠핑",
+  "cs": "kempování",
+  "en": "camping",
+  "category": "music",
+  "icon": "kaemping",
+  "difficulty": 6.5,
+  "loan": "camping"
+ },
+ {
+  "id": "bolpen",
+  "ko": "볼펜",
+  "cs": "propiska",
+  "en": "ballpoint pen",
+  "category": "tech",
+  "icon": "bolpen",
+  "difficulty": 6.5,
+  "loan": "ball pen"
+ },
+ {
+  "id": "harin",
+  "ko": "할인",
+  "cs": "sleva",
+  "en": "discount",
+  "category": "tech",
+  "icon": "harin",
+  "difficulty": 6.5
+ },
+ {
+  "id": "jeongmal",
+  "ko": "정말",
+  "cs": "opravdu",
+  "en": "truly",
+  "category": "phrase",
+  "icon": "phrase",
+  "difficulty": 6.5
+ },
+ {
+  "id": "gonghang",
+  "ko": "공항",
+  "cs": "letiště",
+  "en": "airport",
+  "category": "travel",
+  "icon": "gonghang",
+  "difficulty": 6.5
+ },
+ {
+  "id": "incheon",
+  "ko": "인천",
+  "cs": "Inčchon",
+  "en": "Incheon (city in Korea)",
+  "category": "travel",
+  "icon": "incheon",
+  "difficulty": 6.5
+ },
+ {
+  "id": "gangnam",
+  "ko": "강남",
+  "cs": "Kangnam",
+  "en": "Gangnam (area in Seoul)",
+  "category": "travel",
+  "icon": "gangnam",
+  "difficulty": 6.5
+ },
+ {
+  "id": "chulbal",
+  "ko": "출발",
+  "cs": "odjezd",
+  "en": "departure",
+  "category": "travel",
+  "icon": "chulbal",
+  "difficulty": 6.5
+ },
+ {
+  "id": "seonmul",
+  "ko": "선물",
+  "cs": "dárek",
+  "en": "gift",
+  "category": "holiday",
+  "icon": "seonmul",
+  "difficulty": 6.5
+ },
+ {
+  "id": "saengil",
+  "ko": "생일",
+  "cs": "narozeniny",
+  "en": "birthday",
+  "category": "holiday",
+  "icon": "saengil",
   "difficulty": 6.5
  },
  {
@@ -486,12 +1329,40 @@
   "difficulty": 6.8
  },
  {
+  "id": "weiteo",
+  "ko": "웨이터",
+  "cs": "číšník",
+  "en": "waiter",
+  "category": "music",
+  "icon": "weiteo",
+  "difficulty": 6.8,
+  "loan": "waiter"
+ },
+ {
   "id": "gwail",
   "ko": "과일",
   "cs": "ovoce",
   "en": "fruit",
   "category": "food",
   "icon": "gwail",
+  "difficulty": 7
+ },
+ {
+  "id": "yeonghwa",
+  "ko": "영화",
+  "cs": "film",
+  "en": "movie",
+  "category": "music",
+  "icon": "yeonghwa",
+  "difficulty": 7
+ },
+ {
+  "id": "yeogwon",
+  "ko": "여권",
+  "cs": "pas",
+  "en": "passport",
+  "category": "travel",
+  "icon": "yeogwon",
   "difficulty": 7
  },
  {
@@ -502,6 +1373,33 @@
   "category": "color",
   "icon": "hoesaek",
   "difficulty": 7
+ },
+ {
+  "id": "keuriseumaseu",
+  "ko": "크리스마스",
+  "cs": "Vánoce",
+  "en": "Christmas",
+  "category": "holiday",
+  "icon": "keuriseumaseu",
+  "difficulty": 7.5
+ },
+ {
+  "id": "josimhada",
+  "ko": "조심하다",
+  "cs": "dávat pozor",
+  "en": "to be careful",
+  "category": "body",
+  "icon": "josimhada",
+  "difficulty": 7.8
+ },
+ {
+  "id": "harabeoji",
+  "ko": "할아버지",
+  "cs": "dědeček",
+  "en": "grandfather",
+  "category": "family",
+  "icon": "harabeoji",
+  "difficulty": 7.8
  },
  {
   "id": "bibimbap",
@@ -528,7 +1426,8 @@
   "en": "chocolate",
   "category": "food",
   "icon": "chokollit",
-  "difficulty": 8
+  "difficulty": 8,
+  "loan": "chocolate"
  },
  {
   "id": "tto_oseyo",
@@ -546,6 +1445,90 @@
   "en": "to be pretty",
   "category": "adj",
   "icon": "yeppeuda",
+  "difficulty": 8
+ },
+ {
+  "id": "mokgeori",
+  "ko": "목걸이",
+  "cs": "náhrdelník",
+  "en": "necklace",
+  "category": "clothes",
+  "icon": "mokgeori",
+  "difficulty": 8
+ },
+ {
+  "id": "geolgeurup",
+  "ko": "걸그룹",
+  "cs": "dívčí skupina",
+  "en": "girl group (K-pop)",
+  "category": "music",
+  "icon": "geolgeurup",
+  "difficulty": 8,
+  "loan": "girl group"
+ },
+ {
+  "id": "haendeupon",
+  "ko": "핸드폰",
+  "cs": "mobil",
+  "en": "cell phone",
+  "category": "tech",
+  "icon": "haendeupon",
+  "difficulty": 8,
+  "loan": "hand phone"
+ },
+ {
+  "id": "naengjanggo",
+  "ko": "냉장고",
+  "cs": "lednice",
+  "en": "refrigerator",
+  "category": "tech",
+  "icon": "naengjanggo",
+  "difficulty": 8
+ },
+ {
+  "id": "seonpunggi",
+  "ko": "선풍기",
+  "cs": "větrák",
+  "en": "electric fan",
+  "category": "tech",
+  "icon": "seonpunggi",
+  "difficulty": 8
+ },
+ {
+  "id": "inteonet",
+  "ko": "인터넷",
+  "cs": "internet",
+  "en": "internet",
+  "category": "tech",
+  "icon": "inteonet",
+  "difficulty": 8,
+  "loan": "internet"
+ },
+ {
+  "id": "banchanggo",
+  "ko": "반창고",
+  "cs": "náplast",
+  "en": "band-aid",
+  "category": "body",
+  "icon": "banchanggo",
+  "difficulty": 8
+ },
+ {
+  "id": "jeongnyujang",
+  "ko": "정류장",
+  "cs": "zastávka",
+  "en": "bus stop",
+  "category": "travel",
+  "icon": "jeongnyujang",
+  "difficulty": 8
+ },
+ {
+  "id": "yeodongsaeng",
+  "ko": "여동생",
+  "cs": "mladší sestra",
+  "en": "younger sister",
+  "category": "family",
+  "icon": "yeodongsaeng",
   "difficulty": 8
  },
  {
@@ -594,6 +1577,16 @@
   "difficulty": 8.3
  },
  {
+  "id": "pissibang",
+  "ko": "피씨방",
+  "cs": "herna (PC bang)",
+  "en": "PC room",
+  "category": "music",
+  "icon": "pissibang",
+  "difficulty": 8.3,
+  "loan": "PC bang"
+ },
+ {
   "id": "tto_bwayo",
   "ko": "또 봐요",
   "cs": "zase někdy",
@@ -603,13 +1596,23 @@
   "difficulty": 8.8
  },
  {
+  "id": "byeongwon",
+  "ko": "병원",
+  "cs": "nemocnice",
+  "en": "hospital",
+  "category": "body",
+  "icon": "byeongwon",
+  "difficulty": 8.8
+ },
+ {
   "id": "aiseukeurim",
   "ko": "아이스크림",
   "cs": "zmrzlina",
   "en": "ice cream",
   "category": "food",
   "icon": "aiseukeurim",
-  "difficulty": 9.3
+  "difficulty": 9.3,
+  "loan": "ice cream"
  },
  {
   "id": "samgyetang",
@@ -621,12 +1624,40 @@
   "difficulty": 9.5
  },
  {
+  "id": "tellebijeon",
+  "ko": "텔레비전",
+  "cs": "televize",
+  "en": "television",
+  "category": "tech",
+  "icon": "tellebijeon",
+  "difficulty": 9.5,
+  "loan": "television"
+ },
+ {
   "id": "kimchijjigae",
   "ko": "김치찌개",
   "cs": "kimči polévka",
   "en": "kimchi stew",
   "category": "food",
   "icon": "kimchijjigae",
+  "difficulty": 9.8
+ },
+ {
+  "id": "namdongsaeng",
+  "ko": "남동생",
+  "cs": "mladší bratr",
+  "en": "younger brother",
+  "category": "family",
+  "icon": "namdongsaeng",
+  "difficulty": 9.8
+ },
+ {
+  "id": "jangnangam",
+  "ko": "장난감",
+  "cs": "hračka",
+  "en": "toy",
+  "category": "holiday",
+  "icon": "jangnangam",
   "difficulty": 9.8
  },
  {
@@ -663,7 +1694,8 @@
   "en": "sandwich",
   "category": "food",
   "icon": "saendeuwichi",
-  "difficulty": 10
+  "difficulty": 10,
+  "loan": "sandwich"
  },
  {
   "id": "masitda",
@@ -675,6 +1707,24 @@
   "difficulty": 10
  },
  {
+  "id": "bangawoyo",
+  "ko": "반가워요",
+  "cs": "těší mě",
+  "en": "Nice to meet you",
+  "category": "expr",
+  "icon": "bangawoyo",
+  "difficulty": 10
+ },
+ {
+  "id": "undonghwa",
+  "ko": "운동화",
+  "cs": "tenisky",
+  "en": "sneakers",
+  "category": "clothes",
+  "icon": "undonghwa",
+  "difficulty": 10.3
+ },
+ {
   "id": "juhwangsaek",
   "ko": "주황색",
   "cs": "oranžová",
@@ -682,6 +1732,24 @@
   "category": "color",
   "icon": "juhwangsaek",
   "difficulty": 10.3
+ },
+ {
+  "id": "gwaenchanta",
+  "ko": "괜찮다",
+  "cs": "v pořádku",
+  "en": "to be okay",
+  "category": "adj",
+  "icon": "gwaenchanta",
+  "difficulty": 10.5
+ },
+ {
+  "id": "meri_keuriseumaseu",
+  "ko": "메리 크리스마스",
+  "cs": "veselé Vánoce",
+  "en": "Merry Christmas",
+  "category": "holiday",
+  "icon": "meri_keuriseumaseu",
+  "difficulty": 10.5
  },
  {
   "id": "annyeonghaseyo",
@@ -729,6 +1797,15 @@
   "difficulty": 12
  },
  {
+  "id": "gojangnasseoyo",
+  "ko": "고장났어요",
+  "cs": "je to rozbité",
+  "en": "It's broken",
+  "category": "tech",
+  "icon": "gojangnasseoyo",
+  "difficulty": 13
+ },
+ {
   "id": "doenjangjjigae",
   "ko": "된장찌개",
   "cs": "sójová polévka",
@@ -736,5 +1813,14 @@
   "category": "food",
   "icon": "doenjangjjigae",
   "difficulty": 13.8
+ },
+ {
+  "id": "saengil_chukahaeyo",
+  "ko": "생일 축하해요",
+  "cs": "všechno nejlepší",
+  "en": "Happy birthday",
+  "category": "holiday",
+  "icon": "saengil_chukahaeyo",
+  "difficulty": 14.3
  }
 ]

@@ -41,6 +41,20 @@ const helpers = () => {
     d.friends = { kim: { clean: 3, chapter: 1 }, haeun: { clean: 2, chapter: 1 }, nabi: { clean: 7, chapter: upTo >= 9 ? 3 : 1 } };
     d.streak = { count: 3, lastDay: new Date().toISOString().slice(0, 10).split('-').join('-') };
   };
+  /** Unlock everything up to night n (records for the whole chain). */
+  P.unlockTo = (n) => {
+    const d = P.G.data;
+    let cur = P.levels.prevNight(n);
+    while (cur) { d.nights[cur] = d.nights[cur] ?? { stars: 3, bestCoins: 90, plays: 1, seats: 3 }; cur = P.levels.prevNight(cur); }
+  };
+  /** Start a night and skip the boss intro. */
+  P.night2 = async (n, wait = 9000) => {
+    P.unlockTo(n);
+    P.start('Night', { night: n, seats: 3 });
+    await sleep(1600);
+    for (let k = 0; k < 6; k++) { const dlg = P.night()?.children?.list.find((o) => o.type === 'Container' && o.depth === 2000); if (!dlg) break; dlg.list[0].emit('pointerup'); await sleep(250); dlg.list[0].emit('pointerup'); await sleep(250); }
+    await sleep(wait);
+  };
   P.sleep = sleep;
   P.night = () => P.game.scene.getScene('Night');
   P.typeFirst = async (partial) => {
@@ -76,6 +90,9 @@ const SHOTS = [
   ['11d-night-greeted', async (p) => { await ev(p, "(async()=>{const el=P.G.ime.el; for(const s of P.imeStates('안녕하세요')){el.value=s;el.dispatchEvent(new InputEvent('input'));await P.sleep(30);}})()"); await p.waitForTimeout(250); }],
   ['11e-night-reaction', async (p) => { await p.waitForTimeout(4000); await ev(p, "(()=>{const n=P.night(); const c=n.customers.find(x=>x.state==='wait'&&x.bubble); if(c){c.bubble.destroy(); c.bubble=null; c.order=null; n.react(c,'spicy');}})()"); await p.waitForTimeout(500); }],
   ['12-night-boss', async (p) => { await ev(p, "P.seed(10); P.start('Night',{night:11})"); await p.waitForTimeout(1500); await p.mouse.click(200, 400); await p.waitForTimeout(300); await p.mouse.click(200, 400); await p.waitForTimeout(300); await p.mouse.click(200, 400); await p.waitForTimeout(300); await p.mouse.click(200, 400); await p.waitForTimeout(6000); }],
+  ['22-map-scroll', async (p) => { await ev(p, "P.seed(10); P.unlockTo(13); P.start('Map')"); await p.waitForTimeout(900); }],
+  ['23-night-dongdaemun', async (p) => { await ev(p, "P.seed(10); P.night2(13, 9000)"); await p.waitForTimeout(10600); await ev(p, 'P.typeFirst(true)'); await p.waitForTimeout(250); }],
+  ['24-night-blogger', async (p) => { await ev(p, "P.seed(10); P.night2(116, 5000)"); await p.waitForTimeout(8000); }],
   ['13-result', async (p) => { await ev(p, "P.start('Result',{night:4,stars:3,total:11,served:11,angry:0,mistakes:2,coins:132,tips:30,bestCombo:7,newWords:['jjigae','japchae','galbi','gansik','eumsik'],trouble:['jjigae','gwaja'],regularsSeen:[],clean:{}})"); await p.waitForTimeout(3200); }],
   ['14-postcard', async (p) => { await ev(p, "P.game.scene.getScene('Result').postcard()"); await p.waitForTimeout(1300); }],
   ['15-result-boss', async (p) => { await ev(p, "P.start('Result',{night:11,stars:4,total:11,served:10,angry:1,mistakes:1,coins:210,tips:40,bestCombo:5,newWords:['hana','juseyo'],trouble:[],regularsSeen:[],clean:{},critic:{stars:4,mistakes:1,walkouts:0}})"); await p.waitForTimeout(3200); }],

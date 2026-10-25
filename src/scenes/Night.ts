@@ -1,21 +1,21 @@
 // One night = one level. Customers order in bubbles, the player types the
 // Korean with the system IME, matching orders are served.
 import Phaser from 'phaser';
-import { BOSS_NIGHT, CRITIC_ORDERS, CRITIC_PATIENCE, nightDef, nightPool, type NightDef, type RegularId } from '../data/levels';
-import { CRITIC_INTRO } from '../data/story';
+import { CRITIC_ORDERS, CRITIC_PATIENCE, DISTRICTS, homeDistrict, nightDef, nightPool, type NightDef, type RegularId } from '../data/levels';
+import { BOSS_INTRO, HOLIDAY_INTRO, NAMES, PHARMACY_INTRO } from '../data/story';
 import { matchAgainst } from '../logic/hangul';
 import { BOSS_SEATS, DEFAULT_SEATS, comboMultiplier, criticStars, nightStars, patienceMultiplier, seatMultiplier, serveCoins, spawnInterval } from '../logic/rules';
 import { helperPick } from '../logic/helper';
-import { BOSS_GREET_WINDOW, BYE_COINS, BYE_WORDS, GREET_WINDOW, HELLO_COINS, HELLO_PATIENCE, HELLO_WORDS, REACTIONS, REACTIONS_FROM, REACTION_CHANCE, REACTION_COINS, REACTION_TIME, matchPolite, pickReaction, type GreetKind, type Greeting, type ReactionId } from '../logic/polite';
+import { DISCOUNT_MUL, HAGGLE_CHANCE, HAGGLE_WINDOW, HAGGLE_WORDS, INSIST_LEAVE, INSIST_MUL, BOSS_GREET_WINDOW, BYE_COINS, BYE_WORDS, GREET_WINDOW, HELLO_COINS, HELLO_PATIENCE, HELLO_WORDS, REACTIONS, REACTIONS_FROM, REACTION_CHANCE, REACTION_COINS, REACTION_TIME, matchPolite, pickReaction, type GreetKind, type Greeting, type ReactionId } from '../logic/polite';
 import { ITEM_REACTIONS } from '../data/reactions';
 import { jamoKnown } from '../data/levels';
-import { jamoSet } from '../logic/hangul';
+import { jamoSet, matchKind } from '../logic/hangul';
 import { hintLevel } from '../logic/srs';
 import { recordMissed, recordMistake, recordServe, rng } from '../logic/srs';
 import { Bubble } from '../game/bubble';
 import { playDialogue } from '../game/dialogue';
-import { makeOrder, tokenAt, type Kind, type Order } from '../game/orders';
-import { G, iconIdx, word } from '../game/state';
+import { joinTokens, makeOrder, orderTargets, tokenAt, type Kind, type Order } from '../game/orders';
+import { G, iconTex, word } from '../game/state';
 import { DEPTH, Street, particleFrame } from '../game/street';
 import { TypeBox } from '../game/typebox';
 import { attachHat } from '../game/hats';
@@ -39,6 +39,12 @@ interface Customer {
   tutorial?: boolean;
   /** Greeting window (hand when seated, door when leaving). */
   greet?: { kind: GreetKind; until: number; tag: Phaser.GameObjects.Container };
+  /** 용산: "To je drahé!" waiting for 할인 / 싸다. */
+  haggle?: { until: number; tag: Phaser.GameObjects.Container };
+  /** Price multiplier after haggling. */
+  priceMul?: number;
+  /** Got a discount: will not walk out. */
+  stays?: boolean;
   /** Last item served (for the reaction). */
   lastItem?: string;
 }
@@ -65,7 +71,13 @@ export interface NightSummary {
   reactions: number;
 }
 
-const GENERIC = ['char_cust_a', 'char_cust_b', 'char_cust_c', 'char_cust_d'];
+/** Ambient sound per backdrop. */
+function ambientFor(b: string): 'rain' | 'river' | 'city' | 'sea' {
+  if (b === 'euljiro') return 'rain';
+  if (b === 'hangang') return 'river';
+  if (b === 'busan') return 'sea';
+  return 'city';
+}
 const INPUT_H = 46;
 
 export class NightScene extends Phaser.Scene {
@@ -106,6 +118,9 @@ export class NightScene extends Phaser.Scene {
   private seatMul = 1;
   private helped = 0;
   private greetings = 0;
+  private haggles = 0;
+  /** Customers who left after 싸다 (not angry, not counted). */
+  private lost = 0;
   private reactions = 0;
   /** A mistake happened while typing a greeting (no mastery for it). */
   private greetDirty = false;
@@ -129,9 +144,9 @@ export class NightScene extends Phaser.Scene {
     this.n = d?.night ?? G.night;
     G.night = this.n;
     this.def = nightDef(this.n);
-    this.seats = this.n === BOSS_NIGHT ? BOSS_SEATS : (d?.seats ?? G.data.settings.seats ?? DEFAULT_SEATS);
+    this.seats = this.def.boss ? BOSS_SEATS : (d?.seats ?? G.data.settings.seats ?? DEFAULT_SEATS);
     this.seatMul = seatMultiplier(this.seats);
-    this.helped = this.greetings = this.reactions = 0;
+    this.helped = this.greetings = this.reactions = this.haggles = this.lost = 0;
     this.greetDirty = this.criticGreeted = false;
     this.known = jamoKnown(this.n);
     this.customers = [];
@@ -150,16 +165,16 @@ export class NightScene extends Phaser.Scene {
   create() {
     fadeIn(this, 400);
     if (G.speed !== 1) { this.time.timeScale = G.speed; this.tweens.timeScale = G.speed; this.anims.globalTimeScale = G.speed; }
-    const boss = this.n === BOSS_NIGHT;
-    const backdrop = this.def.district === 'euljiro' ? 'euljiro' : 'hangang';
+    const boss = !!this.def.boss;
+    const backdrop = DISTRICTS[homeDistrict(this.def)].backdrop;
     this.street = new Street(this, { backdrop, seats: this.seats });
     this.seatsTaken = this.street.seatX.map(() => null);
     this.patMul = patienceMultiplier(G.data.upgrades, G.data.settings.relaxed, this.street.raining);
     this.pool = nightPool(this.n, G.data.upgrades);
     this.newTonight = new Set(this.def.newWords);
     for (const [id, s] of Object.entries(G.data.words)) if (s.seen > 0) this.seenBefore.add(id);
-    G.audio.setAmbient(backdrop === 'euljiro' ? 'rain' : 'river');
-    G.audio.setLofi(G.hasUpgrade('radio'));
+    G.audio.setAmbient(ambientFor(backdrop));
+    G.audio.setLofi(G.hasUpgrade('radio'), G.station());
 
     this.buildQueue();
     this.buildHud();
@@ -193,15 +208,17 @@ export class NightScene extends Phaser.Scene {
     this.box.bg.setInteractive().on('pointerdown', () => G.ime.reopen());
 
     this.nextArrival = 1.4;
-    const title = boss ? 'Finále · 미식가' : `Noc ${this.n}`;
+    const title = boss ? `Boss · ${NAMES[this.def.boss!]}` : `Noc ${this.n}`;
     const banner = txt(this, this.scale.width / 2, this.scale.height / 2 - 60, title, { size: 'l', color: C.yellow, origin: [0.5, 0.5], shadow: true }).setDepth(DEPTH.overlay);
     banner.setScale(2).setAlpha(0);
     this.tweens.add({ targets: banner, scale: 1, alpha: 1, duration: 400, ease: 'Back.easeOut', hold: 900, yoyo: true, onComplete: () => banner.destroy() });
-    if (boss) {
+    const introLines = boss ? BOSS_INTRO[this.def.boss!]
+      : HOLIDAY_INTRO[this.n] ?? (this.n === 201 && !G.data.nights[201] ? PHARMACY_INTRO : null);
+    if (introLines) {
       this.intro = true;
       this.time.delayedCall(900, async () => {
         this.updateTapArea();
-        await playDialogue(this, CRITIC_INTRO, { bottom: this.scale.height - INPUT_H - 4 });
+        await playDialogue(this, introLines, { bottom: this.scale.height - INPUT_H - 4 });
         this.intro = false;
         this.updateTapArea();
       });
@@ -211,7 +228,7 @@ export class NightScene extends Phaser.Scene {
   // ------------------------------------------------------------- schedule
   private buildQueue() {
     const d = this.def;
-    const total = this.n === BOSS_NIGHT ? 6 : d.customers;
+    const total = d.boss ? 6 : d.customers;
     const q: Kind[] = Array.from({ length: total }, () => 'generic' as Kind);
     const slot = (from: number, to: number) => {
       for (let tries = 0; tries < 20; tries++) {
@@ -227,7 +244,7 @@ export class NightScene extends Phaser.Scene {
       if (r === 'kim') i = slot(Math.floor(total * 0.6), total);
       if (i >= 0) q[i] = r;
     }
-    if (this.n === BOSS_NIGHT) q.unshift('critic');
+    if (d.boss) q.unshift('boss');
     this.queue = q;
   }
 
@@ -258,7 +275,7 @@ export class NightScene extends Phaser.Scene {
     this.hud = this.add.container(0, 0).setDepth(DEPTH.hud);
     const bg = this.add.rectangle(0, 0, 10, 22, 0x181425, 0.85).setOrigin(0, 0).setName('bg');
     const line = this.add.rectangle(0, 22, 10, 1, 0x3a4466).setOrigin(0, 0).setName('line');
-    const night = txt(s, 6, 11, this.n === BOSS_NIGHT ? '미식가' : `Noc ${this.n}`, { size: 's', color: C.cream, origin: [0, 0.5] });
+    const night = txt(s, 6, 11, this.def.boss ? NAMES[this.def.boss] : `Noc ${this.n}`, { size: 's', color: C.cream, origin: [0, 0.5] });
     this.progressBg = this.add.rectangle(0, 9, 10, 5, 0x3a4466).setOrigin(0, 0);
     this.progress = this.add.rectangle(0, 10, 0, 3, 0xf77622).setOrigin(0, 0);
     this.coinIcon = this.add.sprite(0, 11, 'coin').play('coin:spin');
@@ -283,24 +300,25 @@ export class NightScene extends Phaser.Scene {
   }
 
   private updateProgress() {
-    const done = this.served + this.angry;
+    const done = this.served + this.angry + this.lost;
     const total = Math.max(1, this.totalCustomers());
     this.progress.width = Math.round((this.progressBg.width - 2) * (done / total));
   }
 
   // ------------------------------------------------------------- customers
   private spawn(kind: Kind) {
-    const seat = kind === 'critic' ? 1 : this.freeSeat();
+    const seat = kind === 'boss' ? 1 : this.freeSeat();
     if (seat < 0) return false;
-    const key = kind === 'generic' ? GENERIC[Math.floor(this.rand() * GENERIC.length)]
-      : kind === 'nabi' ? (G.data.friends.nabi?.chapter >= 2 ? 'nabi_fat' : 'nabi') : `char_${kind === 'critic' ? 'critic' : kind}`;
+    const generics = DISTRICTS[homeDistrict(this.def)].generics;
+    const key = kind === 'generic' ? generics[Math.floor(this.rand() * generics.length)]
+      : kind === 'nabi' ? (G.data.friends.nabi?.chapter >= 2 ? 'nabi_fat' : 'nabi') : `char_${kind === 'boss' ? this.def.boss : kind}`;
     const sp = this.add.sprite(this.street.wx(140), 0, key).setOrigin(0.5, 1).setDepth(DEPTH.customer);
     if (kind === 'nabi') { sp.setFlipX(false); attachHat(this, sp); }
-    const c: Customer = { kind, key, sprite: sp, seat, state: 'walk', patience: 1, max: 1, order: null, bubble: null, ordersLeft: kind === 'critic' ? CRITIC_ORDERS : 1 };
+    const c: Customer = { kind, key, sprite: sp, seat, state: 'walk', patience: 1, max: 1, order: null, bubble: null, ordersLeft: kind === 'boss' ? CRITIC_ORDERS : 1 };
     this.seatsTaken[seat] = c;
     this.customers.push(c);
     this.arrived++;
-    if (kind !== 'generic' && kind !== 'critic' && !this.regularsSeen.includes(kind)) this.regularsSeen.push(kind);
+    if (kind !== 'generic' && kind !== 'boss' && !this.regularsSeen.includes(kind)) this.regularsSeen.push(kind);
     this.placeCustomer(c);
     const tx = this.street.wx(this.street.seatX[seat]);
     sp.play(`${key}:walk`);
@@ -313,7 +331,7 @@ export class NightScene extends Phaser.Scene {
   }
 
   private freeSeat(): number {
-    const free = this.seatsTaken.map((c, i) => (c ? -1 : i)).filter((i) => i >= 0 && !(this.n === BOSS_NIGHT && i === 1 && !this.critic.done));
+    const free = this.seatsTaken.map((c, i) => (c ? -1 : i)).filter((i) => i >= 0 && !(this.def.boss && i === 1 && !this.critic.done));
     if (!free.length) return -1;
     return free[Math.floor(this.rand() * free.length)];
   }
@@ -328,8 +346,9 @@ export class NightScene extends Phaser.Scene {
   private placeBubble(c: Customer) {
     const b = c.bubble!;
     const W = this.scale.width;
-    const row = c.kind === 'critic' ? 1 : c.seat % 2;
-    const anchorY = this.street.wy(c.kind === 'nabi' ? -58 : -82) - row * 56;
+    const row = c.kind === 'boss' ? 1 : c.seat % 2;
+    const rowGap = DISTRICTS[homeDistrict(this.def)].mechanic === 'colorItem' ? 76 : 56;
+    const anchorY = this.street.wy(c.kind === 'nabi' ? -58 : -82) - row * rowGap;
     const cx = this.street.wx(this.street.seatX[c.seat]);
     let x = Math.round(cx - b.bw / 2);
     x = Math.max(2, Math.min(W - b.bw - 2, x));
@@ -343,21 +362,22 @@ export class NightScene extends Phaser.Scene {
     if (c.kind === 'nabi') G.audio.play('meow'); else G.audio.play('bell', { volume: 0.6 });
     this.newOrder(c);
     if (c.kind !== 'nabi' && !c.tutorial) this.openGreeting(c, 'hello');
+    this.maybeHaggle(c);
   }
 
   private newOrder(c: Customer) {
     const exclude = new Set<string>([...this.recent.slice(-2)]);
     for (const o of this.customers) if (o.order) o.order.tokens.forEach((t) => exclude.add(t.id));
-    const order = makeOrder(c.kind, this.pool, this.newTonight, exclude, this.rand);
+    const order = makeOrder(c.kind, { pool: this.pool, newTonight: this.newTonight, exclude, rand: this.rand, mechanic: DISTRICTS[homeDistrict(this.def)].mechanic, boss: this.def.boss, late: this.def.late });
     c.order = order;
-    const base = c.kind === 'critic' ? CRITIC_PATIENCE : this.def.patience * (c.kind === 'haeun' ? 0.7 : c.kind === 'nabi' ? 1.2 : 1);
+    const base = c.kind === 'boss' ? CRITIC_PATIENCE : this.def.patience * (c.kind === 'haeun' ? 0.7 : c.kind === 'nabi' ? 1.2 : 1);
     c.max = base * this.patMul;
     c.patience = c.max;
     if (this.n === 1 && G.data.stats.served === 0 && this.served === 0 && !this.customers.some((o) => o.tutorial)) {
       c.tutorial = true;
       this.showTutorial(order);
     }
-    const b = new Bubble(this, order, c.kind === 'critic' ? Math.min(140, this.scale.width - 8) : 66);
+    const b = new Bubble(this, order, c.kind === 'boss' ? Math.min(150, this.scale.width - 8) : 66);
     c.bubble = b;
     this.placeBubble(c);
     b.setScale(0.2).setAlpha(0);
@@ -392,7 +412,7 @@ export class NightScene extends Phaser.Scene {
       G.ime.clear();
       return;
     }
-    const m = matchPolite(text, ws, (c) => c.order!.target, this.activeGreetings());
+    const m = matchPolite(text, ws, (c) => orderTargets(c.order!), this.activeGreetings());
     const r = m.orders;
     for (const c of ws) c.bubble!.setMatch(text.length === 0 ? 'normal' : r.prefix.includes(c) ? 'hi' : 'dim');
     if (text.length === 0) { this.setError(false); this.greetDirty = false; return; }
@@ -406,8 +426,8 @@ export class NightScene extends Phaser.Scene {
       const target = r.full;
       // 김치 vs 김치찌개: if it's also a prefix of another order, wait a moment
       const longer = r.prefix.some((c) => c !== target && c.order!.target.length > target.order!.target.length);
-      if (longer) this.pendingServe = this.time.delayedCall(650, () => this.serve(target));
-      else this.serve(target);
+      if (longer) this.pendingServe = this.time.delayedCall(650, () => this.serve(target, text));
+      else this.serve(target, text);
     }
   }
 
@@ -431,7 +451,7 @@ export class NightScene extends Phaser.Scene {
       G.setStat(id, recordMistake(G.stat(id)));
       this.trouble.set(id, (this.trouble.get(id) ?? 0) + 1);
       c.bubble!.shake();
-      if (c.kind === 'critic') {
+      if (c.kind === 'boss') {
         this.critic.mistakes++;
         floatText(this, c.sprite.x, c.sprite.y - 44, '−★', C.red);
         c.sprite.play(`${c.key}:neutral`);
@@ -471,9 +491,14 @@ export class NightScene extends Phaser.Scene {
   }
 
   // ------------------------------------------------------------- serving
-  private serve(c: Customer) {
+  private serve(c: Customer, typed?: string) {
     if (c.state !== 'wait' || !c.order || !c.bubble) return;
     const o = c.order;
+    // answered with an alternative (버스 instead of 지하철): credit those words
+    if (typed && o.alts) {
+      const alt = o.alts.find((a) => matchKind(typed, joinTokens(a)) === 'full');
+      if (alt && matchKind(typed, o.target) !== 'full') { o.tokens = alt; o.mistakes = alt.map((_, i) => o.mistakes[i] ?? false); }
+    }
     const b = c.bubble;
     const clean = !o.mistakes.some(Boolean);
     if (o.reaction) { this.answerReaction(c, clean); return; }
@@ -485,13 +510,13 @@ export class NightScene extends Phaser.Scene {
     // learning
     o.tokens.forEach((t, i) => G.setStat(t.id, recordServe(G.stat(t.id), { clean: !o.mistakes[i], hinted: o.hinted, night: this.n })));
     o.tokens.forEach((t) => this.recent.push(t.id));
-    if (clean && !o.hinted && c.kind !== 'generic' && c.kind !== 'critic') this.cleanServes[c.kind] = (this.cleanServes[c.kind] ?? 0) + 1;
+    if (clean && !o.hinted && c.kind !== 'generic' && c.kind !== 'boss') this.cleanServes[c.kind] = (this.cleanServes[c.kind] ?? 0) + 1;
     // score
     if (clean) this.combo++; else this.combo = 0;
     this.bestCombo = Math.max(this.bestCombo, this.combo);
     const diff = o.tokens.reduce((a, t) => a + word(t.id).difficulty, 0);
     const pay = serveCoins(diff, c.patience / c.max, this.combo, o.hinted);
-    const total = Math.round(pay.total * this.seatMul);
+    const total = Math.round(pay.total * this.seatMul * (c.priceMul ?? 1));
     this.coins += total;
     this.tips += Math.round(pay.tip * comboMultiplier(this.combo) * this.seatMul);
     this.updateCombo(true);
@@ -532,7 +557,7 @@ export class NightScene extends Phaser.Scene {
       G.audio.play('serve');
       const icons = o.icons;
       icons.forEach((ic, i) => {
-        const dish = this.add.image(this.street.wx(-40), this.street.wy(-43), 'icons', iconIdx(ic)).setOrigin(0.5, 1).setDepth(DEPTH.dish);
+        const dish = this.add.image(this.street.wx(-40), this.street.wy(-43), ...iconTex(ic)).setOrigin(0.5, 1).setDepth(DEPTH.dish);
         const tx = this.street.wx(this.street.seatX[c.seat]) + (icons.length > 1 ? (i - 0.5) * 18 : c.kind === 'nabi' ? -14 : 0);
         this.tweens.add({
           targets: dish, x: tx, duration: 280 + Math.abs(tx - dish.x) * 1.2, ease: 'Cubic.easeOut', delay: i * 80,
@@ -557,12 +582,12 @@ export class NightScene extends Phaser.Scene {
     this.updateProgress();
     this.time.delayedCall(1700, () => {
       crumbs.destroy();
-      if (c.kind === 'critic' && --c.ordersLeft > 0) {
+      if (c.kind === 'boss' && --c.ordersLeft > 0) {
         c.sprite.play(`${c.key}:idle`);
         this.time.delayedCall(900, () => { if (!this.ended) { c.state = 'wait'; this.newOrder(c); } });
         return;
       }
-      if (c.kind === 'critic') this.critic.done = true;
+      if (c.kind === 'boss') this.critic.done = true;
       if (!this.ended && this.maybeReact(c)) return;
       this.leave(c, true);
     });
@@ -647,8 +672,8 @@ export class NightScene extends Phaser.Scene {
     this.updateProgress();
     G.audio.play('angry');
     c.sprite.play(`${c.key}:${c.kind === 'nabi' ? 'walk' : 'angry'}`);
-    floatText(this, c.sprite.x, c.sprite.y - 46, c.kind === 'critic' ? '−★★' : 'hmpf!', C.red);
-    if (c.kind === 'critic') {
+    floatText(this, c.sprite.x, c.sprite.y - 46, c.kind === 'boss' ? '−★★' : 'hmpf!', C.red);
+    if (c.kind === 'boss') {
       this.critic.walkouts++;
       if (--c.ordersLeft > 0) {
         // the critic grumbles but orders again
@@ -674,7 +699,7 @@ export class NightScene extends Phaser.Scene {
       // arrivals
       if (this.queue.length && this.clock >= this.nextArrival) {
         const kind = this.queue[0];
-        const bossWaiting = this.n === BOSS_NIGHT && kind !== 'critic' && this.arrived === 0;
+        const bossWaiting = !!this.def.boss && kind !== 'boss' && this.arrived === 0;
         if (!bossWaiting && this.spawn(kind)) {
           this.queue.shift();
           const [a, b] = spawnInterval(this.def.spawn, this.seats);
@@ -682,12 +707,12 @@ export class NightScene extends Phaser.Scene {
         } else this.nextArrival = this.clock + 0.5;
       }
       // boss night: once the critic is done, nobody new comes
-      if (this.n === BOSS_NIGHT && this.critic.done) this.queue = [];
+      if (this.def.boss && this.critic.done) this.queue = [];
       // patience
       for (const c of this.customers) {
         if (c.state !== 'wait' || !c.bubble) continue;
         if (c.tutorial && this.served === 0) { c.bubble.setPatience(1); continue; }
-        c.patience -= dt;
+        if (!c.stays) c.patience -= dt;
         const f = c.patience / c.max;
         c.bubble.setPatience(f);
         if (c.order?.reaction) { if (c.patience <= 0) this.walkOut(c); continue; }
@@ -704,7 +729,7 @@ export class NightScene extends Phaser.Scene {
   private checkHelper() {
     const ws = this.waiting();
     if (!ws.length || !this.street.helper) return;
-    const pick = helperPick(ws.map((c) => ({ frac: c.patience / c.max, eligible: c.kind !== 'critic' && !c.tutorial && !c.order!.reaction })), this.helped, this.seats, G.hasUpgrade('helper'));
+    const pick = helperPick(ws.map((c) => ({ frac: c.patience / c.max, eligible: c.kind !== 'boss' && !c.tutorial && !c.order!.reaction })), this.helped, this.seats, G.hasUpgrade('helper'));
     if (pick >= 0) this.helperServe(ws[pick]);
   }
 
@@ -731,7 +756,7 @@ export class NightScene extends Phaser.Scene {
         h.play('char_kim_helper:idle');
         G.audio.play('serve');
         o.icons.forEach((ic, i) => {
-          const dish = this.add.image(h.x + 14, this.street.wy(-43), 'icons', iconIdx(ic)).setOrigin(0.5, 1).setDepth(DEPTH.dish);
+          const dish = this.add.image(h.x + 14, this.street.wy(-43), ...iconTex(ic)).setOrigin(0.5, 1).setDepth(DEPTH.dish);
           const tx = this.street.wx(this.street.seatX[c.seat]) + (o.icons.length > 1 ? (i - 0.5) * 18 : c.kind === 'nabi' ? -14 : 0);
           this.tweens.add({
             targets: dish, x: tx, duration: 300 + Math.abs(tx - dish.x) * 1.2, ease: 'Cubic.easeOut', delay: i * 80,
@@ -778,6 +803,7 @@ export class NightScene extends Phaser.Scene {
       if (!this.customers.some((c) => c.greet?.kind === kind)) continue;
       for (const id of this.greetWords(kind)) out.push({ id, ko: word(id).ko, kind });
     }
+    if (this.customers.some((c) => c.haggle)) for (const id of HAGGLE_WORDS) out.push({ id, ko: word(id).ko, kind: 'haggle' });
     return out;
   }
 
@@ -796,7 +822,7 @@ export class NightScene extends Phaser.Scene {
     const bg = this.add.nineslice(-2, 0, 'bubble', undefined, bw, 14, 5, 5, 5, 5).setOrigin(0, 0.5);
     tag.add([bg, icon, t]);
     tag.setSize(bw, 14);
-    const window = c.kind === 'critic' && kind === 'hello' ? BOSS_GREET_WINDOW : GREET_WINDOW;
+    const window = c.kind === 'boss' && kind === 'hello' ? BOSS_GREET_WINDOW : GREET_WINDOW;
     c.greet?.tag.destroy();
     c.greet = { kind, until: this.clock + window, tag };
     this.placeGreeting(c);
@@ -815,6 +841,79 @@ export class NightScene extends Phaser.Scene {
     g.tag.setPosition(Math.round(Math.max(3, Math.min(W - g.tag.width, x))), Math.round(Math.max(30, y)));
   }
 
+  // ------------------------------------------------------------- 용산 haggling
+  private maybeHaggle(c: Customer) {
+    if (DISTRICTS[homeDistrict(this.def)].mechanic !== 'haggle' || c.kind === 'boss' || c.kind === 'nabi' || c.tutorial) return;
+    if (!HAGGLE_WORDS.every((id) => this.ready(id)) || this.rand() >= HAGGLE_CHANCE) return;
+    this.time.delayedCall(1300, () => {
+      if (c.state !== 'wait' || !c.bubble || c.order?.reaction || this.ended) return;
+      const tag = this.add.container(0, 0).setDepth(DEPTH.bubble + 3);
+      const t1 = txt(this, 4, 3, 'To je drahé!', { size: 'xs', color: C.red });
+      const hint = HAGGLE_WORDS.map((id) => {
+        const w = word(id);
+        const lvl = hintLevel(G.stat(id).mastery);
+        return lvl === 'full' ? w.ko : lvl === 'partial' ? [...w.ko][0] + '…' : '?';
+      }).join(' / ');
+      const t2 = txt(this, 4, 12, hint, { size: 'xs', color: C.ink });
+      const bw = Math.max(t1.width, t2.width) + 8;
+      const bg = this.add.nineslice(0, 0, 'bubble', undefined, bw, 23, 5, 5, 5, 5).setOrigin(0, 0);
+      tag.add([bg, t1, t2]).setSize(bw, 23);
+      c.haggle = { until: this.clock + HAGGLE_WINDOW, tag };
+      c.sprite.play(`${c.key}:neutral`);
+      this.placeHaggle(c);
+      tag.setScale(0.3);
+      this.tweens.add({ targets: tag, scale: 1, duration: 220, ease: 'Back.easeOut' });
+      G.audio.play('hint', { detune: -300 });
+    });
+  }
+
+  private placeHaggle(c: Customer) {
+    if (!c.haggle) return;
+    const W = this.scale.width;
+    const b = c.bubble;
+    const x = b ? b.x + b.bw - c.haggle.tag.width + 6 : c.sprite.x;
+    const y = b ? b.y - 18 : c.sprite.y - 60;
+    c.haggle.tag.setPosition(Math.round(Math.max(2, Math.min(W - c.haggle.tag.width - 2, x))), Math.round(Math.max(26, y)));
+  }
+
+  private closeHaggle(c: Customer) {
+    const h = c.haggle;
+    if (!h) return;
+    c.haggle = undefined;
+    this.tweens.add({ targets: h.tag, alpha: 0, duration: 180, onComplete: () => h.tag.destroy() });
+  }
+
+  private haggleAnswer(g: Greeting) {
+    G.setStat(g.id, recordServe(G.stat(g.id), { clean: !this.greetDirty, hinted: false, night: this.n }));
+    this.greetDirty = false;
+    this.haggles++;
+    for (const c of this.customers.filter((x) => x.haggle)) {
+      this.closeHaggle(c);
+      if (g.id === 'harin') {
+        c.priceMul = DISCOUNT_MUL;
+        c.stays = true;
+        c.patience = c.max;
+        floatText(this, c.sprite.x, c.sprite.y - 46, 'sleva −25 %', C.green);
+        if (c.state === 'wait') c.sprite.play(`${c.key}:happy`);
+        this.time.delayedCall(700, () => { if (c.state === 'wait') c.sprite.play(`${c.key}:idle`); });
+        G.audio.play('coin', { detune: -200 });
+      } else if (this.rand() < INSIST_LEAVE) {
+        floatText(this, c.sprite.x, c.sprite.y - 46, 'Tak nic…', C.grey);
+        this.lost++;
+        const b = c.bubble;
+        c.bubble = null; c.order = null;
+        if (b) this.tweens.add({ targets: b, alpha: 0, duration: 200, onComplete: () => b.destroy() });
+        this.updateProgress();
+        this.leave(c, false);
+      } else {
+        c.priceMul = INSIST_MUL;
+        floatText(this, c.sprite.x, c.sprite.y - 46, 'cena +50 %', C.yellow);
+        G.audio.play('combo', { volume: 0.5 });
+      }
+    }
+    this.onInput('', false, true);
+  }
+
   private closeGreeting(c: Customer, ok = false) {
     const g = c.greet;
     if (!g) return;
@@ -826,12 +925,16 @@ export class NightScene extends Phaser.Scene {
 
   private updateGreetings() {
     for (const c of this.customers) {
+      if (c.haggle) {
+        this.placeHaggle(c);
+        if (c.state !== 'wait' || c.haggle.until <= this.clock) this.closeHaggle(c);
+      }
       if (!c.greet) continue;
       this.placeGreeting(c);
       const left = c.greet.until - this.clock;
       if (left < 1.2) c.greet.tag.setAlpha(Math.floor(this.clock * 6) % 2 ? 0.4 : 1);
       if (left <= 0) {
-        if (c.kind === 'critic' && c.greet.kind === 'hello' && !this.criticGreeted) {
+        if (c.kind === 'boss' && c.greet.kind === 'hello' && !this.criticGreeted) {
           this.critic.mistakes++;
           floatText(this, c.sprite.x, c.sprite.y - 44, '−★ bez pozdravu', C.red);
           c.sprite.play(`${c.key}:neutral`);
@@ -846,6 +949,7 @@ export class NightScene extends Phaser.Scene {
   private greet(g: Greeting) {
     G.ime.clear();
     this.box.success();
+    if (g.kind === 'haggle') { this.haggleAnswer(g); return; }
     const targets = this.customers.filter((c) => c.greet?.kind === g.kind);
     G.setStat(g.id, recordServe(G.stat(g.id), { clean: !this.greetDirty, hinted: false, night: this.n }));
     this.greetDirty = false;
@@ -858,7 +962,7 @@ export class NightScene extends Phaser.Scene {
       this.flyCoins(c.sprite.x, c.sprite.y - 30, coins);
       floatText(this, c.sprite.x, c.sprite.y - 46, `+${coins} ♥`, C.pink);
       if (g.kind === 'hello') {
-        if (c.kind === 'critic') this.criticGreeted = true;
+        if (c.kind === 'boss') this.criticGreeted = true;
         c.patience = Math.min(c.max, c.patience + c.max * HELLO_PATIENCE);
         if (c.state === 'wait') {
           c.sprite.play(`${c.key}:happy`);
@@ -876,7 +980,7 @@ export class NightScene extends Phaser.Scene {
 
   /** After the meal: maybe a reaction bubble the player answers with an adjective. */
   private maybeReact(c: Customer): boolean {
-    if (this.n < REACTIONS_FROM || c.kind === 'nabi' || c.kind === 'critic' || !c.lastItem) return false;
+    if (this.n < REACTIONS_FROM || c.kind === 'nabi' || c.kind === 'boss' || !c.lastItem) return false;
     if (this.rand() >= REACTION_CHANCE) return false;
     const r = pickReaction(c.lastItem, ITEM_REACTIONS, this.rand, (x) => this.ready(REACTIONS[x].word));
     if (!r) return false;
@@ -926,7 +1030,7 @@ export class NightScene extends Phaser.Scene {
 
   private finish() {
     const total = this.served + this.angry;
-    const boss = this.n === BOSS_NIGHT;
+    const boss = !!this.def.boss;
     const stars = boss ? criticStars(this.critic.mistakes, this.critic.walkouts) : nightStars({ total, served: this.served, angry: this.angry, mistakes: this.mistakes });
     const d = G.data;
     const rec = d.nights[this.n] ?? { stars: 0, bestCoins: 0, plays: 0 };
