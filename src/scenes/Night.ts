@@ -987,7 +987,9 @@ export class NightScene extends Phaser.Scene {
   private maybeReact(c: Customer): boolean {
     if (this.n < REACTIONS_FROM || this.def.district === 'pharmacy' || c.kind === 'nabi' || c.kind === 'boss' || !c.lastItem) return false;
     if (this.rand() >= REACTION_CHANCE) return false;
-    const r = pickReaction(c.lastItem, ITEM_REACTIONS, this.rand, (x) => this.ready(REACTIONS[x].word));
+    // things that are not food are never "tasty"
+    const table = ITEM_REACTIONS[c.lastItem] ? ITEM_REACTIONS : { [c.lastItem]: (word(c.lastItem).category === 'food' ? ['tasty', 'good', 'okay'] : ['good', 'okay']) as ReactionId[] };
+    const r = pickReaction(c.lastItem, table, this.rand, (x) => this.ready(REACTIONS[x].word));
     if (!r) return false;
     this.react(c, r);
     return true;

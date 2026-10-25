@@ -93,6 +93,13 @@ export const NIGHTS: NightDef[] = [
   { n: 25, district: 'yongsan', newWords: ['eeokeon', 'seonpunggi', 'boksagi'], newJamo: [], customers: 13, patience: 26, spawn: [5, 7], regulars: ['nabi', 'park', 'haeun', 'imo'] },
   { n: 26, district: 'yongsan', newWords: [], newJamo: [], customers: 14, patience: 25, spawn: [4.5, 7], regulars: ['nabi', 'park', 'kim', 'minsu'] },
   { n: 126, district: 'boss', boss: 'trader', newWords: ['neomu', 'jeongmal'], newJamo: [], customers: 8, patience: 28, spawn: [5, 7], regulars: ['park', 'nabi'] },
+  // 부산: destination → transport (+ 표 in the second half)
+  { n: 27, district: 'busan', prev: 126, newWords: ['gicha', 'beoseu', 'jihacheol', 'seoul', 'gonghang', 'gangnam'], newJamo: [], customers: 11, patience: 27, spawn: [5.5, 8], regulars: ['nabi', 'kang'] },
+  { n: 28, district: 'busan', newWords: ['taeksi', 'bae_boat', 'jejudo', 'incheon', 'bada', 'yeok'], newJamo: [], customers: 12, patience: 26, spawn: [5, 7.5], regulars: ['nabi', 'kang', 'park'] },
+  { n: 29, district: 'busan', late: true, newWords: ['pyo', 'yeogwon', 'geiteu', 'chulgu', 'jeongnyujang'], newJamo: [], customers: 12, patience: 27, spawn: [5, 7.5], regulars: ['nabi', 'kang', 'minsu'] },
+  { n: 30, district: 'busan', late: true, newWords: ['teomineol', 'busan', 'yeohaeng', 'chulbal'], newJamo: [], customers: 13, patience: 26, spawn: [5, 7], regulars: ['nabi', 'kang', 'imo', 'haeun'] },
+  { n: 31, district: 'busan', late: true, newWords: [], newJamo: [], customers: 14, patience: 25, spawn: [4.5, 7], regulars: ['nabi', 'kang', 'kim', 'park'] },
+  { n: 131, district: 'boss', boss: 'captain', late: true, newWords: [], newJamo: [], customers: 8, patience: 32, spawn: [5, 7], regulars: ['kang', 'nabi', 'kim'] },
   // 약국 side line (after 한강): body parts, then symptom → remedy
   { n: 201, district: 'pharmacy', prev: 11, newWords: ['meori', 'bae_belly', 'son', 'bal', 'nun_eye'], newJamo: [], customers: 8, patience: 30, spawn: [5.5, 8], regulars: [] },
   { n: 202, district: 'pharmacy', newWords: ['dari', 'gwi', 'mom', 'uisa', 'ganhosa', 'yaksa'], newJamo: ['ㅢ'], customers: 8, patience: 29, spawn: [5.5, 8], regulars: [] },

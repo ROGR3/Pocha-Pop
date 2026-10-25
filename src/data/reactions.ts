@@ -24,4 +24,7 @@ export const ITEM_REACTIONS: Record<string, ReactionId[]> = {
   haendeupon: ['small', 'pricey', 'good'], kamera: ['pricey', 'good'], kadeu: ['small', 'okay'], bolpen: ['cheap', 'small'],
   noteubuk: ['pricey', 'small'], keompyuteo: ['big', 'pricey'], tellebijeon: ['big', 'pricey'], naengjanggo: ['big', 'okay'],
   setakgi: ['big', 'good'], eeokeon: ['pricey', 'good'], seonpunggi: ['cheap', 'okay'], boksagi: ['big', 'okay'],
+  // 부산 tickets
+  gicha: ['good', 'pricey'], beoseu: ['cheap', 'okay'], jihacheol: ['cheap', 'good'], taeksi: ['pricey', 'okay'], bae_boat: ['big', 'good'],
+  pyo: ['cheap', 'pricey'], yeogwon: ['small', 'okay'],
 };
