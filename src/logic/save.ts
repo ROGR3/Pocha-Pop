@@ -3,8 +3,9 @@
 import type { WordStat } from './srs';
 import { defaultCosmetics, mergeCosmetics, type Cosmetics } from './cosmetics';
 import type { DailyRecord } from './daily';
+import { PLAYER_COLORS, cleanName, type PlayerColor } from './netproto';
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 /** Coins refunded for the removed "4th stool" upgrade (stage 1 → 2). */
 export const STOOL4_REFUND = 150;
 
@@ -17,6 +18,9 @@ export interface Settings {
   seats: number;
   /** Radio station (2 = night jazz, unlocked by 박 사장). */
   station: number;
+  /** Co-op: name shown to the other players ('' = not chosen yet). */
+  coopName: string;
+  coopColor: PlayerColor;
 }
 
 export interface NightRecord {
@@ -62,19 +66,22 @@ export interface Stats {
   greetings?: number;
   /** Clean serves of words containing each Shift jamo. */
   shiftClean?: Record<string, number>;
+  /** Co-op nights played / orders served first in co-op. */
+  coopNights: number;
+  coopFirst: number;
 }
 
 export function defaultSave(): SaveData {
   return {
     version: SAVE_VERSION,
-    settings: { sfx: 0.8, ambient: 0.5, relaxed: false, firstRunDone: false, seats: 3, station: 1 },
+    settings: { sfx: 0.8, ambient: 0.5, relaxed: false, firstRunDone: false, seats: 3, station: 1, coopName: '', coopColor: 'orange' },
     coins: 0,
     upgrades: [],
     nights: {},
     words: {},
     friends: {},
     streak: { count: 0, lastDay: '' },
-    stats: { served: 0, mistakes: 0, nightsPlayed: 0 },
+    stats: { served: 0, mistakes: 0, nightsPlayed: 0, coopNights: 0, coopFirst: 0 },
     cosmetics: defaultCosmetics(),
     achievements: [],
     daily: {},
@@ -109,6 +116,10 @@ export function migrate(raw: unknown): SaveData {
     out.upgrades = out.upgrades.filter((u) => u !== 'stool4');
     out.coins += STOOL4_REFUND;
   }
+  // v3: co-op name / colour / stats
+  out.settings.coopName = typeof out.settings.coopName === 'string' ? cleanName(out.settings.coopName) : '';
+  if (!PLAYER_COLORS.includes(out.settings.coopColor)) out.settings.coopColor = 'orange';
+  for (const k of ['coopNights', 'coopFirst'] as const) if (typeof out.stats[k] !== 'number' || !isFinite(out.stats[k])) out.stats[k] = 0;
   return out;
 }
 

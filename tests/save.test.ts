@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MemoryBackend, SaveManager, bumpStreak, currentStreak, defaultSave, deserialize, migrate, serialize } from '../src/logic/save';
+import { MemoryBackend, SAVE_VERSION, SaveManager, bumpStreak, currentStreak, defaultSave, deserialize, migrate, serialize } from '../src/logic/save';
 import { recordServe, newStat } from '../src/logic/srs';
 
 describe('save data', () => {
@@ -78,7 +78,7 @@ describe('migration v1 → v2', () => {
     const m = migrate(v1);
     expect(m.upgrades).toEqual(['lanterns']);
     expect(m.coins).toBe(170);
-    expect(m.version).toBe(2);
+    expect(m.version).toBe(SAVE_VERSION);
     expect(m.settings.seats).toBe(3);
     expect(m.nights[1].stars).toBe(3);
     // migrating again does not pay twice
@@ -86,5 +86,19 @@ describe('migration v1 → v2', () => {
   });
   it('leaves saves without the stool alone', () => {
     expect(migrate({ coins: 5, upgrades: ['radio'] }).coins).toBe(5);
+  });
+  it('v3: co-op name, colour and stats get defaults; junk is cleaned', () => {
+    const m = migrate({ version: 2, settings: { sfx: 0.3 }, stats: { served: 9, mistakes: 1, nightsPlayed: 2 } });
+    expect(m.version).toBe(3);
+    expect(m.settings.coopName).toBe('');
+    expect(m.settings.coopColor).toBe('orange');
+    expect(m.stats.coopNights).toBe(0);
+    expect(m.stats.coopFirst).toBe(0);
+    expect(m.stats.served).toBe(9);
+    const j = migrate({ settings: { coopName: '  Bartoloměj  ', coopColor: 'purple' }, stats: { coopNights: 'x', coopFirst: 4 } });
+    expect(j.settings.coopName).toBe('Bartolom');
+    expect(j.settings.coopColor).toBe('orange');
+    expect(j.stats.coopNights).toBe(0);
+    expect(j.stats.coopFirst).toBe(4);
   });
 });
