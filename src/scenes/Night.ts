@@ -9,7 +9,7 @@ import { helperPick } from '../logic/helper';
 import { DISCOUNT_MUL, HAGGLE_CHANCE, HAGGLE_WINDOW, HAGGLE_WORDS, INSIST_LEAVE, INSIST_MUL, BOSS_GREET_WINDOW, BYE_COINS, BYE_WORDS, GREET_WINDOW, HELLO_COINS, HELLO_PATIENCE, HELLO_WORDS, REACTIONS, REACTIONS_FROM, REACTION_CHANCE, REACTION_COINS, REACTION_TIME, matchPolite, pickReaction, type GreetKind, type Greeting, type ReactionId } from '../logic/polite';
 import { ITEM_REACTIONS } from '../data/reactions';
 import { jamoKnown } from '../data/levels';
-import { jamoSet, matchKind } from '../logic/hangul';
+import { COMPOUND_VOWELS, SHIFT_VOWELS, jamoSet, matchKind, rawJamo } from '../logic/hangul';
 import { hintLevel } from '../logic/srs';
 import { recordMissed, recordMistake, recordServe, rng } from '../logic/srs';
 import { Bubble } from '../game/bubble';
@@ -793,8 +793,11 @@ export class NightScene extends Phaser.Scene {
     return (kind === 'hello' ? HELLO_WORDS : BYE_WORDS).filter((id) => this.ready(id));
   }
 
+  /** All keys introduced – and compound / Shift vowels (ㅝ, ㅖ…) introduced as letters too. */
   private ready(id: string): boolean {
-    return jamoSet(word(id).ko).every((j) => this.known.has(j));
+    const ko = word(id).ko;
+    return jamoSet(ko).every((j) => this.known.has(j))
+      && rawJamo(ko).every((s) => !(COMPOUND_VOWELS.has(s.medial) || SHIFT_VOWELS.has(s.medial)) || this.known.has(s.medial));
   }
 
   private activeGreetings(): Greeting[] {

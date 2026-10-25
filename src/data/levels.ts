@@ -50,7 +50,8 @@ export const DISTRICTS: Record<Exclude<District, 'boss'>, DistrictDef> = {
   euljiro: { id: 'euljiro', ko: '을지로', cs: 'ulička', mechanic: 'food', backdrop: 'euljiro', generics: GEN1 },
   hangang: { id: 'hangang', ko: '한강', cs: 'u řeky', mechanic: 'food', backdrop: 'hangang', generics: GEN1, review: ['ramyeon', 'gimbap', 'maekju', 'mandu', 'mul', 'uyu', 'cha'] },
   dongdaemun: { id: 'dongdaemun', ko: '동대문', cs: 'trh s oblečením', mechanic: 'colorItem', backdrop: 'dongdaemun', generics: [...GEN1, 'char_cust_e', 'char_cust_f'] },
-  hongdae: { id: 'hongdae', ko: '홍대', cs: 'před klubem', mechanic: 'loanword', backdrop: 'hongdae', generics: [...GEN1, 'char_cust_g', 'char_cust_h'] },
+  hongdae: { id: 'hongdae', ko: '홍대', cs: 'před klubem', mechanic: 'loanword', backdrop: 'hongdae', generics: [...GEN1, 'char_cust_g', 'char_cust_h'],
+    review: ['keopi', 'juseu', 'kolla', 'chikin', 'popkon', 'tteokbokki', 'keikeu', 'aiseukeurim', 'ramyeon', 'maekju'] },
   yongsan: { id: 'yongsan', ko: '용산', cs: 'elektro bazar', mechanic: 'haggle', backdrop: 'yongsan', generics: [...GEN1, 'char_cust_i', 'char_cust_j'] },
   busan: { id: 'busan', ko: '부산', cs: 'přístav', mechanic: 'destination', backdrop: 'busan', generics: [...GEN1, 'char_cust_k', 'char_cust_l'] },
   pharmacy: { id: 'pharmacy', ko: '약국', cs: 'lékárna', mechanic: 'symptom', backdrop: 'pharmacy', generics: GEN1 },
@@ -78,6 +79,13 @@ export const NIGHTS: NightDef[] = [
   { n: 15, district: 'dongdaemun', newWords: ['hoesaek', 'saek'], newJamo: ['ㅚ'], customers: 12, patience: 25, spawn: [5, 7], regulars: ['nabi', 'imo', 'kim', 'haeun'] },
   { n: 16, district: 'dongdaemun', newWords: [], newJamo: [], customers: 13, patience: 24, spawn: [4.5, 6.5], regulars: ['nabi', 'imo', 'kim', 'haeun'] },
   { n: 116, district: 'boss', boss: 'blogger', newWords: [], newJamo: [], customers: 8, patience: 26, spawn: [5, 7], regulars: ['imo', 'nabi'] },
+  // 홍대: loanwords (bubbles show the original)
+  { n: 17, district: 'hongdae', newWords: ['norae', 'gasu', 'yeonghwa', 'deurama', 'geim', 'pati'], newJamo: [], customers: 11, patience: 26, spawn: [5.5, 7.5], regulars: ['nabi', 'minsu'] },
+  { n: 18, district: 'hongdae', newWords: ['konseoteu', 'keipap', 'raep', 'jaejeu', 'weiteo'], newJamo: ['ㅞ'], customers: 12, patience: 25, spawn: [5, 7.5], regulars: ['nabi', 'minsu', 'haeun'] },
+  { n: 19, district: 'hongdae', newWords: ['piano', 'deureom', 'geolgeurup', 'noraebang', 'yaegi'], newJamo: ['ㅒ'], customers: 12, patience: 24, spawn: [5, 7], regulars: ['nabi', 'minsu', 'kim'] },
+  { n: 20, district: 'hongdae', newWords: ['pissibang', 'kaerikteo', 'tenteu', 'kaemping'], newJamo: [], customers: 13, patience: 23, spawn: [4.5, 7], regulars: ['nabi', 'minsu', 'haeun', 'imo'] },
+  { n: 21, district: 'hongdae', newWords: [], newJamo: [], customers: 14, patience: 22, spawn: [4.5, 6.5], regulars: ['nabi', 'minsu', 'kim', 'haeun'] },
+  { n: 121, district: 'boss', boss: 'manager', newWords: [], newJamo: [], customers: 8, patience: 26, spawn: [5, 7], regulars: ['minsu', 'nabi'] },
 ];
 
 /** Districts a boss night belongs to (for backdrop, pool and map). */
