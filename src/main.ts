@@ -4,6 +4,7 @@ import * as levels from './data/levels';
 import { Ime } from './game/ime';
 import { imeStates, typeKorean } from './game/debug';
 import { setupBack } from './game/back';
+import { hostSession, joinSession } from './game/net';
 import { computeLayout, viewportSize } from './game/layout';
 import { BootScene } from './scenes/Boot';
 import { TitleScene } from './scenes/Title';
@@ -71,7 +72,7 @@ async function start() {
   document.addEventListener('pointerdown', unlock);
   document.addEventListener('keydown', unlock);
 
-  (window as any).__pocha = { G, game, typeKorean, imeStates, WORDS, levels };
+  (window as any).__pocha = { G, game, typeKorean, imeStates, WORDS, levels, hostSession: () => hostSession(game), joinSession: (addr: string) => joinSession(game, addr) };
 }
 
 start();

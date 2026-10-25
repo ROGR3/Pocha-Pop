@@ -8,6 +8,7 @@ import { newStat, type WordStat } from '../logic/srs';
 import { Audio } from './audio';
 import { Ime } from './ime';
 import type { Layout } from './layout';
+import type { NetSession } from './net';
 import { NIGHTS, prevNight } from '../data/levels';
 
 export interface Word {
@@ -59,6 +60,8 @@ class GameState {
   speed = 1;
   /** Night the player picked on the map. */
   night = 1;
+  /** Co-op session (lobby / night), null in single player. */
+  net: NetSession | null = null;
 
   get data() { return this.save.data; }
 
