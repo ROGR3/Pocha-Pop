@@ -1,0 +1,12 @@
+{
+  "$schema": "../gen/schemas/mobile-schema.json",
+  "identifier": "mobile",
+  "description": "QR scanner for joining a co-op stall (phones only)",
+  "platforms": ["android", "iOS"],
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "barcode-scanner:default"
+  ]
+}

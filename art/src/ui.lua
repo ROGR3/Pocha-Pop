@@ -233,9 +233,12 @@ do
     trophy = { "kkkkkkkkkkkk", "klllllllllkj", "klllllllllkj", ".kllllllkkj.", ".kllllllkkj.", "..kllllkkj..", "...kllkkj...", ".....kj.....", ".....kj.....", "...kkkkjj...", "..ffffffff..", "..eeeeeeee.." },
     calendar = { ".i..i..i..i.", "iiiiiiiiiiii", "ihhhhhhhhhhi", "tttttttttttu", "tvtvtvtvtvtu", "tttttttttttu", "tvtvtiivtvtu", "ttttiiitttu.", "tvtvtvtvtvtu", "tttttttttttu", "uuuuuuuuuuuu", "............" },
     target = { "....iiii....", "..iittttii..", ".iittttttii.", ".ittiiiitti.", "ittittttitti", "ittitlltitth", "ittitlltitth", "ittittttitth", ".ittiiiitth.", ".iitttttthh.", "..iitttthh..", "....ihhh...." },
+    together = { "............", "DDDD....DDDD", "iiiih..iiiih", "hhhh....hhhh", ".ih......ih.", ".ih..ll..ih.", ".ih.lkkl.ih.", ".ih.lkkl.ih.", ".ih..kk..ih.", "hhh......hhh", "............", "............" },
+    camera = { "............", "....vvvv....", "xxxvuuuuvxxx", "xwwwwwwwwwux", "xwwwqqqqwwwx", "xwwqrsrrqwwx", "xwwqrrrrqwwx", "xwwqrrrrqwwx", "xwwwqqqqwwwx", "xwwwwwwwwwwx", "xxxxxxxxxxxx", "............" },
+    wifi = { "............", "...tttttt...", ".tt......tt.", "t..tttttt..t", "..t......t..", "....tttt....", "...t....t...", "............", ".....tt.....", ".....tt.....", "............", "............" },
     close = { "............", ".tt......tt.", ".ttt....ttt.", "..ttt..ttt..", "...tttttt...", "....tttt....", "....tttt....", "...tttttt...", "..ttt..ttt..", ".ttt....ttt.", ".tt......tt.", "............" },
   }
-  local order = { "gear", "book", "bag", "back", "help", "pause", "sound", "mute", "fire", "heart", "keyboard", "lock", "check", "play", "map", "close", "stool", "hand", "door", "paint", "stool_s", "trophy", "calendar", "target" }
+  local order = { "gear", "book", "bag", "back", "help", "pause", "sound", "mute", "fire", "heart", "keyboard", "lock", "check", "play", "map", "close", "stool", "hand", "door", "paint", "stool_s", "trophy", "calendar", "target", "together", "camera", "wifi" }
   sheet("uiicons", 14, 14, order, function(img, n) L.map(img, 1, 1, ICONS[n]) end, { outline = "g" })
   local f = io.open(L.root .. "/public/assets/uiicons.json", "w")
   local q = {}

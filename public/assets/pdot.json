@@ -1,0 +1,42 @@
+{ "frames": {
+   "0": {
+    "frame": { "x": 0, "y": 0, "w": 7, "h": 7 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 7, "h": 7 },
+    "sourceSize": { "w": 7, "h": 7 },
+    "duration": 100
+   },
+   "1": {
+    "frame": { "x": 7, "y": 0, "w": 7, "h": 7 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 7, "h": 7 },
+    "sourceSize": { "w": 7, "h": 7 },
+    "duration": 100
+   },
+   "2": {
+    "frame": { "x": 14, "y": 0, "w": 7, "h": 7 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 7, "h": 7 },
+    "sourceSize": { "w": 7, "h": 7 },
+    "duration": 100
+   }
+ },
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.3.17.2-x64",
+  "image": "pdot.png",
+  "format": "RGBA8888",
+  "size": { "w": 21, "h": 7 },
+  "scale": "1",
+  "frameTags": [
+  ],
+  "layers": [
+   { "name": "art", "opacity": 255, "blendMode": "normal" }
+  ],
+  "slices": [
+  ]
+ }
+}

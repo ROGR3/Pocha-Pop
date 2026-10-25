@@ -28,3 +28,6 @@ tokio = { version = "1", features = ["net", "sync", "time", "macros", "rt-multi-
 tokio-tungstenite = "0.30"
 futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
 if-addrs = "0.15"
+
+[target.'cfg(any(target_os = "android", target_os = "ios"))'.dependencies]
+tauri-plugin-barcode-scanner = "2"

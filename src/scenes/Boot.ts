@@ -7,7 +7,7 @@ const SHEETS: [string, number, number][] = [
   ['char_cust_a', 32, 40], ['char_cust_b', 32, 40], ['char_cust_c', 32, 40], ['char_cust_d', 32, 40],
   ['chef', 32, 40], ['char_kim_helper', 32, 40], ['nabi', 24, 16], ['nabi_fat', 24, 16], ['kitten_a', 12, 10], ['kitten_b', 12, 10], ['kitten_c', 12, 10],
   ['stall_back', 208, 120], ['stall_roof', 208, 29], ['stall_sign', 36, 13], ['stools', 16, 14], ['lanterns', 12, 18], ['awnings', 216, 12], ['hats', 14, 10], ['pot', 28, 36], ['lantern', 12, 18], ['radio', 18, 14], ['mug', 12, 14],
-  ['coin', 10, 10], ['star', 15, 14], ['star_s', 9, 9], ['faces', 11, 11], ['node', 16, 22], ['node_boss', 26, 34], ['logo', 128, 44],
+  ['coin', 10, 10], ['pdot', 7, 7], ['ui_runoff', 12, 6], ['star', 15, 14], ['star_s', 9, 9], ['faces', 11, 11], ['node', 16, 22], ['node_boss', 26, 34], ['logo', 128, 44],
   ['bg_eul_mid', 320, 240], ['bg_eul_near', 320, 40], ['bg_han_mid', 320, 240], ['bg_han_near', 320, 40],
 ];
 /** Stage-2 backdrops (bg_<p>_far/_sky images, _mid/_near sheets with a 'loop' tag) and stall variants. */
@@ -17,7 +17,7 @@ const NEW_CHARS = ['imo', 'minsu', 'park', 'kang', 'yaksa', 'blogger', 'manager'
 for (const c of NEW_CHARS) SHEETS.push([c, 32, 40]);
 
 const IMAGES = ['counter', 'awning', 'stool', 'bubble', 'bubble_hi', 'bubble_tail', 'panel', 'paper', 'btn', 'btn_down', 'btn_wood', 'btn_wood_down', 'btn_off',
-  'postcard_jeju', 'stamp', 'bg_eul_far', 'bg_han_far', 'bg_eul_sky', 'bg_han_sky', 'appicon',
+  'postcard_jeju', 'stamp', 'crown', 'qr_frame', 'bubble_p_orange', 'bubble_p_blue', 'bubble_p_green', 'ptag_orange', 'ptag_blue', 'ptag_green', 'bg_eul_far', 'bg_han_far', 'bg_eul_sky', 'bg_han_sky', 'appicon',
   ...NEW_BG.flatMap((p) => [`bg_${p}_far`, `bg_${p}_sky`])];
 
 export const CHARS = ['char_kim', 'char_haeun', 'char_critic', 'char_halmeoni', 'char_cust_a', 'char_cust_b', 'char_cust_c', 'char_cust_d', ...NEW_CHARS];

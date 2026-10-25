@@ -34,10 +34,15 @@ export class TitleScene extends Phaser.Scene {
     // bottom area
     const by = Math.round(groundY + (H - groundY) / 2) - 4;
     this.add.rectangle(0, groundY + 10, W, H - groundY, 0x181425, 0.7).setOrigin(0, 0).setDepth(DEPTH.hud - 1);
-    const start = button(this, W / 2, by, 140, 24, 'Otevřít stánek', () => this.open()).setDepth(DEPTH.hud);
+    // room for a second row (Spolu) under the main button?
+    const two = H - groundY >= 74;
+    const sy = two ? by - 13 : by;
+    const start = button(this, W / 2, sy, 140, 24, 'Otevřít stánek', () => this.open()).setDepth(DEPTH.hud);
+    if (two) button(this, W / 2, by + 15, 100, 20, 'Spolu', () => this.coop(), { icon: 'together', style: 'wood', size: 's' }).setDepth(DEPTH.hud);
+    else button(this, 16, by, 20, 20, '', () => this.coop(), { icon: 'together', style: 'wood' }).setDepth(DEPTH.hud);
     this.tweens.add({ targets: start, scale: { from: 1, to: 1.05 }, yoyo: true, repeat: -1, duration: 700, ease: 'Sine.easeInOut' });
     button(this, W - 16, by, 20, 20, '', () => goto(this, 'Settings', { from: 'Title' }), { icon: 'gear', style: 'wood' }).setDepth(DEPTH.hud);
-    txt(this, 4, H - 3, 'v0.2', { size: 'xs', color: C.grey, origin: [0, 1] }).setDepth(DEPTH.hud);
+    txt(this, 4, H - 3, 'v0.3', { size: 'xs', color: C.grey, origin: [0, 1] }).setDepth(DEPTH.hud);
     this.input.keyboard?.on('keydown-ENTER', () => this.open());
     this.game.events.on('layout', this.onLayout, this);
     this.events.once('shutdown', () => this.game.events.off('layout', this.onLayout, this));
@@ -49,6 +54,12 @@ export class TitleScene extends Phaser.Scene {
     G.audio.play('bell');
     if (!G.data.settings.firstRunDone) goto(this, 'Setup', { next: 'Story' });
     else goto(this, 'Map');
+  }
+
+  private coop() {
+    G.audio.play('bell');
+    if (!G.data.settings.firstRunDone) goto(this, 'Setup', { next: 'Coop' });
+    else goto(this, 'Coop');
   }
 
   update(_t: number, dt: number) { this.street.update(dt); }

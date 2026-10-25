@@ -90,6 +90,18 @@ export class Ime {
     st.pointerEvents = 'auto';
   }
 
+  /** Soft keyboard flavour: 'decimal' for the stall code, 'text' otherwise. */
+  setInputMode(mode: 'text' | 'decimal') {
+    this.el.inputMode = mode;
+  }
+
+  /** Pre-fill the field (editing an existing name). */
+  setText(s: string) {
+    this.el.value = s;
+    this.lastText = s;
+    this.notify();
+  }
+
   focus() {
     if (document.activeElement !== this.el) {
       try { this.el.focus({ preventScroll: true }); } catch { this.el.focus(); }

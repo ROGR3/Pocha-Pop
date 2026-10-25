@@ -2,7 +2,10 @@ mod net;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-  tauri::Builder::default()
+  let builder = tauri::Builder::default();
+  #[cfg(mobile)]
+  let builder = builder.plugin(tauri_plugin_barcode_scanner::init());
+  builder
     .plugin(tauri_plugin_store::Builder::default().build())
     .manage(net::NetState::default())
     .invoke_handler(tauri::generate_handler![
