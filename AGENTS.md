@@ -1,9 +1,9 @@
 # AGENTS.md – Pocha Pop 포차팝
 
-Zadání: `DESIGN.md` (etapa 1) a `DESIGN-2.md` (etapa 2, závazné). Uživatelské info: `README.md`.
+Zadání: `DESIGN.md` (etapa 1), `DESIGN-2.md` (etapa 2) a `DESIGN-3.md` (etapa 3, multiplayer). Uživatelské info: `README.md`.
 
 ## Stack
-Tauri 2 (Rust shell, plugin-store) + Vite 7 + TypeScript 5.9 + **Phaser 3.90.0** (pinned).
+Tauri 2 (Rust shell, plugin-store, plugin-barcode-scanner jen mobil, co-op relay tokio-tungstenite) + Vite 7 + TypeScript 5.9 + **Phaser 3.90.0** (pinned).
 Testy vitest 3. Playwright jen pro screenshoty (`scripts/screenshots.mjs`).
 
 ## Struktura
@@ -23,6 +23,8 @@ src/
     achievements.ts    24 odznáčků (evaluate)
     daily.ts           denní výzva (seed z data, jeden zapsaný pokus)
     training.ts        trénink (výběr slov podle SRS váhy)
+    coop.ts            pravidlo „doběh“: CoopReferee (první/doběh/pozdě, kombo, týmové hvězdy), škálování
+    netproto.ts        co-op protokol: typy zpráv, encode/decode (validace), QR/krátký kód, řazení IP
   data/
     words.json         GENEROVÁNO `npm run words` ze scripts/build-words.ts
     levels.ts          NIGHTS (1–31, bossové 11/116/121/126/131, 약국 201–204, svátky 301–303, denní 900),
@@ -30,7 +32,10 @@ src/
     story.ts           všechny texty příběhu (česky): štamgasti, bossové, pohlednice, finále
     colors.ts clothes.ts travel.ts pharmacy.ts family.ts reactions.ts   tabulky pro mechaniky čtvrtí
   game/                runtime helpery nad Phaserem
-    state.ts           singleton G (save, audio, ime, layout), WORDS, iconTex() (ikony i přebarvené oblečení)
+    state.ts           singleton G (save, audio, ime, layout, net), WORDS, iconTex() (ikony i přebarvené oblečení)
+    net.ts             Transport (TauriTransport = Rust, WsTransport = scripts/mp-relay.mjs) + NetSession (lobby, routing)
+    coopHost.ts        CoopDirector: hostitelův rozvrh zákazníků, trpělivost, rozhodčí → zprávy všem
+    coopui.ts          barvy hráčů, PlayerTag, výběr nocí pro co-op
     orders.ts          stavba objednávek podle mechaniky + věty bossů, alternativní odpovědi (alts)
     hats.ts            čepička sleduje sprite kočky (kotvy hlavy z nabi_head.json)
     achievements.ts    vyhodnocení + toast odznáčků
@@ -39,6 +44,7 @@ src/
     street.ts          scéna ulice: pozadí, stánek, upgrady, déšť/světlušky; DEPTH konstanty
     bubble.ts orders.ts typebox.ts dialogue.ts ui.ts audio.ts debug.ts
   scenes/              Boot Title Setup Story Map Night Result Shop Recipes Settings Paint(Barvírna) Training Badges
+                       Coop (menu + čekárna, QR) CoopJoin CoopResult
 art/
   lib.lua              kreslicí knihovna (paleta Endesga 32 jako písmena, L.RAMPS pro palette swap)
   chargen.lua          generátor postav (characters.lua, characters2.lua, characters3.lua)
@@ -46,7 +52,9 @@ art/
   src/*.lua            jeden skript = jeden/několik spritů → public/assets
 public/assets/         exportované PNG/JSON (commitované), public/sfx/*.wav, public/fonts/
 tests/                 vitest
-src-tauri/             Rust + gen/android (commitované; AndroidManifest má adjustResize + portrait)
+src-tauri/             Rust + gen/android (commitované; AndroidManifest má adjustResize + portrait, síťová oprávnění)
+  src/net.rs           co-op relay (host/klient WebSocket, tauri příkazy net_*, eventy net://*) + cargo testy
+  capabilities/mobile.json   barcode-scanner jen pro android/iOS
 ```
 
 ## Příkazy
@@ -63,6 +71,10 @@ src-tauri/             Rust + gen/android (commitované; AndroidManifest má adj
 | `npm run autoplay` | bot dohraje vybrané noci přes UI (`node scripts/autoplay.mjs 12 116`) |
 | `bash scripts/preview-icons.sh <část>` | izolovaný náhled části ikon (nesahá na public/assets) |
 | `npx vite-node scripts/economy.ts` | simulace ekonomiky (výsledky v README) |
+| `npm run mp-e2e` | co-op E2E: relay + 3 Playwright stránky (`--shots` uloží screenshoty, `NO_BUILD=1`) |
+| `npm run mp-relay` | dev relay pro co-op v prohlížeči (port 47200, stránka `?relay=ws://…:47200`) |
+| `node scripts/mp-bot.mjs [ip:port]` | bot jako host přes skutečný protokol (Tauri pod Xvfb, telefon přes `adb forward`) |
+| `cd src-tauri && CARGO_BUILD_JOBS=4 cargo test --lib` | testy Rust relay |
 | `ANDROID_HOME=/opt/android-sdk NDK_HOME=/opt/android-sdk/ndk/27.0.12077973 npm run tauri android build -- --apk` | APK |
 
 ## Konvence
@@ -83,13 +95,19 @@ src-tauri/             Rust + gen/android (commitované; AndroidManifest má adj
 - Jamo pro noc = keystroke jamo (`jamoSet`) **i** složené / Shift samohlásky (`Night.ready()`): slovo s ㅝ se
   nabídne až po nocí, která ㅝ představila.
 - Přebarvitelné věci kreslit rampou `{hi, main, shade, dark}` z `L.RAMPS`, nikdy runtime tint.
-- Scény s klávesnicí (Night, Training, Paint, Setup) se při změně výšky **nerestartují**, jen přepočítají rozložení.
+- Scény s klávesnicí (Night, Training, Paint, Setup, Coop při psaní jména, CoopJoin) se při změně výšky **nerestartují**, jen přepočítají rozložení.
+- Co-op: Night má režim `coop` (data zprávy `start`); vše o zákaznících jde přes zprávy (`onCoopMsg`), i u hostitele
+  (`NetSession.broadcast` doručí i jemu, `toHost` od hostitele nejde po síti). Single player se nesmí změnit –
+  každá co-op větev je za `if (this.coop)`, regresi hlídá `npm run autoplay`. Nová zpráva = typ + `CHECK` v netproto.ts + test.
 
 ## Testování desktopového okna
 **Nikdy neotevírej Tauri okno na uživatelově ploše.** Použij `scripts/xvfb-tauri.sh start` (virtuální
 X display :99, `GDK_BACKEND=x11`, scratch `XDG_DATA_HOME`), `shot <png>`, `focus`, `key <keysym>`
 (keydown/keyup), `stop`. fcitx5 přes `GTK_IM_MODULE=fcitx` se pod Xvfb chová jinak než nativní Wayland –
 po testu vždy `fcitx5-remote -s keyboard-us` (uživatelův výchozí stav). Prohlížečové testy: `npm run screenshots`.
+Co-op na desktopu: seed save do `/tmp/pocha-xvfb/xdg/cz.rogr.pochapop/pocha-pop.json` (`{"save": "<json>"}` s `coopName`),
+`start`, klik Spolu (32,722) → Založit (225,336), `node scripts/mp-bot.mjs` a klik Otevřít stánek (225,510) při 450×800.
+**Během běhu `tauri dev` needituj `src/`** – Vite reloadne stránku a noc spadne.
 `pkill -f` používej jen s ukotveným vzorem (`'^target/debug/...'`), jinak zabije i vlastní shell.
 
 ## Zdroje počítače

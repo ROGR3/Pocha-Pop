@@ -4,7 +4,7 @@ Pixel-art hra na učení psaní korejsky (두벌식) na **systémové** korejsk�
 Babička 할머니 ti předala noční stánek 포장마차 v Soulu – zákazníci objednávají v bublinách,
 ty objednávku napíšeš korejsky a tím je obsloužíš. Linux desktop + Android.
 
-Obsah (etapa 1 + 2, zadání `DESIGN.md` a `DESIGN-2.md`):
+Obsah (etapy 1–3, zadání `DESIGN.md`, `DESIGN-2.md` a `DESIGN-3.md`):
 
 | Čtvrť | Noci | Herní prvek | Štamgast · boss |
 |---|---|---|---|
@@ -19,7 +19,8 @@ Obsah (etapa 1 + 2, zadání `DESIGN.md` a `DESIGN-2.md`):
 
 198 slov (Recallo balíček + 12 ručně doplněných: 11 barev a 얘기 kvůli ㅒ), všechna jamo včetně ㅆ ㅑ ㅒ ㅖ ㅚ ㅝ ㅢ ㅙ ㅞ.
 Navíc: volba počtu míst před nocí (2 · 3 · 4), pomocník 김 대리, pozdravy a poděkování, Barvírna (barvy stánku
-a čepičky pro 나비), trénink, denní výzva a 24 odznáčků.
+a čepičky pro 나비), trénink, denní výzva a 24 odznáčků. Etapa 3: **Spolu** – kooperativní noc pro 2–3 hráče
+přes Wi-Fi / hotspot s pravidlem „doběh“ (viz [Hrajeme spolu](#hrajeme-spolu)).
 
 ## Spuštění
 
@@ -42,7 +43,7 @@ npm run tauri android build -- --apk --debug   # debug-podepsané APK, dá se ro
 Release APK z `tauri android build` je **nepodepsané**. Instalovatelné APK:
 
 ```bash
-bash scripts/sign-apk.sh        # build arm64 + podpis lokálním klíčem → release/pocha-pop-0.2.0-arm64.apk (~13 MB)
+bash scripts/sign-apk.sh        # build arm64 + podpis lokálním klíčem → release/pocha-pop-<verze>-arm64.apk
 ```
 
 Klíč (`signing/`, heslo v `signing/key.properties`) se vytvoří při prvním běhu a je v `.gitignore`.
@@ -96,6 +97,65 @@ Testy desktopového okna bez otevírání okna na reálné ploše: `scripts/xvfb
 - **Odznáčky** (mapa → Odznaky): 24 úspěchů, získané jsou připnuté na plachtě stánku.
 - Receptář po kategoriích (siluety neznámých, rozklad na klávesy), denní série 🔥, pohledy od babičky.
 
+## Hrajeme spolu
+
+Titulní obrazovka → **Spolu**. Napiš jméno (korejsky i latinkou, max. 8 znaků) a vyber barvu.
+
+- **Založit stánek:** telefon hostitele otevře „server“ (port 47123) a ukáže QR kód, krátký kód (`43.1` = poslední
+  dva čísla IP adresy) a celou adresu. Hostitel vybírá z **běžných nocí, které má sám odemčené** (čtvrť ◀ ▶, noc ◀ ▶)
+  a od 2 hráčů dá **Otevřít stánek**.
+- **Připojit se:** *Naskenovat QR* (fotoaparát, jen telefon) nebo napsat krátký kód / celou adresu.
+- Všichni vidí stejné zákazníky a objednávky, odbavují všichni, každý píše na svém telefonu.
+
+**Doběh:** kdo objednávku dopíše první, dostane plné mince (vlastní kombo). Bublina u ostatních zůstane, obarví se
+barvou prvního hráče (s jeho iniciálou) a místo trpělivosti běží 3 s pruh doběhu: kdo to stihne, dostane polovinu
+mincí (bez spropitného), kdo ne, nedostane nic, ale ani chybu. Překlep v doběhu jen přeruší osobní kombo, překlep na
+otevřené objednávce se počítá do týmu. Hvězdy jsou společné (chyby = součet / počet hráčů), míst u pultu jsou vždy 4,
+zákazníků je víc (`×(1 + 0,35 × (hráčů − 1))`), mince ×1,3 pro všechny. V MP nejsou pozdravy, smlouvání, reakce,
+pomocník, štamgasti, bossové, 약국, svátky ani pauza.
+
+Každý si do svého uložení připíše mince a mastery slov, která sám napsal; kampaň (hvězdy nocí) se nemění.
+Statistiky `coopNights` / `coopFirst`. Odejde-li host, ostatní hrají dál; zavře-li hostitel stánek, všem se připíšou
+mince do té chvíle.
+
+### Dva telefony přes hotspot (návod pro test)
+
+1. Telefon A: zapni **hotspot** (Nastavení → Síť → Hotspot). Telefon B se k němu připojí jako k Wi-Fi.
+   (Nebo jsou oba na stejné Wi-Fi – pozor, některé veřejné/hostovské sítě zařízení mezi sebou izolují.)
+2. A: Pocha Pop → Spolu → Založit stánek. Na displeji je QR a kód, např. `43.1` (hotspot Androidu bývá `192.168.x.1`).
+3. B: Spolu → Připojit se → Naskenovat QR (povolit fotoaparát) nebo napsat kód `43.1`.
+4. A vybere noc a dá Otevřít stánek. Píšou oba; kdo je první, toho barvou se bublina u druhého obarví.
+5. Když se B nepřipojí: oba ve stejné síti? Má A víc adres („Jiná adresa“), zkus na B napsat tu celou.
+
+Desktop (Linux) funguje jako hostitel i host, jen ho neladíme: hostitel potřebuje povolený TCP port 47123
+(`sudo ufw allow 47123/tcp`, když běží UFW).
+
+### Jak to funguje uvnitř
+
+- Sítě se dotýká jen Rust (`src-tauri/src/net.rs`, tokio-tungstenite + if-addrs): Android WebView neumí naslouchat
+  a `ws://` z `tauri.localhost` naráží na mixed-content. Příkazy `net_host_start/stop`, `net_join`, `net_send`,
+  `net_kick`, `net_leave`, `net_local_ips`; eventy `net://open|msg|close|error`. Max. 2 hosté (3. dostane close 4001
+  „full“), ping po 5 s, odpojení po 10 s ticha.
+- Protokol (`src/logic/netproto.ts`, `PROTO = 1`): JSON zprávy, `decode()` validuje. Hostitel je rozhodčí
+  (`src/logic/coop.ts` `CoopReferee`, `src/game/coopHost.ts`); sám hraje stejnou cestou (lokální zprávy).
+  Zákazníci jdou k pultu pevně 1,6 s a trpělivost se počítá z hodin hostitele (`tick` každé 2 s).
+  Odchylky od zadání: `spawn` nese navíc `at` (čas hostitele) a `done` navíc `clean`/`hinted` (kvůli kombu
+  a spropitnému); přibyl příkaz `net_kick`.
+- V prohlížeči (Vite / Playwright) nahrazuje Rust `scripts/mp-relay.mjs` (`npm run mp-relay`, port 47200,
+  stránka s `?relay=ws://host:47200`).
+
+### Testy multiplayeru
+
+```bash
+npm test                                  # coop.ts, netproto.ts, migrace save v3
+(cd src-tauri && CARGO_BUILD_JOBS=4 cargo test --lib)   # relay: 2 hosté, 3. odmítnut, broadcast, odpojení
+npm run mp-e2e                            # relay + 3 Playwright stránky: lobby → noc → výsledky
+node scripts/mp-bot.mjs 127.0.0.1:47123   # bot jako host proti Tauri hostiteli (Xvfb) nebo telefonu
+```
+
+Telefon jako hostitel: `adb forward tcp:47123 tcp:47123` a `node scripts/mp-bot.mjs`. Telefon jako host:
+hostitel na PC (Xvfb Tauri) + `adb reverse tcp:47123 tcp:47123`, v telefonu zadat adresu `127.0.0.1`.
+
 ## Přidání slov
 
 1. Uprav `scripts/build-words.ts`: `FOOD` (jídla), `MORE` (ko → [česky, ikona, id, kategorie]), `MORE_BY_ID`
@@ -140,14 +200,14 @@ Normální hráč má tedy na všechno zhruba na začátku 부산, pomalejší a
 
 ## Zvuk
 
-`npm run sfx` vygeneruje SFX (`scripts/gen-sfx.mjs`, sfxr-style syntéza) do `public/sfx/*.wav`.
+`npm run sfx` vygeneruje SFX (`npm run sfx -- beaten runoff_ok` jen vybrané – šum není seedovaný) (`scripts/gen-sfx.mjs`, sfxr-style syntéza) do `public/sfx/*.wav`.
 Déšť / řeka a lo-fi smyčka rádia jsou procedurální WebAudio (`src/game/audio.ts`).
 
 ## Screenshoty
 
 `npm run screenshots` – build + `vite preview` + Playwright, všechny obrazovky v rozlišení
 mobil 412×915 (@2.625) a desktop 450×800 do `screenshots/`. Jen část: `ONLY=23,24 npm run screenshots`
-(prefixy názvů). `npm run autoplay` – bot dohraje první noc a bosse každé čtvrti, 약국, svátky a denní výzvu
+(prefixy názvů); na konci se přes `mp-e2e --shots` přidají obrazovky Spolu (`mobile-6x-coop-*`). `npm run autoplay` – bot dohraje první noc a bosse každé čtvrti, 약국, svátky a denní výzvu
 přes skutečné UI (emulace IME), `node scripts/autoplay.mjs 12 116` jen vybrané noci.
 
 ## Licence a zdroje

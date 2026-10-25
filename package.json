@@ -1,7 +1,7 @@
 {
   "name": "pocha-pop",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@tauri-apps/api": "2.12.4",
-    "@tauri-apps/plugin-barcode-scanner": "2.4.6",
+    "@tauri-apps/plugin-barcode-scanner": "2.5.3",
     "@tauri-apps/plugin-store": "2.5.0",
     "galmuri": "2.40.3",
     "phaser": "3.90.0",
