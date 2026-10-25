@@ -1,7 +1,7 @@
 // One night = one level. Customers order in bubbles, the player types the
 // Korean with the system IME, matching orders are served.
 import Phaser from 'phaser';
-import { CRITIC_ORDERS, CRITIC_PATIENCE, DISTRICTS, homeDistrict, nightDef, nightPool, type NightDef, type RegularId } from '../data/levels';
+import { nightTitle, CRITIC_ORDERS, CRITIC_PATIENCE, DISTRICTS, homeDistrict, nightDef, nightPool, type NightDef, type RegularId } from '../data/levels';
 import { BOSS_INTRO, HOLIDAY_INTRO, NAMES, PHARMACY_INTRO } from '../data/story';
 import { matchAgainst } from '../logic/hangul';
 import { BOSS_SEATS, DEFAULT_SEATS, comboMultiplier, criticStars, nightStars, patienceMultiplier, seatMultiplier, serveCoins, spawnInterval } from '../logic/rules';
@@ -77,6 +77,7 @@ function ambientFor(b: string): 'rain' | 'river' | 'city' | 'sea' {
   if (b === 'euljiro') return 'rain';
   if (b === 'hangang') return 'river';
   if (b === 'busan') return 'sea';
+  if (b === 'pharmacy') return 'rain';
   return 'city';
 }
 const INPUT_H = 46;
@@ -154,7 +155,7 @@ export class NightScene extends Phaser.Scene {
     this.queue = [];
     this.clock = 0;
     this.combo = this.bestCombo = this.coins = this.tips = this.served = this.angry = this.mistakes = this.arrived = 0;
-    this.paused = this.ended = this.inError = false;
+    this.paused = this.ended = this.inError = this.intro = false;
     this.recent = [];
     this.trouble = new Map();
     this.regularsSeen = [];
@@ -209,7 +210,7 @@ export class NightScene extends Phaser.Scene {
     this.box.bg.setInteractive().on('pointerdown', () => G.ime.reopen());
 
     this.nextArrival = 1.4;
-    const title = boss ? `Boss · ${NAMES[this.def.boss!]}` : `Noc ${this.n}`;
+    const title = boss ? `Boss · ${NAMES[this.def.boss!]}` : nightTitle(this.n);
     const banner = txt(this, this.scale.width / 2, this.scale.height / 2 - 60, title, { size: 'l', color: C.yellow, origin: [0.5, 0.5], shadow: true }).setDepth(DEPTH.overlay);
     banner.setScale(2).setAlpha(0);
     this.tweens.add({ targets: banner, scale: 1, alpha: 1, duration: 400, ease: 'Back.easeOut', hold: 900, yoyo: true, onComplete: () => banner.destroy() });
@@ -276,7 +277,7 @@ export class NightScene extends Phaser.Scene {
     this.hud = this.add.container(0, 0).setDepth(DEPTH.hud);
     const bg = this.add.rectangle(0, 0, 10, 22, 0x181425, 0.85).setOrigin(0, 0).setName('bg');
     const line = this.add.rectangle(0, 22, 10, 1, 0x3a4466).setOrigin(0, 0).setName('line');
-    const night = txt(s, 6, 11, this.def.boss ? NAMES[this.def.boss] : `Noc ${this.n}`, { size: 's', color: C.cream, origin: [0, 0.5] });
+    const night = txt(s, 6, 11, nightTitle(this.n, this.def.boss ? NAMES[this.def.boss] : undefined), { size: 's', color: C.cream, origin: [0, 0.5] });
     this.progressBg = this.add.rectangle(0, 9, 10, 5, 0x3a4466).setOrigin(0, 0);
     this.progress = this.add.rectangle(0, 10, 0, 3, 0xf77622).setOrigin(0, 0);
     this.coinIcon = this.add.sprite(0, 11, 'coin').play('coin:spin');
@@ -984,7 +985,7 @@ export class NightScene extends Phaser.Scene {
 
   /** After the meal: maybe a reaction bubble the player answers with an adjective. */
   private maybeReact(c: Customer): boolean {
-    if (this.n < REACTIONS_FROM || c.kind === 'nabi' || c.kind === 'boss' || !c.lastItem) return false;
+    if (this.n < REACTIONS_FROM || this.def.district === 'pharmacy' || c.kind === 'nabi' || c.kind === 'boss' || !c.lastItem) return false;
     if (this.rand() >= REACTION_CHANCE) return false;
     const r = pickReaction(c.lastItem, ITEM_REACTIONS, this.rand, (x) => this.ready(REACTIONS[x].word));
     if (!r) return false;

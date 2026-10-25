@@ -14,7 +14,7 @@
     "art": "bash scripts/build-art.sh",
     "screenshots": "node scripts/screenshots.mjs",
     "fonts": "python3 scripts/build-fonts.py",
-    "autoplay": "node scripts/autoplay.mjs 1 6 11 12 116 17 121 22 126"
+    "autoplay": "node scripts/autoplay.mjs 1 6 11 12 116 17 121 22 126 201 203"
   },
   "dependencies": {
     "@tauri-apps/api": "2.12.4",

@@ -1,6 +1,6 @@
 // End of night: stars, coins, new words → grandma's postcard → regulars' stories.
 import Phaser from 'phaser';
-import { BOSS_NIGHT, DISTRICTS, FINAL_NIGHT, PHARMACY_LAST, homeDistrict, nightDef } from '../data/levels';
+import { nightTitle, BOSS_NIGHT, DISTRICTS, FINAL_NIGHT, PHARMACY_LAST, homeDistrict, nightDef } from '../data/levels';
 import { BOSS_REVIEW, JAMO_TIPS, NAMES, PHARMACY_OUTRO, POSTCARDS, REGULARS } from '../data/story';
 import { hasRawJamo } from '../logic/hangul';
 import { seatMultiplier } from '../logic/rules';
@@ -39,7 +39,7 @@ export class ResultScene extends Phaser.Scene {
     const boss = !!def.boss;
     const L = this.layer;
     const failed = !boss && s.stars === 0;
-    L.add(txt(this, W / 2, 14, boss ? (def.boss === 'critic' ? 'Recenze kritika 미식가' : `Hodnocení: ${NAMES[def.boss!]}`) : failed ? 'Stánek zavírá…' : `Noc ${s.night} – hotovo!`, { size: 'l', color: failed ? C.pink : C.yellow, origin: [0.5, 0], shadow: true }));
+    L.add(txt(this, W / 2, 14, boss ? (def.boss === 'critic' ? 'Recenze kritika 미식가' : `Hodnocení: ${NAMES[def.boss!]}`) : failed ? 'Stánek zavírá…' : `${nightTitle(s.night)} – hotovo!`, { size: 'l', color: failed ? C.pink : C.yellow, origin: [0.5, 0], shadow: true }));
     // stars
     const of = boss ? 5 : 3;
     const big = !boss && W >= 220;

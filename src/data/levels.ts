@@ -93,7 +93,23 @@ export const NIGHTS: NightDef[] = [
   { n: 25, district: 'yongsan', newWords: ['eeokeon', 'seonpunggi', 'boksagi'], newJamo: [], customers: 13, patience: 26, spawn: [5, 7], regulars: ['nabi', 'park', 'haeun', 'imo'] },
   { n: 26, district: 'yongsan', newWords: [], newJamo: [], customers: 14, patience: 25, spawn: [4.5, 7], regulars: ['nabi', 'park', 'kim', 'minsu'] },
   { n: 126, district: 'boss', boss: 'trader', newWords: ['neomu', 'jeongmal'], newJamo: [], customers: 8, patience: 28, spawn: [5, 7], regulars: ['park', 'nabi'] },
+  // 약국 side line (after 한강): body parts, then symptom → remedy
+  { n: 201, district: 'pharmacy', prev: 11, newWords: ['meori', 'bae_belly', 'son', 'bal', 'nun_eye'], newJamo: [], customers: 8, patience: 30, spawn: [5.5, 8], regulars: [] },
+  { n: 202, district: 'pharmacy', newWords: ['dari', 'gwi', 'mom', 'uisa', 'ganhosa', 'yaksa'], newJamo: ['ㅢ'], customers: 8, patience: 29, spawn: [5.5, 8], regulars: [] },
+  { n: 203, district: 'pharmacy', late: true, newWords: ['yak', 'banchanggo', 'byeongwon', 'gamgi', 'sangcheo'], newJamo: ['ㅝ'], customers: 8, patience: 28, spawn: [5, 7.5], regulars: [] },
+  { n: 204, district: 'pharmacy', late: true, newWords: ['apeuda', 'josimhada'], newJamo: [], customers: 8, patience: 27, spawn: [5, 7], regulars: [] },
 ];
+
+const HOLIDAY_NAMES: Record<number, string> = { 301: '추석', 302: '크리스마스', 303: '생일 나비' };
+
+/** Short title of a night for HUD / banners. */
+export function nightTitle(n: number, bossName?: string): string {
+  const d = nightDef(n);
+  if (d.boss) return bossName ?? 'Boss';
+  if (d.district === 'pharmacy') return `약국 L${n - 200}`;
+  if (d.district === 'holiday') return HOLIDAY_NAMES[n] ?? '명절';
+  return `Noc ${n}`;
+}
 
 /** Districts a boss night belongs to (for backdrop, pool and map). */
 export const BOSS_DISTRICT: Record<BossId, Exclude<District, 'boss'>> = {

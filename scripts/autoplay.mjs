@@ -54,9 +54,11 @@ for (const [idx, n] of nights.entries()) {
       if (c) {
         // one deliberate typo per night to exercise the error path
         if (typed === 2 && mistakesMade === 0) { el.value = 'ㅋ'; el.dispatchEvent(new InputEvent('input')); await sleep(100); P.G.ime.clear(); mistakesMade++; await sleep(200); }
-        for (const st of P.imeStates(c.order.target)) { el.value = st; el.dispatchEvent(new InputEvent('input')); await sleep(40); }
+        const tgt = c.order.target;
+        for (const st of P.imeStates(tgt)) { el.value = st; el.dispatchEvent(new InputEvent('input')); await sleep(40); }
         typed++;
-        await sleep(300);
+        // 약 vs 약사: the game waits a moment before serving a prefix of another order
+        await sleep(night.customers.some((x) => x !== c && x.order && x.order.target.startsWith(tgt)) ? 900 : 300);
       } else await sleep(150);
     }
     await sleep(1500);

@@ -31,6 +31,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: 'helper', name: 'Tým', desc: 'Najmi pomocníka 김 대리.' },
   { id: 'stories', name: 'Štamgasti', desc: 'Všechny kapitoly všech štamgastů.' },
   { id: 'daily', name: 'Denní výzva', desc: 'Dohraj denní výzvu.' },
+  { id: 'pharmacy', name: 'Zástup', desc: 'Dokonči vedlejší linku 약국.' },
 ];
 
 export interface AchievementInput {
@@ -69,6 +70,7 @@ export function evaluate(a: AchievementInput): string[] {
   add('helper', s.upgrades.includes('helper'));
   add('stories', a.regulars.every((r) => (s.friends[r]?.chapter ?? 0) >= 3));
   add('daily', Object.keys(s.daily ?? {}).length > 0);
+  add('pharmacy', (s.nights[204]?.stars ?? 0) > 0);
   return got;
 }
 

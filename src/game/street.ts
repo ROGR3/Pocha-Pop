@@ -129,7 +129,7 @@ export class Street {
       this.stools.push(st);
     });
     const nabi = G.data.friends.nabi;
-    if (nabi && nabi.chapter >= 3) {
+    if (nabi && nabi.chapter >= 3 && o.backdrop !== 'pharmacy') {
       ['kitten_a', 'kitten_b', 'kitten_c'].forEach((k, i) => {
         const kt = s.add.sprite(0, 0, k).setOrigin(0.5, 1).setDepth(DEPTH.stool + 1).play({ key: `${k}:idle`, startFrame: i % 2 });
         this.place(kt, 100 + i * 9 - (seats === 4 ? 0 : 0), 1 + (i % 2));
