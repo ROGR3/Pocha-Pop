@@ -3,7 +3,7 @@
 // lo-fi loop for the radio upgrade.
 import Phaser from 'phaser';
 
-export const SFX_KEYS = ['type', 'syllable', 'error', 'pop', 'coin', 'combo', 'angry', 'star', 'serve', 'sizzle', 'click', 'buy', 'bell', 'hint', 'fanfare', 'fail', 'meow', 'paper', 'runoff_ok', 'beaten'] as const;
+export const SFX_KEYS = ['type', 'syllable', 'error', 'pop', 'coin', 'combo', 'angry', 'star', 'serve', 'sizzle', 'click', 'buy', 'bell', 'hint', 'fanfare', 'fail', 'meow', 'paper', 'runoff_ok', 'beaten', 'replay'] as const;
 export type SfxKey = (typeof SFX_KEYS)[number];
 
 /** rain = 을지로, river = 한강, city = distant crowd/traffic, sea = harbour waves. */

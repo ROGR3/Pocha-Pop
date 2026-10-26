@@ -10,6 +10,7 @@ local ORDER = {
   "book_food", "book_ddm", "book_hgd", "book_ysn", "book_phm", "book_bsn",
   "boss_critic", "boss_blogger", "boss_manager", "boss_trader", "boss_captain",
   "streak7", "colors", "hats", "helper", "stories", "daily", "pharmacy",
+  "listen_first", "listen_noreplay", "listen_boss",
 }
 
 local GOLD = { hi = "t", light = "l", mid = "k", dark = "j", deep = "b" }
@@ -42,6 +43,9 @@ local B = {
   stories = { field = { "D", "i", "h" }, gold = true },
   daily = { field = { "l", "k", "j" } },
   pharmacy = { field = { "d", "e", "f" } },
+  listen_first = { field = { "r", "q", "y" } },
+  listen_noreplay = { field = { "C", "B", "y" }, gold = true },
+  listen_boss = { field = { "q", "x", "y" }, gold = true, shield = true },
 }
 
 -- 12x12 symbols (drawn at 6,6 inside the 24x24 frame), auto-outlined in field dark.
@@ -51,7 +55,38 @@ local OPEN_BOOK = {
   "cccccfcccccc",
   "ffffffffffff",
 }
+-- Poslech: an ear and a speaker
+local EAR = {
+  "...EEEEE....",
+  "..EEEEEEE...",
+  ".EEFFFFFEE..",
+  ".EFFggggFE..",
+  ".EFgEEEgFE..",
+  ".EFFgEEgFE..",
+  "..EFFggFFE..",
+  "...EFFFFEE..",
+  "....EFFEE...",
+  "...EEEEE....",
+  "...EEEE.....",
+  "....EE......",
+}
 local SYM = {
+  listen_first = EAR,
+  listen_boss = EAR,
+  listen_noreplay = {
+    "............",
+    ".....t......",
+    "....tu......",
+    "...tuu..l...",
+    "tttuuu...l..",
+    "tuuuuu...l..",
+    "tuuuuu...l..",
+    "uuuvvu...l..",
+    "...uvv...l..",
+    "....vv..l...",
+    ".....v......",
+    "............",
+  },
   first_night = {
     ".....gg.....",
     "....bkkb....",
@@ -397,6 +432,9 @@ local MINI = {
   stories = { "ttt.", "tDt.", "tt..", "t..." },
   daily = { "....", "iii.", "ttt.", "ttt." },
   pharmacy = { "....", "ttt.", "tnt.", "...." },
+  listen_first = { ".EE.", "E.E.", "..E.", ".E.." },
+  listen_noreplay = { ".t..", "tt.l", "tt.l", ".t.." },
+  listen_boss = { ".EE.", "E.E.", "..E.", ".E.." },
 }
 
 

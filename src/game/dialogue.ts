@@ -1,7 +1,8 @@
 // Dialogue box with portrait + typewriter text. Tap / Enter / Space advances.
 import Phaser from 'phaser';
 import { NAMES, type Line } from '../data/story';
-import { C, panel, txt } from './ui';
+import { C, button, panel, txt } from './ui';
+import { markSeen } from '../logic/save';
 import { G } from './state';
 
 const PORTRAIT: Record<string, { key: string; frame: number } | null> = {
@@ -19,10 +20,11 @@ const PORTRAIT: Record<string, { key: string; frame: number } | null> = {
   manager: { key: 'char_manager', frame: 2 },
   trader: { key: 'char_trader', frame: 3 },
   captain: { key: 'char_captain', frame: 0 },
+  chef: { key: 'chef', frame: 0 },
   narrator: null,
 };
 
-export function playDialogue(scene: Phaser.Scene, lines: Line[], opts: { bottom?: number; depth?: number } = {}): Promise<void> {
+export function playDialogue(scene: Phaser.Scene, lines: Line[], opts: { bottom?: number; depth?: number; skip?: boolean } = {}): Promise<void> {
   return new Promise((resolve) => {
     const W = scene.scale.width;
     const H = scene.scale.height;
@@ -93,6 +95,14 @@ export function playDialogue(scene: Phaser.Scene, lines: Line[], opts: { bottom?
       show(i);
     };
     shade.on('pointerup', advance);
+    if (opts.skip) {
+      // Poslech replays the story; seen already → one tap skips it all
+      root.add(button(scene, W - 38, y0 - 12, 64, 18, 'Přeskočit', () => {
+        timer?.remove(); timer = null;
+        i = lines.length - 1;
+        advance();
+      }, { size: 's', style: 'wood' }));
+    }
     const onKey = (e: KeyboardEvent) => { if (e.target === G.ime?.el) return; if (e.key === 'Enter' || e.key === ' ') advance(); };
     window.addEventListener('keydown', onKey);
     const prevImeKey = G.ime?.onKey;
@@ -104,4 +114,14 @@ export function playDialogue(scene: Phaser.Scene, lines: Line[], opts: { bottom?
     scene.events.once('shutdown', cleanup);
     advance();
   });
+}
+
+/**
+ * A story scene (prologue, boss intro, postcard, chapter…): remembered in
+ * storySeen; in Poslech a scene seen before gets a "Přeskočit" button.
+ */
+export function playStory(scene: Phaser.Scene, key: string, lines: Line[], opts: { bottom?: number; depth?: number } = {}): Promise<void> {
+  const seen = markSeen(G.data, key);
+  if (!seen) void G.save.save();
+  return playDialogue(scene, lines, { ...opts, skip: seen && G.listening });
 }

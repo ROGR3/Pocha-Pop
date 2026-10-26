@@ -97,6 +97,9 @@ export class MapScene extends Phaser.Scene {
     const st = txt(this, W - 28, 13, `${stars}/${regular.length * 3}`, { size: 's', color: C.yellow, origin: [1, 0.5] }).setDepth(DEPTH.hud);
     this.add.image(W - 34 - st.width, 13, 'star_s', 0).setDepth(DEPTH.hud);
     iconButton(this, W - 13, 13, 'gear', () => goto(this, 'Settings', { from: 'Map' })).setDepth(DEPTH.hud);
+    // track tag: eye (Čtení) / ear (Poslech) – opens Settings
+    const tag = button(this, Math.min(70, Math.round(W / 2) - 36), 13, 20, 20, '', () => goto(this, 'Settings', { from: 'Map' }), { style: G.listening ? 'red' : 'wood' }).setDepth(DEPTH.hud);
+    tag.add(this.add.image(0, -1, 'track_m', G.listening ? 1 : 0));
 
     // bottom bar
     this.add.rectangle(0, H - bottom, W, bottom, 0x181425).setOrigin(0, 0).setDepth(DEPTH.hud);
@@ -148,6 +151,8 @@ export class MapScene extends Phaser.Scene {
     if (h > 240) L.add(this.add.image(Math.round(W / 2), y + h - 240, `bg_${sec.pre}_sky`).setOrigin(0.5, 1).setCrop(0, 200 - (h - 240), 320, h - 240));
     L.add([far, mid]);
     L.add(this.add.rectangle(0, y, W, h, 0x181425, locked ? 0.7 : 0.35).setOrigin(0, 0));
+    // Poslech: a bluer night over every strip
+    if (G.listening) L.add(this.add.rectangle(0, y, W, h, 0x124e89, 0.28).setOrigin(0, 0));
     L.add(this.add.rectangle(0, y + h - 1, W, 1, 0x181425).setOrigin(0, 0));
     const measure = (t: string, size: 'l' | 'xs') => { const m = txt(this, 0, 0, t, { size }); const w = m.width; m.destroy(); return w; };
     const tw = Math.max(measure(sec.title, 'l'), measure(locked ? `${sec.sub} · zamčeno` : sec.sub, 'xs'));
@@ -213,7 +218,8 @@ export class MapScene extends Phaser.Scene {
       L.add(txt(this, x + 1, y + h + 32, String(rec.seats), { size: 'xs', color: C.cream, origin: [0, 0.5], shadow: true }));
     }
     if (unlocked && !rec) {
-      const m = txt(this, x, y - 10, '▼', { size: 's', color: C.yellow, origin: [0.5, 1], shadow: true });
+      // Poslech: a music note instead of the arrow
+      const m = G.listening ? this.add.image(x, y - 9, 'note').setOrigin(0.5, 1) : txt(this, x, y - 10, '▼', { size: 's', color: C.yellow, origin: [0.5, 1], shadow: true });
       L.add(m);
       this.tweens.add({ targets: m, y: y - 6, yoyo: true, repeat: -1, duration: 420, ease: 'Sine.easeInOut' });
     }

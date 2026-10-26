@@ -1,7 +1,7 @@
 // All story text (Czech). Korean words appear only where the player already knows them.
 import type { BossId, RegularId } from './levels';
 
-export type Who = 'halmeoni' | 'kim' | 'haeun' | 'nabi' | 'imo' | 'minsu' | 'park' | 'kang' | 'yaksa' | BossId | 'narrator';
+export type Who = 'halmeoni' | 'kim' | 'haeun' | 'nabi' | 'imo' | 'minsu' | 'park' | 'kang' | 'yaksa' | BossId | 'chef' | 'narrator';
 
 export interface Line {
   who: Who;
@@ -23,6 +23,7 @@ export const NAMES: Record<Who, string> = {
   manager: '매니저',
   trader: '상인',
   captain: '선장',
+  chef: 'Šéfkuchař',
   narrator: '',
 };
 
@@ -519,4 +520,13 @@ export const FINALE: Line[] = [
   { who: 'halmeoni', text: 'Zlatíčko! Slyšela jsem všechno. 미식가, blogerka, rádio, a dokonce 강 이사 zrušil přestavbu!' },
   { who: 'halmeoni', text: 'Stánek je teď opravdu tvůj. A já? Občas přijedu uvařit 김치찌개 – pro štamgasty.' },
   { who: 'narrator', text: 'Ulička 을지로 zůstala. Každou noc se tam rozsvěcí oranžová plachta a voní vývar.' },
+];
+
+/** First switch to Poslech (Settings). */
+export const LISTEN_INTRO: Line[] = [
+  { who: 'chef', text: 'Dneska se objednává jen nahlas. Poslouchej!' },
+  { who: 'chef', text: 'Zákazník řekne objednávku korejsky a ty napíšeš, co slyšíš. V bublině je jen reproduktor.' },
+  { who: 'chef', text: 'Nezaslechl/a jsi to? Ťukni na bublinu (nebo na ucho vedle psaní). První opakování je zdarma, každé další stojí spropitné.' },
+  { who: 'chef', text: 'Nápověda „?“ funguje jako vždycky. A po obsloužení ti bublina ukáže, co to bylo.' },
+  { who: 'chef', text: 'Poslech má vlastní postup – začínáš od první noci. Mince, vylepšení a Barvírna ti zůstávají.' },
 ];

@@ -135,6 +135,8 @@ const SFX = {
     synth({ wave: 'sine', freq: 420, slide: 7000, sustain: 0.02, decay: 0.05, punch: 0.3, volume: 0.35 }),
     synth({ wave: 'triangle', freq: note(84), sustain: 0.02, decay: 0.08, volume: 0.15 }), 0.02),
   // co-op: someone else was faster (soft "pfff")
+  // Poslech: a short wooden "ťuk" before the order is said again
+  replay: synth({ wave: 'triangle', freq: note(76), slide: -900, sustain: 0.02, decay: 0.07, punch: 0.4, lpf: 0.5, volume: 0.4 }),
   beaten: synth({ wave: 'noise', freq: 1800, slide: -2500, attack: 0.02, sustain: 0.08, decay: 0.2, lpf: 0.12, volume: 0.28 }),
 };
 

@@ -34,6 +34,8 @@ const helpers = () => {
     const d = P.G.data;
     d.settings.firstRunDone = true;
     d.settings.track = 'read';
+    d.settings.listenIntro = true;
+    d.tracks.listen = { nights: {}, words: {}, friends: {}, daily: {}, training: { sessions: 0, best: 0 } };
     d.coins = 240;
     d.upgrades = upTo >= 6 ? ['lanterns', 'radio', 'awning'] : [];
     d.tracks.read.nights = {};
@@ -58,6 +60,23 @@ const helpers = () => {
     await sleep(1600);
     for (let k = 0; k < 6; k++) { const dlg = P.night()?.children?.list.find((o) => o.type === 'Container' && o.depth === 2000); if (!dlg) break; dlg.list[0].emit('pointerup'); await sleep(250); dlg.list[0].emit('pointerup'); await sleep(250); }
     await sleep(wait);
+  };
+  /** Poslech: switch the track and give it some progress (nights 1..upTo). */
+  P.listenTo = (upTo) => {
+    const d = P.G.data;
+    d.settings.track = 'listen';
+    for (let n = 1; n <= upTo; n++) d.tracks.listen.nights[n] = { stars: n % 2 ? 3 : 2, bestCoins: 50 + n * 5, plays: 1, seats: 3 };
+    ['cha', 'uyu', 'mul', 'dubu', 'mandu', 'bap'].forEach((id, i) => { d.tracks.listen.words[id] = { mastery: i % 3, seen: 2 + i, correct: 1 + i, errors: 0, lapses: 0, lastNight: 1 }; });
+  };
+  /** Poslech: type the last thing a waiting customer said (from __pocha.spoken). */
+  P.typeHeard = async (partial) => {
+    const n = P.night();
+    const said = P.spoken.map((x) => x.text).reverse().find((t) => n.customers.some((c) => c.state === 'wait' && c.order && c.order.target === t));
+    if (!said) return null;
+    const st = P.imeStates(said);
+    const el = P.G.ime.el;
+    for (const s of st.slice(0, partial ? Math.max(1, st.length - 2) : st.length)) { el.value = s; el.dispatchEvent(new InputEvent('input')); await sleep(50); }
+    return said;
   };
   P.sleep = sleep;
   P.night = () => P.game.scene.getScene('Night');
@@ -129,6 +148,12 @@ const SHOTS = [
   ['18-recipes', async (p) => { await ev(p, "P.seed(6); P.start('Recipes')"); await p.waitForTimeout(900); }],
   ['19-recipe-detail', async (p) => { await ev(p, "P.game.scene.getScene('Recipes').detail(P.WORDS.find(w=>w.id==='tteokbokki'), true)"); await p.waitForTimeout(400); }],
   ['20-settings', async (p) => { await ev(p, "P.start('Settings',{from:'Map'})"); await p.waitForTimeout(700); }],
+  ['50-settings-listen', async (p) => { await ev(p, "P.seed(6); P.listenTo(2); P.start('Settings',{from:'Map'})"); await p.waitForTimeout(800); }],
+  ['51-listen-intro', async (p) => { await ev(p, "P.seed(6); P.G.data.settings.listenIntro=false; P.start('Settings',{from:'Map'})"); await p.waitForTimeout(700); await ev(p, "P.game.scene.getScene('Settings').setTrack('listen')"); await p.waitForTimeout(1600); }],
+  ['52-map-listen', async (p) => { await ev(p, "P.seed(9); P.listenTo(3); P.start('Map')"); await p.waitForTimeout(900); }],
+  ['53-night-listen', async (p) => { await ev(p, "P.seed(9); P.listenTo(3); P.start('Night',{night:4,seats:3})"); await p.waitForTimeout(5200);
+    await ev(p, "(async()=>{const n=P.night(); for(let k=0;k<60;k++){ if(n.customers.some(c=>c.bubble&&P.G.speech.speaking(c))) return; await P.sleep(50);} })()"); await p.waitForTimeout(120); }],
+  ['54-night-listen-reveal', async (p) => { await p.waitForTimeout(2500); await ev(p, 'P.typeHeard(false)'); await p.waitForTimeout(450); }],
   ['21-epilogue', async (p) => { await ev(p, "P.seed(10); P.G.track().friends.nabi.chapter=3; P.start('Story',{kind:'ending'})"); await p.waitForTimeout(2600); }],
 ];
 
@@ -139,7 +164,7 @@ for (const vp of VIEWPORTS) {
   const ctx = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: vp.dpr, hasTouch: vp.name === 'mobile' });
   const page = await ctx.newPage();
   page.on('pageerror', (e) => errors.push(`${vp.name}: ${e.message}`));
-  await page.goto(url);
+  await page.goto(url + '?tts=mock');
   await page.waitForTimeout(1200);
   await page.evaluate(helpers);
   const ONLY = process.env.ONLY ? process.env.ONLY.split(',') : null;

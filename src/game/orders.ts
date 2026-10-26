@@ -1,7 +1,8 @@
 // Building orders (single words or critic sentences) and their bubble text.
 import { hintLevel } from '../logic/srs';
 import { pickWord } from '../logic/srs';
-import { matchedJamo, toJamo } from '../logic/hangul';
+import { matchedJamo, splitSyllable, toJamo } from '../logic/hangul';
+import { listenHint } from '../logic/track';
 import { G, word } from './state';
 import { COLORS } from '../data/colors';
 import { CLOTHES } from '../data/clothes';
@@ -37,6 +38,8 @@ export interface Order {
   kind: Kind;
   /** Post-meal reaction (adjective) instead of a real order. */
   reaction?: ReactionId;
+  /** Poslech: asked to hear it too often – no tip (mastery still counts). */
+  noTip?: boolean;
 }
 
 export interface OrderCtx {
@@ -257,6 +260,14 @@ export function koreanHint(o: Order): { text: string; alpha: number } {
   const text = parts.map((p, i) => (i > 0 && !o.tokens[i].glue ? ' ' : '') + p).join('');
   if (all.every((l) => l === 'none')) return { text: '', alpha: 0 };
   return { text, alpha: all.every((l) => l === 'full') ? 1 : 0.6 };
+}
+
+/** Poslech bubble: never the words, only a first consonant / syllable count by listening mastery (all when hinted). */
+export function listenKoreanHint(o: Order): { text: string; alpha: number } {
+  if (o.hinted) return { text: o.target, alpha: 1 };
+  const ini = (ch: string) => splitSyllable(ch)?.initial ?? ch;
+  const text = o.tokens.map((t, i) => (i > 0 && !o.tokens[i].glue ? ' ' : '') + listenHint(t.ko, G.stat(t.id).mastery, ini)).join('');
+  return text.trim() ? { text, alpha: 0.6 } : { text: '', alpha: 0 };
 }
 
 /** Which token was being typed when the jamo at `pos` (0-based) went wrong. */

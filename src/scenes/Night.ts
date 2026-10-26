@@ -29,6 +29,8 @@ import type { CoopSummary, Msg, OrderData, PlayerInfo } from '../logic/netproto'
 import { CoopDirector } from '../game/coopHost';
 import { PFRAME, PCOL, PlayerTag, initial } from '../game/coopui';
 import type { NetSession } from '../game/net';
+import { RATE_SLOW, listenHint, replayRule } from '../logic/track';
+import { splitSyllable } from '../logic/hangul';
 
 type StartMsg = Extract<Msg, { t: 'start' }>;
 
@@ -89,6 +91,11 @@ interface Customer {
   /** Last item served (for the reaction). */
   lastItem?: string;
   coop?: CoopCust;
+  /** Poslech: the first telling of the order has finished (patience runs from then). */
+  heard?: boolean;
+  /** Poslech: replays the player asked for / the automatic one after a typo. */
+  replays?: number;
+  autoReplayed?: boolean;
 }
 
 export interface NightSummary {
@@ -114,6 +121,9 @@ export interface NightSummary {
   haggles: number;
   /** Daily challenge: was this today's (first, recorded) attempt? */
   dailyCounted?: boolean;
+  /** Poslech night: replays the player asked for. */
+  listen?: boolean;
+  replays?: number;
 }
 
 /** Ambient sound per backdrop. */
@@ -175,6 +185,12 @@ export class NightScene extends Phaser.Scene {
   private unsub?: () => void;
   /** Co-op night (null = single player). */
   private coop: CoopCtx | null = null;
+  /** Poslech: customers speak, bubbles show a speaker. */
+  private listen = false;
+  private replaysAsked = 0;
+  private earBtn?: Phaser.GameObjects.Container;
+  private lastTap = 0;
+  private onImeTap = (e: PointerEvent) => this.tapAt(e.clientX, e.clientY, true);
   // HUD
   private coinText!: Phaser.GameObjects.Text;
   private coinIcon!: Phaser.GameObjects.Sprite;
@@ -217,12 +233,16 @@ export class NightScene extends Phaser.Scene {
     // the daily challenge is the same night for everyone that day
     this.rand = rng(this.n === DAILY_NIGHT ? daySeed(dayKey(new Date())) : Date.now() & 0xffffffff);
     this.coop = null;
+    this.replaysAsked = 0;
+    this.listen = G.listening && G.speech.ok && !d?.coop;
     if (d?.coop && G.net && !G.net.closed) {
       const s = G.net;
       this.seats = d.coop.seats;
       this.seatMul = COOP_SEAT_MUL;
       this.rand = rng(d.coop.seed);
       this.coop = { s, start: d.coop, me: s.pid, tags: new Map(), coins: new Map(), lastTick: 0, tickAt: performance.now(), offs: [], paid: false, roster: [...s.players] };
+      // a player without a Korean voice plays the listening night by reading
+      this.listen = d.coop.track === 'listen' && G.speech.ok;
     }
   }
 
@@ -248,6 +268,13 @@ export class NightScene extends Phaser.Scene {
     this.box = new TypeBox(this, 4, 0, 10, INPUT_H - 6, 'Napiš objednávku…');
     this.box.root.setDepth(DEPTH.input);
     this.hintBtn = iconButton(this, 0, 0, 'help', () => this.hint(), 'wood').setDepth(DEPTH.input + 1);
+    if (this.listen) {
+      const ear = button(this, 0, 0, 20, 20, '', () => this.earReplay(), { style: 'wood' }).setDepth(DEPTH.input + 1);
+      ear.add(this.add.image(0, -1, 'track_m', 1));
+      this.earBtn = ear;
+      G.ime.el.addEventListener('pointerdown', this.onImeTap);
+      this.input.on('pointerdown', (p: Phaser.Input.Pointer) => this.tapAt(p.x, p.y, false));
+    } else if (G.listening && !this.coop) this.time.delayedCall(1500, () => toast(this, 'Chybí korejský hlas – dnes se čte z bublin', C.orange));
     this.layout();
 
     G.ime.activate();
@@ -259,6 +286,8 @@ export class NightScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-ESC', () => this.togglePause());
     this.game.events.on('layout', this.layout, this);
     this.events.once('shutdown', () => {
+      G.speech.stop();
+      G.ime.el.removeEventListener('pointerdown', this.onImeTap);
       this.unsub?.();
       G.ime.onKey = null;
       G.ime.deactivate();
@@ -328,8 +357,9 @@ export class NightScene extends Phaser.Scene {
     const W = this.scale.width, H = this.scale.height;
     const gy = H - INPUT_H;
     this.street.layout(gy);
-    this.box.setPosition(28, gy + 3, W - 32);
+    this.box.setPosition(28, gy + 3, W - (this.earBtn ? 56 : 32));
     this.hintBtn.setPosition(15, gy + 3 + (INPUT_H - 6) / 2);
+    this.earBtn?.setPosition(W - 15, gy + 3 + (INPUT_H - 6) / 2);
     this.hud.setPosition(0, 0);
     this.layoutHud();
     this.updateTapArea();
@@ -453,18 +483,93 @@ export class NightScene extends Phaser.Scene {
       c.tutorial = true;
       this.showTutorial(order);
     }
-    const b = new Bubble(this, order, c.kind === 'boss' ? Math.min(150, this.scale.width - 8) : this.seats === 4 ? 70 : 96);
+    const b = new Bubble(this, order, this.bubbleW(c), { listen: this.listen && c.kind !== 'nabi' });
     c.bubble = b;
     this.placeBubble(c);
     b.setScale(0.2).setAlpha(0);
     this.tweens.add({ targets: b, scale: 1, alpha: 1, duration: 260, ease: 'Back.easeOut' });
+    this.tellOrder(c);
     this.onInput(G.ime.state.text, G.ime.state.composing, true);
+  }
+
+  private bubbleW(c: Customer) {
+    return c.kind === 'boss' ? Math.min(150, this.scale.width - 8) : this.coop || this.seats === 4 ? 70 : 96;
+  }
+
+  // ------------------------------------------------------------- Poslech
+  /** The customer says the order (the cat only meows and keeps its picture). */
+  private tellOrder(c: Customer) {
+    c.heard = !this.listen;
+    c.replays = 0;
+    c.autoReplayed = false;
+    if (!this.listen) return;
+    if (c.kind === 'nabi') { c.heard = true; void G.speech.speak('야옹', { tag: c }); return; }
+    this.sayOrder(c, G.voiceRate());
+  }
+
+  private sayOrder(c: Customer, rate: number) {
+    const o = c.order;
+    if (!o) return;
+    void G.speech.speak(o.target, { tag: c, rate }).then(() => { if (c.order === o) c.heard = true; });
+  }
+
+  /** Tap on a speaker bubble (screen or game coordinates) = hear it again. */
+  private tapAt(x: number, y: number, css: boolean) {
+    if (!this.listen || this.paused || this.ended || this.intro) return;
+    if (css) {
+      const r = this.game.canvas.getBoundingClientRect();
+      const k = r.width / this.scale.width;
+      x = (x - r.left) / k;
+      y = (y - r.top) / k;
+    }
+    if (performance.now() - this.lastTap < 250) return;
+    const c = this.waiting().find((w) => w.bubble!.listen && x >= w.bubble!.x && x <= w.bubble!.x + w.bubble!.bw && y >= w.bubble!.y && y <= w.bubble!.y + w.bubble!.bh);
+    if (!c) return;
+    this.lastTap = performance.now();
+    this.replay(c);
+  }
+
+  /** Ear button: replays the only waiting order. */
+  private earReplay() {
+    const ws = this.waiting().filter((c) => c.bubble!.listen);
+    if (ws.length === 1) this.replay(ws[0]);
+    else if (ws.length > 1) toast(this, 'Ťukni na bublinu, kterou chceš slyšet', C.cream, this.scale.height - INPUT_H - 20);
+    G.ime.focus();
+  }
+
+  private replay(c: Customer) {
+    const o = c.order;
+    if (!o || c.state !== 'wait' || G.speech.pending(c)) return;
+    c.replays = (c.replays ?? 0) + 1;
+    this.replaysAsked++;
+    const rule = replayRule(c.replays, G.voiceRate());
+    if (rule.costsTip && !o.noTip) {
+      o.noTip = true;
+      floatText(this, c.bubble!.x + c.bubble!.bw / 2, c.bubble!.y - 4, 'bez spropitného', C.grey);
+    }
+    G.audio.play('replay');
+    this.tweens.add({ targets: c.bubble, scale: { from: 1.08, to: 1 }, duration: 160 });
+    this.time.delayedCall(120, () => { if (c.order === o) this.sayOrder(c, rule.rate); });
+  }
+
+  /** After serving in Poslech: picture + Korean + Czech for 1.5 s, then pop. */
+  private reveal(c: Customer, b: Bubble, o: Order) {
+    const r = new Bubble(this, { ...o, hinted: true }, this.bubbleW(c));
+    r.hidePatience();
+    r.setPosition(Phaser.Math.Clamp(Math.round(b.x + b.bw / 2 - r.bw / 2), 2, this.scale.width - r.bw - 2), Math.max(26, Math.round(b.y + b.bh - r.bh)));
+    r.tail.x = Phaser.Math.Clamp(b.tail.x + b.x - r.x, 4, r.bw - 13);
+    b.destroy();
+    G.audio.play('pop', { volume: 0.4 });
+    r.setScale(0.9);
+    this.tweens.add({ targets: r, scale: 1, duration: 160, ease: 'Back.easeOut' });
+    this.time.delayedCall(1500, () => this.popBubble(r));
   }
 
   private showTutorial(o: Order) {
     const W = this.scale.width;
     this.tutorialText?.destroy();
-    this.tutorialText = txt(this, W / 2, this.scale.height - INPUT_H - 8, `Opiš z bubliny korejsky: ${o.target}\n(${o.cs}) – na systémové klávesnici`, {
+    const msg = this.listen ? `Poslouchej a napiš korejsky, co slyšíš (${o.cs}).\nŤukni na bublinu = ještě jednou.` : `Opiš z bubliny korejsky: ${o.target}\n(${o.cs}) – na systémové klávesnici`;
+    this.tutorialText = txt(this, W / 2, this.scale.height - INPUT_H - 8, msg, {
       size: 's', color: C.yellow, origin: [0.5, 1], align: 'center', shadow: true, wrap: W - 12,
     }).setDepth(DEPTH.overlay);
     this.tweens.add({ targets: this.tutorialText, alpha: { from: 1, to: 0.6 }, yoyo: true, repeat: -1, duration: 600 });
@@ -527,6 +632,11 @@ export class NightScene extends Phaser.Scene {
       G.setStat(id, recordMistake(G.stat(id)));
       this.trouble.set(id, (this.trouble.get(id) ?? 0) + 1);
       c.bubble!.shake();
+      if (c.bubble!.listen && !c.autoReplayed && !G.speech.pending(c)) {
+        // after a typo the order is said once more, slowly (free)
+        c.autoReplayed = true;
+        this.time.delayedCall(450, () => { if (c.order === o) this.sayOrder(c, RATE_SLOW); });
+      }
       if (c.kind === 'boss') {
         this.critic.mistakes++;
         floatText(this, c.sprite.x, c.sprite.y - 44, '−★', C.red);
@@ -602,7 +712,7 @@ export class NightScene extends Phaser.Scene {
     if (clean) this.combo++; else this.combo = 0;
     this.bestCombo = Math.max(this.bestCombo, this.combo);
     const diff = o.tokens.reduce((a, t) => a + word(t.id).difficulty, 0);
-    const pay = serveCoins(diff, c.patience / c.max, this.combo, o.hinted);
+    const pay = serveCoins(diff, c.patience / c.max, this.combo, o.hinted || !!o.noTip);
     const total = Math.round(pay.total * this.seatMul * (c.priceMul ?? 1));
     this.coins += total;
     this.tips += Math.round(pay.tip * comboMultiplier(this.combo) * this.seatMul);
@@ -611,7 +721,8 @@ export class NightScene extends Phaser.Scene {
     c.state = 'eat';
     c.order = null;
     c.bubble = null;
-    this.popBubble(b);
+    G.speech.cancel(c);
+    if (b.listen) this.reveal(c, b, o); else this.popBubble(b);
     this.cookAndDeliver(c, o, total, pay.tip > 0);
     this.onInput('', false, true);
   }
@@ -729,6 +840,7 @@ export class NightScene extends Phaser.Scene {
 
   private leave(c: Customer, happy: boolean) {
     c.state = 'leave';
+    G.speech.cancel(c);
     if (c.bubble) {
       const b = c.bubble;
       c.bubble = null;
@@ -792,6 +904,7 @@ export class NightScene extends Phaser.Scene {
   // ------------------------------------------------------------- loop
   update(_t: number, dtMs: number) {
     this.street.update(dtMs);
+    if (this.listen) for (const c of this.customers) c.bubble?.setTalking(G.speech.speaking(c));
     if (this.paused || this.ended) return;
     if (this.coop) { this.coopUpdate(dtMs); return; }
     const dt = (dtMs / 1000) * G.speed;
@@ -813,6 +926,7 @@ export class NightScene extends Phaser.Scene {
       for (const c of this.customers) {
         if (c.state !== 'wait' || !c.bubble) continue;
         if (c.tutorial && this.served === 0) { c.bubble.setPatience(1); continue; }
+        if (!c.heard) { c.bubble.setPatience(1); continue; }
         if (!c.stays) c.patience -= dt;
         const f = c.patience / c.max;
         c.bubble.setPatience(f);
@@ -838,6 +952,7 @@ export class NightScene extends Phaser.Scene {
     const o = c.order!, b = c.bubble!;
     c.lastItem = o.tokens[0].id;
     this.helped++;
+    G.speech.cancel(c);
     c.state = 'eat';
     c.order = null;
     c.bubble = null;
@@ -955,6 +1070,7 @@ export class NightScene extends Phaser.Scene {
       const t1 = txt(this, 4, 3, 'To je drahé!', { size: 'xs', color: C.red });
       const hint = HAGGLE_WORDS.map((id) => {
         const w = word(id);
+        if (this.listen) return listenHint(w.ko, G.stat(id).mastery, (ch) => splitSyllable(ch)?.initial ?? ch) || '?';
         const lvl = hintLevel(G.stat(id).mastery);
         return lvl === 'full' ? w.ko : lvl === 'partial' ? [...w.ko][0] + '…' : '?';
       }).join(' / ');
@@ -968,6 +1084,8 @@ export class NightScene extends Phaser.Scene {
       tag.setScale(0.3);
       this.tweens.add({ targets: tag, scale: 1, duration: 220, ease: 'Back.easeOut' });
       G.audio.play('hint', { detune: -300 });
+      // Poslech: the trader says it – "할인?"
+      if (this.listen) void G.speech.speak(`${word('harin').ko}?`, { tag: c, rate: G.voiceRate() });
     });
   }
 
@@ -1100,12 +1218,14 @@ export class NightScene extends Phaser.Scene {
     c.state = 'wait';
     c.max = c.patience = REACTION_TIME;
     c.sprite.play(`${c.key}:happy`);
-    const b = new Bubble(this, c.order, 66);
+    const b = new Bubble(this, c.order, 66, { listen: this.listen });
     c.bubble = b;
     this.placeBubble(c);
     b.setScale(0.2).setAlpha(0);
     this.tweens.add({ targets: b, scale: 1, alpha: 1, duration: 220, ease: 'Back.easeOut' });
     G.audio.play('hint', { detune: 200 });
+    // Poslech: the customer says the adjective; reactions are short, the timer runs at once
+    if (this.listen) { c.heard = true; c.replays = 0; c.autoReplayed = false; this.sayOrder(c, G.voiceRate()); }
     this.onInput(G.ime.state.text, G.ime.state.composing, true);
   }
 
@@ -1117,7 +1237,8 @@ export class NightScene extends Phaser.Scene {
     this.reactions++;
     c.order = null;
     c.bubble = null;
-    this.popBubble(b);
+    G.speech.cancel(c);
+    if (b.listen) this.reveal(c, b, o); else this.popBubble(b);
     this.coins += REACTION_COINS;
     this.flyCoins(c.sprite.x, c.sprite.y - 30, REACTION_COINS);
     floatText(this, c.sprite.x, c.sprite.y - 46, `+${REACTION_COINS} 네!`, C.green);
@@ -1148,6 +1269,7 @@ export class NightScene extends Phaser.Scene {
     d.stats.nightsPlayed++;
     d.stats.bestCombo = Math.max(d.stats.bestCombo ?? 0, this.bestCombo);
     d.stats.greetings = (d.stats.greetings ?? 0) + this.greetings;
+    if (this.listen && this.replaysAsked === 0 && stars > 0) d.stats.listenNoReplay = (d.stats.listenNoReplay ?? 0) + 1;
     let dailyCounted: boolean | undefined;
     if (this.n === DAILY_NIGHT) dailyCounted = recordDaily(t.daily, dayKey(new Date()), { stars, coins: this.coins, served: this.served, total });
     for (const [k, v] of Object.entries(this.cleanServes)) {
@@ -1162,7 +1284,7 @@ export class NightScene extends Phaser.Scene {
       night: this.n, stars, total, served: this.served, angry: this.angry, mistakes: this.mistakes, coins: this.coins, tips: this.tips,
       bestCombo: this.bestCombo, newWords, trouble, regularsSeen: this.regularsSeen, clean: this.cleanServes, seats: this.seats, helped: this.helped, greetings: this.greetings, reactions: this.reactions, haggles: this.haggles,
       critic: boss ? { stars, mistakes: this.critic.mistakes, walkouts: this.critic.walkouts } : undefined,
-      dailyCounted,
+      dailyCounted, listen: this.listen, replays: this.replaysAsked,
     };
     G.ime.deactivate();
     goto(this, 'Result', summary, 500);
@@ -1476,6 +1598,7 @@ export class NightScene extends Phaser.Scene {
     if (this.coop) { this.askLeave(); return; }
     if (this.pauseLayer) { this.pauseLayer.destroy(); this.pauseLayer = undefined; this.paused = false; this.tweens.resumeAll(); G.ime.focus(); this.updateTapArea(); return; }
     this.paused = true;
+    G.speech.stop();
     this.updateTapArea();
     this.tweens.pauseAll();
     const W = this.scale.width, H = this.scale.height;

@@ -2,7 +2,7 @@
 // patience bar with mood face. 9-slice, highlighted while it matches input.
 import Phaser from 'phaser';
 import { mood } from '../logic/rules';
-import { koreanHint, type Order } from './orders';
+import { koreanHint, listenKoreanHint, type Order } from './orders';
 import { iconTex } from './state';
 import { DEPTH } from './street';
 import { C, snapText, txt } from './ui';
@@ -23,10 +23,14 @@ export class Bubble extends Phaser.GameObjects.Container {
   private taken?: string;
   private runoffBar?: Phaser.GameObjects.NineSlice;
   private runoffW = 0;
+  /** Poslech: speaker instead of picture + Czech; tap = hear it again. */
+  readonly listen: boolean;
+  speaker?: Phaser.GameObjects.Sprite;
 
-  constructor(scene: Phaser.Scene, order: Order, maxW: number) {
+  constructor(scene: Phaser.Scene, order: Order, maxW: number, opts: { listen?: boolean } = {}) {
     super(scene, 0, 0);
     this.order = order;
+    this.listen = !!opts.listen;
     const critic = order.kind === 'boss';
     // wide enough for the whole Korean on one line (크리스마스), within maxW
     const probeW = txt(scene, 0, 0, order.target, { size: 'm' });
@@ -36,26 +40,30 @@ export class Bubble extends Phaser.GameObjects.Container {
     const pad = 4;
     const parts: Phaser.GameObjects.GameObject[] = [];
     let y = pad;
-    // icons
+    // icons (Poslech: the speaker)
     const n = order.icons.length;
-    order.icons.forEach((ic, i) => {
+    if (this.listen) {
+      this.speaker = scene.add.sprite(Math.round(bw / 2), y + 1, 'speaker', 0).setOrigin(0.5, 0);
+      parts.push(this.speaker);
+      y += 17;
+    } else order.icons.forEach((ic, i) => {
       const x = Math.round(bw / 2 + (i - (n - 1) / 2) * 26);
       parts.push(scene.add.image(x, y, ...iconTex(ic)).setOrigin(0.5, 0));
     });
-    y += 25;
+    if (!this.listen) y += 25;
     let cs: Phaser.GameObjects.Text | null = null;
-    if (order.kind !== 'nabi') {
+    if (order.kind !== 'nabi' && !this.listen) {
       cs = txt(scene, bw / 2, y, order.cs, { size: 's', color: C.ink, origin: [0.5, 0], align: 'center', wrap: bw - 6, lineSpacing: 0 });
       parts.push(cs);
       y += cs.height + 2;
     }
-    if (order.extra) {
+    if (order.extra && !this.listen) {
       // loanword: the original spelling, small
       const ex = txt(scene, bw / 2, y - 2, order.extra, { size: 'xs', color: C.grey, origin: [0.5, 0] });
       parts.push(ex);
       y += 9;
     }
-    const kh = koreanHint(order);
+    const kh = this.hintOf();
     this.ko = txt(scene, bw / 2, y, kh.text || ' ', { size: 'm', color: C.brown, origin: [0.5, 0], align: 'center', wrap: bw - 6, lineSpacing: 0 });
     parts.push(this.ko);
     // reserve room for the fully revealed Korean (hint button) – measured
@@ -79,13 +87,29 @@ export class Bubble extends Phaser.GameObjects.Container {
     scene.add.existing(this);
   }
 
+  private hintOf() { return this.listen ? listenKoreanHint(this.order) : koreanHint(this.order); }
+
+  /** Poslech: sound waves while the customer speaks. */
+  setTalking(on: boolean) {
+    if (!this.speaker) return;
+    if (on && !this.speaker.anims.isPlaying) this.speaker.play('speaker:talk');
+    if (!on && this.speaker.anims.isPlaying) this.speaker.stop().setFrame(0);
+  }
+
+  /** After serving: no patience row any more (the reveal bubble). */
+  hidePatience() {
+    this.face.setVisible(false);
+    this.bar.setVisible(false);
+    this.barBg.setVisible(false);
+  }
+
   setKorean(text: string, alpha: number) {
     this.ko.setText(text).setAlpha(alpha);
     snapText(this.ko);
   }
 
   refreshHint() {
-    const k = koreanHint(this.order);
+    const k = this.hintOf();
     this.setKorean(k.text, k.alpha);
   }
 

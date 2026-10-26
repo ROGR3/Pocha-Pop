@@ -2,7 +2,8 @@
 // scripts/mp-relay.mjs) only carries them as opaque strings; everything is
 // validated here, so a broken / foreign message is simply dropped (null).
 
-export const PROTO = 1;
+/** 2: `start` carries the track (Čtení / Poslech). */
+export const PROTO = 2;
 
 export type PlayerColor = 'orange' | 'blue' | 'green';
 export const PLAYER_COLORS: PlayerColor[] = ['orange', 'blue', 'green'];
@@ -57,7 +58,7 @@ export type Msg =
   | { t: 'welcome'; pid: number; players: PlayerInfo[] }
   | { t: 'reject'; reason: RejectReason }
   | { t: 'lobby'; players: PlayerInfo[]; night: number }
-  | { t: 'start'; night: number; seed: number; district: string; seats: number; total: number }
+  | { t: 'start'; night: number; seed: number; district: string; seats: number; total: number; track?: 'read' | 'listen' }
   | { t: 'spawn'; cid: number; seat: number; look: string; order: OrderData; patienceMs: number; at: number }
   | { t: 'served'; cid: number; pid: number; coins: number }
   | { t: 'runoff'; cid: number; pid: number; coins: number }
@@ -118,7 +119,7 @@ const CHECK: Record<MsgType, (m: Record<string, unknown>) => boolean> = {
   welcome: (m) => isInt(m.pid) && players(m.players),
   reject: (m) => m.reason === 'full' || m.reason === 'proto' || m.reason === 'started',
   lobby: (m) => players(m.players) && isInt(m.night),
-  start: (m) => isInt(m.night) && isInt(m.seed) && isStr(m.district, 20) && isInt(m.seats) && m.seats >= 2 && m.seats <= 4 && isInt(m.total) && m.total > 0,
+  start: (m) => isInt(m.night) && isInt(m.seed) && isStr(m.district, 20) && isInt(m.seats) && m.seats >= 2 && m.seats <= 4 && isInt(m.total) && m.total > 0 && (m.track === undefined || m.track === 'read' || m.track === 'listen'),
   spawn: (m) => isInt(m.cid) && isInt(m.seat) && m.seat >= 0 && m.seat < 4 && isStr(m.look, 40) && isOrder(m.order) && isNum(m.patienceMs) && m.patienceMs > 0 && isNum(m.at),
   served: (m) => isInt(m.cid) && isInt(m.pid) && isInt(m.coins),
   runoff: (m) => isInt(m.cid) && isInt(m.pid) && isInt(m.coins),

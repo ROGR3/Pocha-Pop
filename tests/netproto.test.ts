@@ -6,6 +6,18 @@ const order: OrderData = {
   cs: 'Jedu na letiště.', icons: ['airport'], extra: '공항', kind: 'generic',
 };
 
+describe('netproto v2 (Poslech)', () => {
+  it('protocol version 2, start carries the track', () => {
+    expect(PROTO).toBe(2);
+    const m = decode(encode({ t: 'start', night: 3, seed: 1, district: 'euljiro', seats: 3, total: 9, track: 'listen' }));
+    expect(m && m.t === 'start' && m.track).toBe('listen');
+    // an old host's start (no track) is still valid = Čtení
+    const old = decode(JSON.stringify({ t: 'start', night: 3, seed: 1, district: 'euljiro', seats: 3, total: 9 }));
+    expect(old && old.t === 'start' && old.track).toBeUndefined();
+    expect(decode(JSON.stringify({ t: 'start', night: 3, seed: 1, district: 'euljiro', seats: 3, total: 9, track: 'sing' }))).toBeNull();
+  });
+});
+
 describe('netproto', () => {
   it('round-trips every message type', () => {
     const msgs: Msg[] = [
@@ -18,6 +30,7 @@ describe('netproto', () => {
       { t: 'reject', reason: 'full' },
       { t: 'lobby', players: [], night: 7 },
       { t: 'start', night: 7, seed: 42, district: 'hangang', seats: 4, total: 14 },
+      { t: 'start', night: 7, seed: 42, district: 'hangang', seats: 4, total: 14, track: 'listen' },
       { t: 'spawn', cid: 1, seat: 3, look: 'char_cust_a', order, patienceMs: 30000, at: 1500 },
       { t: 'served', cid: 1, pid: 0, coins: 12 },
       { t: 'runoff', cid: 1, pid: 1, coins: 4 },
@@ -56,7 +69,7 @@ describe('netproto', () => {
     expect(cleanName('Bartoloměj')).toBe('Bartolom');
   });
   it('QR payload and short codes', () => {
-    expect(qrPayload('192.168.43.1', DEFAULT_PORT)).toBe('pochapop:1:192.168.43.1:47123');
+    expect(qrPayload('192.168.43.1', DEFAULT_PORT)).toBe(`pochapop:${PROTO}:192.168.43.1:47123`);
     expect(parseQr('pochapop:1:192.168.43.1:47123')).toEqual({ proto: 1, ip: '192.168.43.1', port: 47123 });
     expect(parseQr('https://example.com')).toBeNull();
     expect(shortCode('192.168.43.1', DEFAULT_PORT)).toBe('43.1');
