@@ -31,7 +31,6 @@ export class CoopScene extends Phaser.Scene {
 
   init(d: { error?: string; view?: View }) {
     this.error = d?.error ?? '';
-    this.view = G.net && !G.net.closed ? 'lobby' : 'menu';
     this.editing = false;
     this.confirm = undefined;
     this.offs = [];
@@ -43,7 +42,10 @@ export class CoopScene extends Phaser.Scene {
     const W = this.scale.width, H = this.scale.height;
     this.builtW = W;
     this.add.rectangle(0, 0, W, H, 0x262b44).setOrigin(0, 0);
-    if (this.view === 'menu') this.menu(); else this.lobby(G.net!);
+    // decided here, not in init(): the session can die in between (scene fade)
+    const net = G.net && !G.net.closed ? G.net : null;
+    this.view = net ? 'lobby' : 'menu';
+    if (net) this.lobby(net); else this.menu();
     this.game.events.on('layout', this.relayout, this);
     this.events.once('shutdown', () => {
       this.unsubIme?.();

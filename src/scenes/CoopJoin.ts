@@ -13,6 +13,8 @@ export class CoopJoinScene extends Phaser.Scene {
   private status!: Phaser.GameObjects.Text;
   private code = '';
   private busy = false;
+  /** The native camera view is over the game: Back cancels it. */
+  private scanning = false;
   private ownIp: string | null = null;
   private unsub?: () => void;
   private builtW = 0;
@@ -97,7 +99,10 @@ export class CoopJoinScene extends Phaser.Scene {
       if (perm !== 'granted') perm = await bs.requestPermissions();
       if (perm !== 'granted') { this.say('Bez fotoaparátu to nepůjde – napiš kód.', C.orange); return; }
       G.ime.deactivate();
+      this.scanning = true;
+      this.say('Namiř na QR kód hostitele… (Zpět = zrušit)', C.light);
       const r = await bs.scan({ windowed: false, formats: [bs.Format.QRCode] });
+      this.scanning = false;
       G.ime.activate();
       const q = parseQr(r.content);
       if (!q) { this.say('Tohle není QR kód stánku Pocha Pop.', C.pink); return; }
@@ -105,8 +110,10 @@ export class CoopJoinScene extends Phaser.Scene {
       await this.connect(q.ip, q.port);
     } catch (e) {
       console.warn('scan', e);
+      const cancelled = !this.scanning;
+      this.scanning = false;
       G.ime.activate();
-      this.say('Skenování se nepovedlo – napiš kód.', C.orange);
+      this.say(cancelled ? 'Skenování zrušeno – můžeš napsat kód.' : 'Skenování se nepovedlo – napiš kód.', C.orange);
     }
   }
 
@@ -124,5 +131,13 @@ export class CoopJoinScene extends Phaser.Scene {
     }
   }
 
-  onBack() { goto(this, 'Coop'); }
+  onBack() {
+    if (this.scanning) {
+      // Android Back reaches the game, not the camera view: close the scanner instead of the screen
+      this.scanning = false;
+      void import('@tauri-apps/plugin-barcode-scanner').then((bs) => bs.cancel()).catch(() => {});
+      return;
+    }
+    goto(this, 'Coop');
+  }
 }

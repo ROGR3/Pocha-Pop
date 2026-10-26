@@ -19,3 +19,9 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+# QR scanner (tauri-plugin-barcode-scanner → ML Kit): ML Kit finds its component
+# registrars by reflection; R8 stripped their no-arg constructors in release
+# ("Could not instantiate com.google.mlkit.common.internal.CommonComponentRegistrar").
+-keep class com.google.mlkit.** { *; }
+-keep class com.google.android.gms.internal.mlkit_vision_** { *; }
+-keep class * implements com.google.firebase.components.ComponentRegistrar { <init>(); }

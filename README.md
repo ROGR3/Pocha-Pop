@@ -153,8 +153,20 @@ npm run mp-e2e                            # relay + 3 Playwright stránky: lobby
 node scripts/mp-bot.mjs 127.0.0.1:47123   # bot jako host proti Tauri hostiteli (Xvfb) nebo telefonu
 ```
 
-Telefon jako hostitel: `adb forward tcp:47123 tcp:47123` a `node scripts/mp-bot.mjs`. Telefon jako host:
-hostitel na PC (Xvfb Tauri) + `adb reverse tcp:47123 tcp:47123`, v telefonu zadat adresu `127.0.0.1`.
+**Telefon přes adb** (`scripts/mp-phone.mjs`): potřebuje debug build `cz.rogr.pochapop.debug` (instaluje se vedle
+release verze, má vlastní uložení), protože jen u něj jde WebView ovládat přes DevTools (`scripts/adb-cdp.mjs`).
+Tlačítka se mačkají skutečným `adb input tap` (souřadnice se počítají z objektů hry), psaní je emulace IME.
+
+```bash
+npm run tauri android build -- --apk --debug --target aarch64
+adb install -r src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk
+node scripts/mp-phone.mjs host    # telefon hostí, PC bot se připojí přes adb forward
+bash scripts/xvfb-tauri.sh start  # (+ Spolu → Založit stánek, viz AGENTS) a pak:
+node scripts/mp-phone.mjs guest   # telefon se připojí k PC přes adb reverse na 127.0.0.1
+```
+
+Ověřeno na Pixelu 8a (Android 17): telefon jako hostitel i jako host, celé noci, mince v uložení.
+QR skener se otevírá, Zpět ho zavře (samotné skenování kódu je potřeba vyzkoušet ručně).
 
 ## Přidání slov
 

@@ -251,6 +251,7 @@ export class NetSession {
       if (this.onClosed) this.onClosed(why);
       else if (sc?.onNetClosed) sc.onNetClosed(why);
       else if (sc) sc.scene.start('Coop', { error: why });
+      else this.game.scene.start('Coop', { error: why });
     }
   }
 }

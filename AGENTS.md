@@ -75,6 +75,7 @@ src-tauri/             Rust + gen/android (commitované; AndroidManifest má adj
 | `npm run mp-relay` | dev relay pro co-op v prohlížeči (port 47200, stránka `?relay=ws://…:47200`) |
 | `node scripts/mp-bot.mjs [ip:port]` | bot jako host přes skutečný protokol (Tauri pod Xvfb, telefon přes `adb forward`) |
 | `cd src-tauri && CARGO_BUILD_JOBS=4 cargo test --lib` | testy Rust relay |
+| `node scripts/mp-phone.mjs host\|guest` | co-op na telefonu přes adb (debug APK `cz.rogr.pochapop.debug`, CDP v `scripts/adb-cdp.mjs`) |
 | `ANDROID_HOME=/opt/android-sdk NDK_HOME=/opt/android-sdk/ndk/27.0.12077973 npm run tauri android build -- --apk` | APK |
 
 ## Konvence
@@ -108,6 +109,10 @@ po testu vždy `fcitx5-remote -s keyboard-us` (uživatelův výchozí stav). Pro
 Co-op na desktopu: seed save do `/tmp/pocha-xvfb/xdg/cz.rogr.pochapop/pocha-pop.json` (`{"save": "<json>"}` s `coopName`),
 `start`, klik Spolu (32,722) → Založit (225,336), `node scripts/mp-bot.mjs` a klik Otevřít stánek (225,510) při 450×800.
 **Během běhu `tauri dev` needituj `src/`** – Vite reloadne stránku a noc spadne.
+Telefon (Pixel 8a): instalovat jen se souhlasem uživatele. Ovládání přes adb jde jen u debug buildu
+(release WebView nemá DevTools); `adb input tap` počítej z herních objektů (`page.tap('Popisek')` v adb-cdp.mjs),
+odhad ze screenshotu minul. První injektovaný dotyk po startu aplikace WebView podrží – nejdřív tapni do prázdného rohu.
+USB kabel občas vypadne (adb forward/reverse pak zmizí). Systémové věci (blokace fotoaparátu atd.) neměnit.
 `pkill -f` používej jen s ukotveným vzorem (`'^target/debug/...'`), jinak zabije i vlastní shell.
 
 ## Zdroje počítače
