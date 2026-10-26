@@ -1,4 +1,5 @@
 mod net;
+mod tts;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -7,6 +8,7 @@ pub fn run() {
   let builder = builder.plugin(tauri_plugin_barcode_scanner::init());
   builder
     .plugin(tauri_plugin_store::Builder::default().build())
+    .plugin(tts::init())
     .manage(net::NetState::default())
     .invoke_handler(tauri::generate_handler![
       net::net_host_start,
@@ -15,7 +17,11 @@ pub fn run() {
       net::net_send,
       net::net_kick,
       net::net_leave,
-      net::net_local_ips
+      net::net_local_ips,
+      tts::tts_status,
+      tts::tts_speak,
+      tts::tts_stop,
+      tts::tts_install_data
     ])
     .setup(|app| {
       if cfg!(debug_assertions) {

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { G, WORDS } from './game/state';
 import * as levels from './data/levels';
 import { Ime } from './game/ime';
+import { MockTts, pickBackend } from './game/speech';
 import { imeStates, typeKorean } from './game/debug';
 import { setupBack } from './game/back';
 import { hostSession, joinSession } from './game/net';
@@ -27,6 +28,9 @@ async function start() {
   const fonts = ['Galmuri11', 'Galmuri9', 'Galmuri7', 'Galmuri14'];
   await Promise.all(fonts.map((f) => document.fonts.load(`12px ${f}`, '가나ěščřžýáíéůú').catch(() => null)));
   await G.save.load();
+  // Poslech: start the voice early (Android TTS needs ~0.5 s to initialise)
+  G.speech.onDuck = (on) => G.audio.duck(on);
+  void G.speech.init(pickBackend());
   G.applyVolumes();
   G.ime = new Ime(document.getElementById('ime') as HTMLInputElement);
 
@@ -75,7 +79,10 @@ async function start() {
   document.addEventListener('pointerdown', unlock);
   document.addEventListener('keydown', unlock);
 
-  (window as any).__pocha = { G, game, typeKorean, imeStates, WORDS, levels, hostSession: () => hostSession(game), joinSession: (addr: string) => joinSession(game, addr) };
+  (window as any).__pocha = { G, game, typeKorean, imeStates, WORDS, levels,
+    /** MockTts: everything the customers said (Poslech tests). */
+    get spoken() { const b = G.speech.backend; return b instanceof MockTts ? b.spoken : []; },
+    useMockTts: () => G.speech.init(new MockTts()), hostSession: () => hostSession(game), joinSession: (addr: string) => joinSession(game, addr) };
 }
 
 start();

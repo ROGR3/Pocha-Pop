@@ -7,6 +7,7 @@ import { SaveManager, createBackend, bumpStreak, currentStreak } from '../logic/
 import { newStat, type WordStat } from '../logic/srs';
 import { Audio } from './audio';
 import { Ime } from './ime';
+import { Speech } from './speech';
 import type { Layout } from './layout';
 import type { NetSession } from './net';
 import { NIGHTS, prevNight } from '../data/levels';
@@ -55,6 +56,8 @@ export function word(id: string): Word {
 class GameState {
   save = new SaveManager(createBackend());
   audio = new Audio();
+  /** Poslech: the customers' voice (queue + backend). */
+  speech = new Speech();
   ime!: Ime;
   layout!: Layout;
   /** Debug/test only: game speed multiplier for nights (window.__pocha.G.speed). */
@@ -117,7 +120,11 @@ class GameState {
     this.audio.sfxVolume = this.data.settings.sfx;
     this.audio.ambientVolume = this.data.settings.ambient;
     this.audio.updateAmbientGain();
+    this.speech.volume = this.data.settings.voice;
   }
+
+  /** Voice speed from Settings (1 / 0.75). */
+  voiceRate(): number { return this.data.settings.voiceRate; }
 }
 
 export const G = new GameState();

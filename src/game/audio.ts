@@ -20,6 +20,10 @@ export class Audio {
   private lofi: { stop: () => void } | null = null;
   private lofiStation: 1 | 2 = 1;
   private lastPlay: Record<string, number> = {};
+  private lofiOut: GainNode | null = null;
+  /** Ambience / radio level while a customer speaks (Poslech). */
+  private duckMul = 1;
+  static readonly DUCK = 0.4;
 
   attach(game: Phaser.Game) {
     this.game = game;
@@ -82,11 +86,22 @@ export class Audio {
     this.updateAmbientGain();
   }
 
-  updateAmbientGain() {
+  updateAmbientGain(tc = 0.5) {
     if (this.ambientGain && this.ctx) {
       const base = this.ambientKind === 'rain' ? 0.09 : this.ambientKind === 'city' ? 0.1 : 0.12;
-      this.ambientGain.gain.setTargetAtTime(base * this.ambientVolume, this.ctx.currentTime, 0.5);
+      this.ambientGain.gain.setTargetAtTime(base * this.ambientVolume * this.duckMul, this.ctx.currentTime, tc);
     }
+    if (this.lofiOut && this.ctx) this.lofiOut.gain.setTargetAtTime(this.lofiGain(), this.ctx.currentTime, tc);
+  }
+
+  private lofiGain() { return 0.05 * Math.max(0.2, this.ambientVolume) * 2 * this.duckMul; }
+
+  /** Ducking: ambience and radio drop to 40 % while somebody speaks. */
+  duck(on: boolean) {
+    const m = on ? Audio.DUCK : 1;
+    if (m === this.duckMul) return;
+    this.duckMul = m;
+    this.updateAmbientGain(on ? 0.08 : 0.4);
   }
 
   stopAmbient() {
@@ -99,14 +114,15 @@ export class Audio {
 
   /** Procedural lo-fi loop: soft chords + vinyl crackle + lazy beat (radio upgrade). */
   setLofi(on: boolean, station: 1 | 2 = 1) {
-    if (!on || (this.lofi && this.lofiStation !== station)) { this.lofi?.stop(); this.lofi = null; }
+    if (!on || (this.lofi && this.lofiStation !== station)) { this.lofi?.stop(); this.lofi = null; this.lofiOut = null; }
     if (!on || this.lofi) return;
     this.lofiStation = station;
     if (station === 2) { this.startJazz(); return; }
     const ctx = this.ensureCtx();
     if (!ctx) return;
     const out = ctx.createGain();
-    out.gain.value = 0.05 * Math.max(0.2, this.ambientVolume) * 2;
+    out.gain.value = this.lofiGain();
+    this.lofiOut = out;
     const lp = ctx.createBiquadFilter();
     lp.type = 'lowpass';
     lp.frequency.value = 1400;
@@ -171,7 +187,8 @@ export class Audio {
     const ctx = this.ensureCtx();
     if (!ctx) return;
     const out = ctx.createGain();
-    out.gain.value = 0.05 * Math.max(0.2, this.ambientVolume) * 2;
+    out.gain.value = this.lofiGain();
+    this.lofiOut = out;
     const lp = ctx.createBiquadFilter();
     lp.type = 'lowpass';
     lp.frequency.value = 1800;
