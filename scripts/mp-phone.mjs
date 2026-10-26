@@ -28,7 +28,7 @@ await page.eval(`(() => {
   d.settings.firstRunDone = true;
   d.settings.coopName = 'Pixel';
   d.settings.coopColor = 'orange';
-  for (let i = 1; i <= 4; i++) d.nights[i] = d.nights[i] ?? { stars: 3, bestCoins: 1, plays: 1 };
+  for (let i = 1; i <= 4; i++) P.G.track().nights[i] = P.G.track().nights[i] ?? { stars: 3, bestCoins: 1, plays: 1 };
   P.G.save.save();
   P.G.net?.close();
   P.game.scene.getScenes(true)[0].scene.start('Coop');

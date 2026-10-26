@@ -23,7 +23,7 @@ export function currentAchievements(): string[] {
   const allJamo = new Set<string>();
   NIGHTS.forEach((d) => d.newJamo.forEach((j) => allJamo.add(j)));
   const met = new Set<string>();
-  for (const d of NIGHTS) if (G.data.nights[d.n]) jamoKnown(d.n).forEach((j) => met.add(j));
+  for (const d of NIGHTS) if (G.track().nights[d.n]) jamoKnown(d.n).forEach((j) => met.add(j));
   const bossNights: Record<string, number> = {};
   for (const d of NIGHTS) if (d.boss) bossNights[d.boss] = d.n;
   return evaluate({

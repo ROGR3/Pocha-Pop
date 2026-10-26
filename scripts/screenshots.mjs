@@ -33,22 +33,23 @@ const helpers = () => {
   P.seed = (upTo) => {
     const d = P.G.data;
     d.settings.firstRunDone = true;
+    d.settings.track = 'read';
     d.coins = 240;
     d.upgrades = upTo >= 6 ? ['lanterns', 'radio', 'awning'] : [];
-    d.nights = {};
+    d.tracks.read.nights = {};
     d.achievements = [];
     d.cosmetics = { roof: null, sign: null, stools: null, lanterns: null, hat: null, owned: [] };
-    for (let n = 1; n <= upTo; n++) d.nights[n] = { stars: n % 3 === 0 ? 2 : 3, bestCoins: 60 + n * 7, plays: 1, seats: 2 + (n % 3) };
+    for (let n = 1; n <= upTo; n++) d.tracks.read.nights[n] = { stars: n % 3 === 0 ? 2 : 3, bestCoins: 60 + n * 7, plays: 1, seats: 2 + (n % 3) };
     const ids = ['cha', 'uyu', 'dubu', 'mul', 'mandu', 'bap', 'gogi', 'ramyeon', 'kimchi', 'gimbap', 'ppang', 'tteok', 'danmuji', 'jjigae', 'japchae', 'galbi', 'gansik', 'eumsik', 'gwaja', 'tteokbokki', 'podo', 'juseu', 'keopi'];
-    ids.slice(0, upTo * 4).forEach((id, i) => { d.words[id] = { mastery: i % 6, seen: 3 + i, correct: 2 + i, errors: i % 3, lapses: 0, lastNight: 1 }; });
-    d.friends = { kim: { clean: 3, chapter: 1 }, haeun: { clean: 2, chapter: 1 }, nabi: { clean: 7, chapter: upTo >= 9 ? 3 : 1 } };
+    ids.slice(0, upTo * 4).forEach((id, i) => { d.tracks.read.words[id] = { mastery: i % 6, seen: 3 + i, correct: 2 + i, errors: i % 3, lapses: 0, lastNight: 1 }; });
+    d.tracks.read.friends = { kim: { clean: 3, chapter: 1 }, haeun: { clean: 2, chapter: 1 }, nabi: { clean: 7, chapter: upTo >= 9 ? 3 : 1 } };
     d.streak = { count: 3, lastDay: new Date().toISOString().slice(0, 10).split('-').join('-') };
   };
   /** Unlock everything up to night n (records for the whole chain). */
   P.unlockTo = (n) => {
     const d = P.G.data;
     let cur = P.levels.prevNight(n);
-    while (cur) { d.nights[cur] = d.nights[cur] ?? { stars: 3, bestCoins: 90, plays: 1, seats: 3 }; cur = P.levels.prevNight(cur); }
+    while (cur) { P.G.track().nights[cur] = P.G.track().nights[cur] ?? { stars: 3, bestCoins: 90, plays: 1, seats: 3 }; cur = P.levels.prevNight(cur); }
   };
   /** Start a night and skip the boss intro. */
   P.night2 = async (n, wait = 9000) => {
@@ -86,7 +87,7 @@ const SHOTS = [
   ['09-night-error', async (p) => { await ev(p, "(()=>{const el=P.G.ime.el; el.value='ㅋㅋ'; el.dispatchEvent(new InputEvent('input'));})()"); await p.waitForTimeout(120); }],
   ['10-pause', async (p) => { await ev(p, 'P.night().togglePause()'); await p.waitForTimeout(400); }],
   ['11-night-hangang', async (p) => { await ev(p, "P.seed(7); P.start('Night',{night:8})"); await p.waitForTimeout(14000); }],
-  ['11b-night-helper', async (p) => { await ev(p, "P.seed(9); P.G.data.upgrades=['lanterns','helper']; P.G.data.friends.kim.chapter=3; P.start('Night',{night:8,seats:4})"); await p.waitForTimeout(9000);
+  ['11b-night-helper', async (p) => { await ev(p, "P.seed(9); P.G.data.upgrades=['lanterns','helper']; P.G.track().friends.kim.chapter=3; P.start('Night',{night:8,seats:4})"); await p.waitForTimeout(9000);
     await ev(p, "(()=>{const c=P.night().customers.find(x=>x.state==='wait'&&x.bubble); if(c) c.patience=c.max*0.15;})()"); await p.waitForTimeout(900); }],
   ['11c-night-greet', async (p) => { await ev(p, "P.seed(9); P.G.data.upgrades=['lanterns']; P.start('Night',{night:8,seats:3})"); await p.waitForTimeout(4200);
     await ev(p, "(async()=>{const el=P.G.ime.el; for(const s of P.imeStates('안녕하').slice(0,-1)){el.value=s;el.dispatchEvent(new InputEvent('input'));await P.sleep(40);}})()"); await p.waitForTimeout(300); }],
@@ -100,8 +101,8 @@ const SHOTS = [
   ['26-night-manager', async (p) => { await ev(p, "P.seed(10); P.night2(121, 5000)"); await p.waitForTimeout(8000); }],
   ['27-night-yongsan', async (p) => { await ev(p, "P.seed(10); P.night2(24, 7000)"); await p.waitForTimeout(8600); await ev(p, "(()=>{const n=P.night(); const c=n.customers.find(x=>x.state==='wait'&&x.bubble&&!x.haggle); if(c){ n.rand=()=>0; n.maybeHaggle(c);} })()"); await p.waitForTimeout(1800); }],
   ['28-night-trader', async (p) => { await ev(p, "P.seed(10); P.night2(126, 5000)"); await p.waitForTimeout(8000); }],
-  ['29-pharmacy-intro', async (p) => { await ev(p, "P.seed(11); delete P.G.data.nights[201]; P.unlockTo(201); P.start('Night',{night:201,seats:3})"); await p.waitForTimeout(2600); }],
-  ['30-pharmacy-parts', async (p) => { await ev(p, "P.seed(11); P.G.data.nights[201]={stars:3,bestCoins:50,plays:1}; P.night2(202, 7000)"); await p.waitForTimeout(8600); }],
+  ['29-pharmacy-intro', async (p) => { await ev(p, "P.seed(11); delete P.G.track().nights[201]; P.unlockTo(201); P.start('Night',{night:201,seats:3})"); await p.waitForTimeout(2600); }],
+  ['30-pharmacy-parts', async (p) => { await ev(p, "P.seed(11); P.G.track().nights[201]={stars:3,bestCoins:50,plays:1}; P.night2(202, 7000)"); await p.waitForTimeout(8600); }],
   ['31-pharmacy-symptoms', async (p) => { await ev(p, "P.seed(11); P.night2(203, 9000)"); await p.waitForTimeout(10600); }],
   ['32-night-busan', async (p) => { await ev(p, "P.seed(12); P.night2(29, 9000)"); await p.waitForTimeout(10600); }],
   ['33-night-captain', async (p) => { await ev(p, "P.seed(12); P.night2(131, 5000)"); await p.waitForTimeout(8000); }],
@@ -111,7 +112,7 @@ const SHOTS = [
   ['37-training', async (p) => { await ev(p, "P.seed(10); P.unlockTo(14); P.start('Training')"); await p.waitForTimeout(3500); await ev(p, "(async()=>{const sc=P.game.scene.getScene('Training'); const s=sc.slots.find(x=>x.order); const el=P.G.ime.el; for(const st of P.imeStates(s.order.target).slice(0,-1)){el.value=st;el.dispatchEvent(new InputEvent('input'));await P.sleep(40);}})()"); await p.waitForTimeout(600); }],
   ['38-training-end', async (p) => { await ev(p, "(()=>{const sc=P.game.scene.getScene('Training'); sc.done=17; sc.finish();})()"); await p.waitForTimeout(900); }],
   ['39-badges', async (p) => { await ev(p, "P.seed(10); P.G.data.achievements=['first_night','combo10','polite','book_food','boss_critic','helper','streak7']; P.start('Badges')"); await p.waitForTimeout(900); }],
-  ['40-map-daily', async (p) => { await ev(p, "P.seed(10); P.unlockTo(28); P.G.data.nights[201]={stars:2,bestCoins:40,plays:1}; P.G.data.achievements=['first_night','combo10','polite','book_food','boss_critic','helper']; P.start('Map')"); await p.waitForTimeout(900); }],
+  ['40-map-daily', async (p) => { await ev(p, "P.seed(10); P.unlockTo(28); P.G.track().nights[201]={stars:2,bestCoins:40,plays:1}; P.G.data.achievements=['first_night','combo10','polite','book_food','boss_critic','helper']; P.start('Map')"); await p.waitForTimeout(900); }],
   ['41-daily-night', async (p) => { await ev(p, "P.start('Night',{night:900,seats:3})"); await p.waitForTimeout(9000); }],
   ['42-finale', async (p) => { await ev(p, "P.seed(12); P.start('Story',{kind:'finale'})"); await p.waitForTimeout(2600); }],
   ['43-title-badges', async (p) => { await ev(p, "P.seed(12); P.G.data.achievements=['first_night','combo10','polite','book_food','boss_critic','helper','streak7','colors','hats','daily']; P.G.data.cosmetics.hat='straw'; P.G.data.upgrades=['lanterns','radio','mug']; P.start('Title')"); await p.waitForTimeout(1500); }],
@@ -120,15 +121,15 @@ const SHOTS = [
   ['14-postcard', async (p) => { await ev(p, "P.game.scene.getScene('Result').postcard()"); await p.waitForTimeout(1300); }],
   ['15-result-boss', async (p) => { await ev(p, "P.start('Result',{night:11,stars:4,total:11,served:10,angry:1,mistakes:1,coins:210,tips:40,bestCombo:5,newWords:['hana','juseyo'],trouble:[],regularsSeen:[],clean:{},critic:{stars:4,mistakes:1,walkouts:0}})"); await p.waitForTimeout(3200); }],
   ['16-shop', async (p) => { await ev(p, "P.seed(4); P.G.data.coins=170; P.start('Shop')"); await p.waitForTimeout(900); }],
-  ['17-shop-upgraded', async (p) => { await ev(p, "P.seed(9); P.G.data.upgrades=['lanterns','radio','awning','helper']; P.G.data.friends.kim.chapter=3; P.start('Shop')"); await p.waitForTimeout(900); }],
-  ['16b-paint', async (p) => { await ev(p, "P.seed(9); P.G.data.coins=300; ['ppalgansaek','paransaek','noransaek','choroksaek','bunhongsaek'].forEach((w,i)=>P.G.data.words[w]={mastery:i%3,seen:2,correct:1,errors:0,lapses:0,lastNight:12}); P.G.data.cosmetics={roof:'blue',sign:'yellow',stools:'yellow',lanterns:'green',hat:'crown',owned:['roof:blue','sign:yellow','stools:yellow','lanterns:green','hat:crown']}; P.G.data.upgrades=['lanterns','awning']; P.start('Paint')"); await p.waitForTimeout(900); }],
+  ['17-shop-upgraded', async (p) => { await ev(p, "P.seed(9); P.G.data.upgrades=['lanterns','radio','awning','helper']; P.G.track().friends.kim.chapter=3; P.start('Shop')"); await p.waitForTimeout(900); }],
+  ['16b-paint', async (p) => { await ev(p, "P.seed(9); P.G.data.coins=300; ['ppalgansaek','paransaek','noransaek','choroksaek','bunhongsaek'].forEach((w,i)=>P.G.track().words[w]={mastery:i%3,seen:2,correct:1,errors:0,lapses:0,lastNight:12}); P.G.data.cosmetics={roof:'blue',sign:'yellow',stools:'yellow',lanterns:'green',hat:'crown',owned:['roof:blue','sign:yellow','stools:yellow','lanterns:green','hat:crown']}; P.G.data.upgrades=['lanterns','awning']; P.start('Paint')"); await p.waitForTimeout(900); }],
   ['16c-paint-typing', async (p) => { await ev(p, "(()=>{const sc=P.game.scene.getScene('Paint'); const c=sc.cells().find(x=>x.id==='red'); sc.select(c);})()"); await p.waitForTimeout(400);
     await ev(p, "(async()=>{const el=P.G.ime.el; for(const s of P.imeStates('빨간').slice(0,-1)){el.value=s;el.dispatchEvent(new InputEvent('input'));await P.sleep(40);}})()"); await p.waitForTimeout(500); }],
   ['16d-paint-hats', async (p) => { await ev(p, "P.start('Paint',{tab:'hat'})"); await p.waitForTimeout(900); }],
   ['18-recipes', async (p) => { await ev(p, "P.seed(6); P.start('Recipes')"); await p.waitForTimeout(900); }],
   ['19-recipe-detail', async (p) => { await ev(p, "P.game.scene.getScene('Recipes').detail(P.WORDS.find(w=>w.id==='tteokbokki'), true)"); await p.waitForTimeout(400); }],
   ['20-settings', async (p) => { await ev(p, "P.start('Settings',{from:'Map'})"); await p.waitForTimeout(700); }],
-  ['21-epilogue', async (p) => { await ev(p, "P.seed(10); P.G.data.friends.nabi.chapter=3; P.start('Story',{kind:'ending'})"); await p.waitForTimeout(2600); }],
+  ['21-epilogue', async (p) => { await ev(p, "P.seed(10); P.G.track().friends.nabi.chapter=3; P.start('Story',{kind:'ending'})"); await p.waitForTimeout(2600); }],
 ];
 
 async function ev(p, js) { return p.evaluate(`(async()=>{const P=window.__pocha; ${js.includes(";") ? js : "return await (" + js + ")"} })()`); }

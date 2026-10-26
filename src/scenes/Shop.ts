@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { UPGRADES } from '../data/levels';
 import { checkAchievements } from '../game/achievements';
 import { G, iconTex, word } from '../game/state';
+import { playedAnywhere } from '../logic/track';
 import { DEPTH, Street } from '../game/street';
 import { C, button, iconFrame, fadeIn, goto, iconButton, panel, toast, txt } from '../game/ui';
 
@@ -37,7 +38,7 @@ export class ShopScene extends Phaser.Scene {
     UPGRADES.forEach((u, i) => {
       const y = i * rowH;
       const owned = G.hasUpgrade(u.id);
-      const locked = (!!u.story && (G.data.friends[u.story]?.chapter ?? 0) < 3) || (!!u.after && !G.data.nights[u.after]);
+      const locked = (!!u.story && G.chapter(u.story) < 3) || (!!u.after && !playedAnywhere(G.data, u.after));
       panel(this, 4, y, W - 8, rowH - 2).setDepth(DEPTH.hud - 1);
       // icon
       const ix = 20, iy = y + rowH / 2 - 1;
@@ -102,8 +103,8 @@ export class ShopScene extends Phaser.Scene {
     if (this.moved > 6) return;
     const u = UPGRADES.find((x) => x.id === id)!;
     if (G.data.coins < u.price || G.hasUpgrade(id)) return;
-    if (u.story && (G.data.friends[u.story]?.chapter ?? 0) < 3) return;
-    if (u.after && !G.data.nights[u.after]) return;
+    if (u.story && G.chapter(u.story) < 3) return;
+    if (u.after && !playedAnywhere(G.data, u.after)) return;
     G.data.coins -= u.price;
     G.data.upgrades.push(id);
     G.save.save();

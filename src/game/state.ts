@@ -10,6 +10,7 @@ import { Ime } from './ime';
 import type { Layout } from './layout';
 import type { NetSession } from './net';
 import { NIGHTS, prevNight } from '../data/levels';
+import { bestChapter, trackData, type Track, type TrackData } from '../logic/track';
 
 export interface Word {
   id: string;
@@ -65,18 +66,28 @@ class GameState {
 
   get data() { return this.save.data; }
 
-  stat(id: string): WordStat {
-    return this.data.words[id] ?? newStat();
+  /** Current campaign (Čtení / Poslech). */
+  get trackId(): Track { return this.data.settings.track; }
+  get listening(): boolean { return this.data.settings.track === 'listen'; }
+
+  /** Progress of the current track (nights, words, friends, daily, training). */
+  track(t?: Track): TrackData { return trackData(this.data, t); }
+
+  stat(id: string, t?: Track): WordStat {
+    return this.track(t).words[id] ?? newStat();
   }
 
   setStat(id: string, s: WordStat) {
-    this.data.words[id] = s;
+    this.track().words[id] = s;
   }
+
+  /** Regular's chapter for shared unlocks (shop, radio): the better track counts. */
+  chapter(regular: string): number { return bestChapter(this.data, regular); }
 
   isUnlocked(n: number): boolean {
     const p = prevNight(n);
     if (!p) return true;
-    const prev = this.data.nights[p];
+    const prev = this.track().nights[p];
     return !!prev && prev.stars > 0;
   }
 
@@ -85,7 +96,7 @@ class GameState {
     let last = 1;
     for (const d of NIGHTS) {
       if (d.district === 'pharmacy' || d.district === 'holiday' || !this.isUnlocked(d.n)) continue;
-      if (!this.data.nights[d.n]) return d.n;
+      if (!this.track().nights[d.n]) return d.n;
       last = d.n;
     }
     return last;
@@ -95,7 +106,7 @@ class GameState {
 
   /** Radio station: 1 = lo-fi, 2 = night jazz (after 박 사장 repaired the radio). */
   station(): 1 | 2 {
-    return (this.data.friends.park?.chapter ?? 0) >= 3 && this.data.settings.station === 2 ? 2 : 1;
+    return this.chapter('park') >= 3 && this.data.settings.station === 2 ? 2 : 1;
   }
 
   streak(): number { return currentStreak(this.data.streak, new Date()); }

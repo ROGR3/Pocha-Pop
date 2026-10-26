@@ -58,7 +58,7 @@ export class TrainingScene extends Phaser.Scene {
     const met = new Set<string>();
     for (const d of NIGHTS) if (G.isUnlocked(d.n)) jamoKnown(d.n).forEach((j) => met.add(j));
     const all = WORDS.filter((w) => w.category !== 'phrase').map((w) => ({ id: w.id, jamo: jamoSet(w.ko) }));
-    this.pool = trainingPool(all, G.data.words, met, COLORS.map((c) => c.word));
+    this.pool = trainingPool(all, G.track().words, met, COLORS.map((c) => c.word));
     if (this.pool.length < 4) this.pool = ['cha', 'uyu', 'mul', 'dubu', 'mandu'];
 
     this.hud = this.add.container(0, 0).setDepth(DEPTH.hud);
@@ -122,7 +122,7 @@ export class TrainingScene extends Phaser.Scene {
   private fill(i: number) {
     if (this.ended) return;
     const exclude = new Set(this.slots.filter((s) => s.order).map((s) => s.order!.tokens[0].id));
-    const id = trainingPick(this.pool, G.data.words, exclude, this.rand);
+    const id = trainingPick(this.pool, G.track().words, exclude, this.rand);
     if (!id) return;
     const w = word(id);
     const order: Order = { tokens: [{ id, ko: w.ko }], target: w.ko, cs: w.cs, icons: [w.icon], extra: w.loan, hinted: false, mistakes: [false], kind: 'generic' };
@@ -217,9 +217,9 @@ export class TrainingScene extends Phaser.Scene {
     if (this.ended) return;
     this.ended = true;
     G.ime.deactivate();
-    G.data.training.sessions++;
-    const best = this.done > G.data.training.best;
-    G.data.training.best = Math.max(G.data.training.best, this.done);
+    G.track().training.sessions++;
+    const best = this.done > G.track().training.best;
+    G.track().training.best = Math.max(G.track().training.best, this.done);
     G.save.save();
     G.audio.play(this.done ? 'fanfare' : 'fail');
     for (const s of this.slots) if (s.bubble) this.tweens.add({ targets: s.bubble, alpha: 0, duration: 200 });
@@ -230,7 +230,7 @@ export class TrainingScene extends Phaser.Scene {
     c.add(panel(this, 0, 0, pw, ph));
     c.add(txt(this, pw / 2, 10, 'Trénink hotov!', { size: 'l', color: C.yellow, origin: [0.5, 0] }));
     c.add(txt(this, pw / 2, 34, `Procvičeno slov: ${this.done}`, { size: 'm', color: C.white, origin: [0.5, 0] }));
-    c.add(txt(this, pw / 2, 50, `Překlepy: ${this.mistakes}   Rekord: ${G.data.training.best}${best && this.done ? ' (nový!)' : ''}`, { size: 's', color: best ? C.green : C.light, origin: [0.5, 0] }));
+    c.add(txt(this, pw / 2, 50, `Překlepy: ${this.mistakes}   Rekord: ${G.track().training.best}${best && this.done ? ' (nový!)' : ''}`, { size: 's', color: best ? C.green : C.light, origin: [0.5, 0] }));
     c.add(txt(this, pw / 2, 64, 'Mince se tu nedávají, ale slova sílí.', { size: 'xs', color: C.grey, origin: [0.5, 0] }));
     c.add(button(this, pw / 2 - 52, ph - 22, 92, 22, 'Znovu', () => goto(this, 'Training'), { style: 'wood', size: 's' }));
     c.add(button(this, pw / 2 + 52, ph - 22, 92, 22, 'Na mapu', () => goto(this, 'Map'), { size: 's' }));

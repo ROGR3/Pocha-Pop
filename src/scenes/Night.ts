@@ -203,7 +203,7 @@ export class NightScene extends Phaser.Scene {
     this.helped = this.greetings = this.reactions = this.haggles = this.lost = 0;
     this.greetDirty = this.criticGreeted = false;
     this.known = jamoKnown(this.n);
-    if (this.n === DAILY_NIGHT) for (const d of NIGHTS) if (G.data.nights[d.n]) jamoKnown(d.n).forEach((j) => this.known.add(j));
+    if (this.n === DAILY_NIGHT) for (const d of NIGHTS) if (G.track().nights[d.n]) jamoKnown(d.n).forEach((j) => this.known.add(j));
     this.customers = [];
     this.queue = [];
     this.clock = 0;
@@ -235,11 +235,11 @@ export class NightScene extends Phaser.Scene {
     this.seatsTaken = this.street.seatX.map(() => null);
     this.patMul = patienceMultiplier(G.data.upgrades, G.data.settings.relaxed, this.street.raining);
     this.pool = this.n === DAILY_NIGHT
-      ? dailyPool(WORDS.filter((w) => (G.data.words[w.id]?.seen ?? 0) > 0 && !['phrase', 'expr', 'adj'].includes(w.category)).map((w) => w.id), dayKey(new Date()))
+      ? dailyPool(WORDS.filter((w) => (G.track().words[w.id]?.seen ?? 0) > 0 && !['phrase', 'expr', 'adj'].includes(w.category)).map((w) => w.id), dayKey(new Date()))
       : nightPool(this.n, G.data.upgrades);
     if (this.pool.length < 3) this.pool = ['cha', 'uyu', 'mul', 'dubu', 'mandu'];
     this.newTonight = new Set(this.def.newWords);
-    for (const [id, s] of Object.entries(G.data.words)) if (s.seen > 0) this.seenBefore.add(id);
+    for (const [id, s] of Object.entries(G.track().words)) if (s.seen > 0) this.seenBefore.add(id);
     G.audio.setAmbient(this.def.weather === 'dry' || this.def.weather === 'snow' ? 'city' : ambientFor(backdrop));
     G.audio.setLofi(G.hasUpgrade('radio'), G.station());
 
@@ -286,7 +286,7 @@ export class NightScene extends Phaser.Scene {
     this.tweens.add({ targets: banner, scale: 1, alpha: 1, duration: 400, ease: 'Back.easeOut', hold: 900, yoyo: true, onComplete: () => banner.destroy() });
     if (this.coop) { this.coopSetup(); return; }
     const introLines = boss ? BOSS_INTRO[this.def.boss!]
-      : HOLIDAY_INTRO[this.n] ?? (this.n === 201 && !G.data.nights[201] ? PHARMACY_INTRO : null);
+      : HOLIDAY_INTRO[this.n] ?? (this.n === 201 && !G.track().nights[201] ? PHARMACY_INTRO : null);
     if (introLines) {
       this.intro = true;
       this.time.delayedCall(900, async () => {
@@ -386,7 +386,7 @@ export class NightScene extends Phaser.Scene {
     if (seat < 0) return false;
     const generics = DISTRICTS[homeDistrict(this.def)].generics;
     const key = kind === 'generic' ? generics[Math.floor(this.rand() * generics.length)]
-      : kind === 'nabi' ? (G.data.friends.nabi?.chapter >= 2 ? 'nabi_fat' : 'nabi') : `char_${kind === 'boss' ? this.def.boss : kind}`;
+      : kind === 'nabi' ? (G.track().friends.nabi?.chapter >= 2 ? 'nabi_fat' : 'nabi') : `char_${kind === 'boss' ? this.def.boss : kind}`;
     const sp = this.add.sprite(this.street.wx(140), 0, key).setOrigin(0.5, 1).setDepth(DEPTH.customer);
     if (kind === 'nabi') { sp.setFlipX(false); attachHat(this, sp); }
     const c: Customer = { kind, key, sprite: sp, seat, state: 'walk', patience: 1, max: 1, order: null, bubble: null, ordersLeft: kind === 'boss' ? CRITIC_ORDERS : 1 };
@@ -1139,9 +1139,9 @@ export class NightScene extends Phaser.Scene {
     const total = this.served + this.angry;
     const boss = !!this.def.boss;
     const stars = boss ? criticStars(this.critic.mistakes, this.critic.walkouts) : nightStars({ total, served: this.served, angry: this.angry, mistakes: this.mistakes });
-    const d = G.data;
-    const rec = d.nights[this.n] ?? { stars: 0, bestCoins: 0, plays: 0 };
-    d.nights[this.n] = { stars: Math.max(rec.stars, stars), bestCoins: Math.max(rec.bestCoins, this.coins), plays: rec.plays + 1, seats: Math.max(rec.seats ?? 0, this.seats) };
+    const d = G.data, t = G.track();
+    const rec = t.nights[this.n] ?? { stars: 0, bestCoins: 0, plays: 0 };
+    t.nights[this.n] = { stars: Math.max(rec.stars, stars), bestCoins: Math.max(rec.bestCoins, this.coins), plays: rec.plays + 1, seats: Math.max(rec.seats ?? 0, this.seats) };
     d.coins += this.coins;
     d.stats.served += this.served;
     d.stats.mistakes += this.mistakes;
@@ -1149,13 +1149,13 @@ export class NightScene extends Phaser.Scene {
     d.stats.bestCombo = Math.max(d.stats.bestCombo ?? 0, this.bestCombo);
     d.stats.greetings = (d.stats.greetings ?? 0) + this.greetings;
     let dailyCounted: boolean | undefined;
-    if (this.n === DAILY_NIGHT) dailyCounted = recordDaily(d.daily, dayKey(new Date()), { stars, coins: this.coins, served: this.served, total });
+    if (this.n === DAILY_NIGHT) dailyCounted = recordDaily(t.daily, dayKey(new Date()), { stars, coins: this.coins, served: this.served, total });
     for (const [k, v] of Object.entries(this.cleanServes)) {
-      const f = d.friends[k] ?? { clean: 0, chapter: 0 };
-      d.friends[k] = { ...f, clean: f.clean + (v ?? 0) };
+      const f = t.friends[k] ?? { clean: 0, chapter: 0 };
+      t.friends[k] = { ...f, clean: f.clean + (v ?? 0) };
     }
     G.markPlayedToday();
-    const newWords = Object.entries(d.words).filter(([id, s]) => s.seen > 0 && !this.seenBefore.has(id)).map(([id]) => id);
+    const newWords = Object.entries(t.words).filter(([id, s]) => s.seen > 0 && !this.seenBefore.has(id)).map(([id]) => id);
     const trouble = [...this.trouble.entries()].sort((a, b) => b[1] - a[1]).map(([id]) => id).slice(0, 3);
     G.save.save();
     const summary: NightSummary = {

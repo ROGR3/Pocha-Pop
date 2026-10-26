@@ -1,11 +1,12 @@
 // Persistent game state. Backend: @tauri-apps/plugin-store inside Tauri,
 // localStorage in a plain browser (Vite dev / Playwright), memory in tests.
-import type { WordStat } from './srs';
 import { defaultCosmetics, mergeCosmetics, type Cosmetics } from './cosmetics';
-import type { DailyRecord } from './daily';
 import { PLAYER_COLORS, cleanName, type PlayerColor } from './netproto';
+import { RATE_NORMAL, RATE_SLOW, emptyTrack, isTrack, migrateTrack, type Track, type TrackData } from './track';
 
-export const SAVE_VERSION = 3;
+export type { FriendState, NightRecord, TrackData, Track } from './track';
+
+export const SAVE_VERSION = 4;
 /** Coins refunded for the removed "4th stool" upgrade (stage 1 → 2). */
 export const STOOL4_REFUND = 150;
 
@@ -21,21 +22,13 @@ export interface Settings {
   /** Co-op: name shown to the other players ('' = not chosen yet). */
   coopName: string;
   coopColor: PlayerColor;
-}
-
-export interface NightRecord {
-  stars: number; // 0..3 (boss: 1..5)
-  bestCoins: number;
-  plays: number;
-  /** Most seats this night was played with (map shows a stool badge). */
-  seats?: number;
-}
-
-export interface FriendState {
-  /** Clean serves (no mistake, no hint) of this regular. */
-  clean: number;
-  /** Story chapters already shown (0..3). */
-  chapter: number;
+  /** Campaign: Čtení / Poslech (v4). */
+  track: Track;
+  /** Voice speed (1 / 0.75) and volume (0..1) in Poslech. */
+  voiceRate: number;
+  voice: number;
+  /** The chef's Poslech intro was shown. */
+  listenIntro: boolean;
 }
 
 export interface SaveData {
@@ -43,17 +36,15 @@ export interface SaveData {
   settings: Settings;
   coins: number;
   upgrades: string[];
-  nights: Record<number, NightRecord>;
-  words: Record<string, WordStat>;
-  friends: Record<string, FriendState>;
+  /** Per-track progress (nights, mastery, regulars, daily, training). */
+  tracks: Record<Track, TrackData>;
+  /** Story scenes already seen in any track (Poslech offers "Přeskočit"). */
+  storySeen: string[];
   streak: { count: number; lastDay: string };
   stats: Stats;
   cosmetics: Cosmetics;
   /** Unlocked achievement ids. */
   achievements: string[];
-  /** Daily challenge results by day key. */
-  daily: Record<string, DailyRecord>;
-  training: { sessions: number; best: number };
 }
 
 export interface Stats {
@@ -69,23 +60,22 @@ export interface Stats {
   /** Co-op nights played / orders served first in co-op. */
   coopNights: number;
   coopFirst: number;
+  /** Poslech nights finished without asking for a single replay. */
+  listenNoReplay?: number;
 }
 
 export function defaultSave(): SaveData {
   return {
     version: SAVE_VERSION,
-    settings: { sfx: 0.8, ambient: 0.5, relaxed: false, firstRunDone: false, seats: 3, station: 1, coopName: '', coopColor: 'orange' },
+    settings: { sfx: 0.8, ambient: 0.5, relaxed: false, firstRunDone: false, seats: 3, station: 1, coopName: '', coopColor: 'orange', track: 'read', voiceRate: RATE_NORMAL, voice: 1, listenIntro: false },
     coins: 0,
     upgrades: [],
-    nights: {},
-    words: {},
-    friends: {},
+    tracks: { read: emptyTrack(), listen: emptyTrack() },
+    storySeen: [],
     streak: { count: 0, lastDay: '' },
     stats: { served: 0, mistakes: 0, nightsPlayed: 0, coopNights: 0, coopFirst: 0 },
     cosmetics: defaultCosmetics(),
     achievements: [],
-    daily: {},
-    training: { sessions: 0, best: 0 },
   };
 }
 
@@ -93,23 +83,27 @@ export function defaultSave(): SaveData {
 export function migrate(raw: unknown): SaveData {
   const d = defaultSave();
   if (!raw || typeof raw !== 'object') return d;
-  const r = raw as Partial<SaveData>;
+  const r = raw as Partial<SaveData> & Record<string, unknown>;
+  // v3 → v4: the single progress becomes the Čtení track, Poslech starts empty
+  const rt = (r.tracks && typeof r.tracks === 'object' ? r.tracks : null) as Partial<Record<Track, unknown>> | null;
+  const tracks = rt
+    ? { read: migrateTrack(rt.read), listen: migrateTrack(rt.listen) }
+    : { read: migrateTrack({ nights: r.nights, words: r.words, friends: r.friends, daily: r.daily, training: r.training }), listen: emptyTrack() };
+  const { nights: _n, words: _w, friends: _f, daily: _d, training: _t, ...rest } = r;
+  void _n; void _w; void _f; void _d; void _t;
   const out: SaveData = {
     ...d,
-    ...r,
+    ...rest,
     version: SAVE_VERSION,
     settings: { ...d.settings, ...(r.settings ?? {}) },
     upgrades: Array.isArray(r.upgrades) ? [...r.upgrades] : [],
-    nights: { ...(r.nights ?? {}) },
-    words: { ...(r.words ?? {}) },
-    friends: { ...(r.friends ?? {}) },
+    tracks,
+    storySeen: Array.isArray(r.storySeen) ? r.storySeen.filter((x): x is string => typeof x === 'string') : seenFromProgress(tracks.read, r.settings?.firstRunDone === true),
     streak: { ...d.streak, ...(r.streak ?? {}) },
     stats: { ...d.stats, ...(r.stats ?? {}) },
     coins: typeof r.coins === 'number' && isFinite(r.coins) ? r.coins : 0,
     cosmetics: mergeCosmetics(r.cosmetics),
     achievements: Array.isArray(r.achievements) ? [...r.achievements] : [],
-    daily: { ...(r.daily ?? {}) },
-    training: { ...d.training, ...(r.training ?? {}) },
   };
   // v1 → v2: the 4th stool is no longer an upgrade but a choice before each night
   if (out.upgrades.includes('stool4')) {
@@ -120,7 +114,33 @@ export function migrate(raw: unknown): SaveData {
   out.settings.coopName = typeof out.settings.coopName === 'string' ? cleanName(out.settings.coopName) : '';
   if (!PLAYER_COLORS.includes(out.settings.coopColor)) out.settings.coopColor = 'orange';
   for (const k of ['coopNights', 'coopFirst'] as const) if (typeof out.stats[k] !== 'number' || !isFinite(out.stats[k])) out.stats[k] = 0;
+  // v4: track + voice
+  const st = out.settings;
+  if (!isTrack(st.track)) st.track = 'read';
+  st.voiceRate = st.voiceRate === RATE_SLOW ? RATE_SLOW : RATE_NORMAL;
+  st.voice = typeof st.voice === 'number' && isFinite(st.voice) ? Math.max(0, Math.min(1, st.voice)) : 1;
+  st.listenIntro = st.listenIntro === true;
   return out;
+}
+
+/** Story scenes a pre-v4 player has already seen, judged by their Čtení progress. */
+export function seenFromProgress(t: TrackData, firstRun: boolean): string[] {
+  const out: string[] = [];
+  if (firstRun || Object.keys(t.nights).length) out.push('prologue');
+  for (const n of Object.keys(t.nights)) out.push(`night:${n}`);
+  // after the 한강 critic / the 부산 captain / the last 약국 night
+  if (t.nights[11]) out.push('ending');
+  if (t.nights[131]) out.push('finale');
+  if (t.nights[204]) out.push('pharmacy_outro');
+  for (const [r, f] of Object.entries(t.friends)) for (let k = 0; k < (f?.chapter ?? 0); k++) out.push(`chapter:${r}:${k}`);
+  return out;
+}
+
+/** Remember a story scene; true when it had been seen before. */
+export function markSeen(s: SaveData, key: string): boolean {
+  if (s.storySeen.includes(key)) return true;
+  s.storySeen.push(key);
+  return false;
 }
 
 export function serialize(s: SaveData): string {

@@ -40,7 +40,7 @@ async function player(name, color, big) {
     d.settings.coopName = n;
     d.settings.coopColor = c;
     d.coins = 0;
-    for (let i = 1; i <= 4; i++) d.nights[i] = { stars: 3, bestCoins: 1, plays: 1 };
+    for (let i = 1; i <= 4; i++) P.G.track().nights[i] = { stars: 3, bestCoins: 1, plays: 1 };
     P.G.speed = speed;
     window.__mlog = [];
     P.sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -153,7 +153,7 @@ const sumB = await ev(B, () => window.__pocha.game.scene.getScene('CoopResult').
 check(JSON.stringify(sumA) === JSON.stringify(sumB), 'same summary for everyone');
 check(sumA.players.find((p) => p.pid === 2)?.left === true, 'leaver marked in the table');
 check(sumA.served + sumA.angry === sumA.total, 'all customers accounted for', `${sumA.served}+${sumA.angry}/${sumA.total} ★${sumA.stars}`);
-const saveA = await ev(A, () => ({ coins: window.__pocha.G.data.coins, st: window.__pocha.G.data.stats, n2: window.__pocha.G.data.nights[2] }));
+const saveA = await ev(A, () => ({ coins: window.__pocha.G.data.coins, st: window.__pocha.G.data.stats, n2: window.__pocha.G.track().nights[2] }));
 const saveB = await ev(B, () => ({ coins: window.__pocha.G.data.coins, st: window.__pocha.G.data.stats }));
 check(saveA.coins === sumA.players[0].coins && saveA.st.coopNights === 1 && saveA.st.coopFirst === sumA.players[0].first, 'host save: coins + co-op stats', JSON.stringify({ coins: saveA.coins, coopNights: saveA.st.coopNights, coopFirst: saveA.st.coopFirst }));
 check(saveB.coins === sumA.players.find((p) => p.pid === 1).coins && saveB.st.coopNights === 1, 'guest save: coins + co-op stats', `coins ${saveB.coins}`);

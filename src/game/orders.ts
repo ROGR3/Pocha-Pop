@@ -52,14 +52,14 @@ export interface OrderCtx {
 const CAT_FOOD = ['uyu', 'mul', 'gogi', 'chikin', 'dubu', 'mandu', 'gimbap'];
 const SWEET = ['gwaja', 'satang', 'ppang', 'tteokbokki', 'gimbap', 'gansik', 'juseu', 'beobeulti', 'aiseukeurim', 'bingsu', 'keikeu', 'chokollit', 'popkon', 'ttalgi', 'cha', 'uyu', 'dijeoteu', 'banana'];
 
-const pick = (ctx: OrderCtx, pool: string[], newTonight = ctx.newTonight) => pickWord({ pool, stats: G.data.words, newTonight, exclude: ctx.exclude, rand: ctx.rand });
+const pick = (ctx: OrderCtx, pool: string[], newTonight = ctx.newTonight) => pickWord({ pool, stats: G.track().words, newTonight, exclude: ctx.exclude, rand: ctx.rand });
 const ofCat = (pool: string[], ...cats: string[]) => pool.filter((id) => cats.includes(word(id).category));
 
 export function makeOrder(kind: Kind, ctx: OrderCtx): Order {
   if (kind === 'boss') return bossSentence(ctx);
   if (kind === 'nabi') {
     // the cat only ever wants (known) cat food – shown as a picture
-    const stats = G.data.words;
+    const stats = G.track().words;
     const seen = CAT_FOOD.filter((id) => (stats[id]?.seen ?? 0) > 0);
     return single(pick(ctx, seen.length ? seen : CAT_FOOD.slice(0, 3), new Set()), kind);
   }
@@ -184,7 +184,7 @@ function traderSentence(ctx: OrderCtx): Order {
 /** 부산 captain: long sentences from the whole game. */
 function captainSentence(ctx: OrderCtx): Order {
   const r = ctx.rand();
-  const all = Object.keys(G.data.words).filter((id) => (G.data.words[id]?.seen ?? 0) > 0);
+  const all = Object.keys(G.track().words).filter((id) => (G.track().words[id]?.seen ?? 0) > 0);
   const known = (cat: string) => ofCat(all, cat);
   if (r < 0.3) {
     const dests = DESTINATIONS.filter((d) => d.answers.some((a) => a !== 'taeksi'));

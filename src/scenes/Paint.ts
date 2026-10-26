@@ -9,6 +9,7 @@ import { hintLevel, recordMistake, recordServe } from '../logic/srs';
 import { attachHat } from '../game/hats';
 import { checkAchievements } from '../game/achievements';
 import { G, iconTex, word } from '../game/state';
+import { seenAnywhere } from '../logic/track';
 import { DEPTH, Street } from '../game/street';
 import { TypeBox } from '../game/typebox';
 import { Button, C, button, cssRect, fadeIn, floatText, goto, iconButton, iconFrame, panel, segmented, snapText, toast, txt } from '../game/ui';
@@ -52,7 +53,7 @@ export class PaintScene extends Phaser.Scene {
     G.audio.setAmbient('rain');
     this.builtW = this.scale.width;
     this.street = new Street(this, { backdrop: 'euljiro', weather: false });
-    const cat = G.data.friends.nabi?.chapter >= 2 ? 'nabi_fat' : 'nabi';
+    const cat = G.track().friends.nabi?.chapter >= 2 ? 'nabi_fat' : 'nabi';
     this.cat = this.add.sprite(0, 0, cat).setOrigin(0.5, 1).setDepth(DEPTH.customer).play(`${cat}:sit`);
     attachHat(this, this.cat);
     this.box = new TypeBox(this, 0, 0, 100, 34, 'Klepni sem a piš');
@@ -153,7 +154,7 @@ export class PaintScene extends Phaser.Scene {
       { id: null, name: 'Původní', price: 0, state: c[this.tab] ? 'owned' : 'equipped' },
       ...COLORS.map((col) => ({
         id: col.id, name: col.cs, price: part.price,
-        state: itemState(c, this.tab, col.id, part.price, coins, (G.data.words[col.word]?.seen ?? 0) > 0),
+        state: itemState(c, this.tab, col.id, part.price, coins, seenAnywhere(G.data, col.word)),
       })),
     ];
   }

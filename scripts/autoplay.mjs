@@ -30,7 +30,7 @@ for (const [idx, n] of nights.entries()) {
     // unlock everything on the way to n (and words those nights introduce)
     const chain = []; let cur = P.levels.prevNight(n);
     while (cur) { chain.push(cur); cur = P.levels.prevNight(cur); }
-    for (const k of chain) P.G.data.nights[k] = P.G.data.nights[k] ?? { stars: 2, bestCoins: 50, plays: 1 };
+    for (const k of chain) P.G.track().nights[k] = P.G.track().nights[k] ?? { stars: 2, bestCoins: 50, plays: 1 };
     if (!P.G.data.upgrades.includes('helper')) P.G.data.upgrades.push('helper');
     P.game.scene.getScenes(true)[0].scene.start('Night', { night: n, seats });
     await sleep(800);
@@ -63,7 +63,7 @@ for (const [idx, n] of nights.entries()) {
     }
     await sleep(1500);
     const r = P.game.scene.getScene('Result');
-    return { night: n, typed, scenes: P.game.scene.getScenes(true).map((s) => s.scene.key), summary: r?.s, saved: P.G.data.nights[n], coins: P.G.data.coins, words: Object.keys(P.G.data.words).length };
+    return { night: n, typed, scenes: P.game.scene.getScenes(true).map((s) => s.scene.key), summary: r?.s, saved: P.G.track().nights[n], coins: P.G.data.coins, words: Object.keys(P.G.track().words).length };
   }, [n, seats]);
   const ok = res.scenes.includes('Result') && res.summary && res.saved?.plays >= 1 && (n < 6 || n === 900 || res.summary.greetings > 0);
   if (!ok) failed = true;

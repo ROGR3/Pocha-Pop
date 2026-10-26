@@ -113,7 +113,7 @@ export class Street {
     }
     if (up.includes('radio')) {
       this.radio = s.add.sprite(0, 0, 'radio').setOrigin(0.5, 1).setDepth(DEPTH.stall + 1).play('radio:play');
-      if ((G.data.friends.park?.chapter ?? 0) >= 3) {
+      if (G.chapter('park') >= 3) {
         // repaired by 박 사장: tap to switch station
         this.radio.setInteractive({ useHandCursor: true }).on('pointerup', () => {
           G.data.settings.station = G.station() === 2 ? 1 : 2;
@@ -142,7 +142,7 @@ export class Street {
       this.place(st, x, 2);
       this.stools.push(st);
     });
-    const nabi = G.data.friends.nabi;
+    const nabi = G.track().friends.nabi;
     if (o.kittens || (nabi && nabi.chapter >= 3 && o.backdrop !== 'pharmacy')) {
       ['kitten_a', 'kitten_b', 'kitten_c'].forEach((k, i) => {
         const kt = s.add.sprite(0, 0, k).setOrigin(0.5, 1).setDepth(DEPTH.stool + 1).play({ key: `${k}:idle`, startFrame: i % 2 });

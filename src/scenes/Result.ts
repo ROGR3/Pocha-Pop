@@ -70,7 +70,7 @@ export class ResultScene extends Phaser.Scene {
       L.add(review);
       y += review.height + 8;
     } else if (s.night === DAILY_NIGHT) {
-      const msg = s.dailyCounted ? `Výsledek dne zapsán! Nejlepší denní výzva: ${dailyBest(G.data.daily)} mincí.` : 'Dnešní pokus už je zapsaný – tohle bylo jen pro radost.';
+      const msg = s.dailyCounted ? `Výsledek dne zapsán! Nejlepší denní výzva: ${dailyBest(G.track().daily)} mincí.` : 'Dnešní pokus už je zapsaný – tohle bylo jen pro radost.';
       L.add(txt(this, W / 2, y, msg, { size: 's', color: s.dailyCounted ? C.green : C.light, origin: [0.5, 0], align: 'center', wrap: W - 24 }));
       y += 26;
     } else if (failed) {
@@ -177,7 +177,7 @@ export class ResultScene extends Phaser.Scene {
     const s = this.s;
     const unlocked: RegularId[] = [];
     for (const r of Object.keys(REGULARS) as RegularId[]) {
-      const f = G.data.friends[r] ?? { clean: 0, chapter: 0 };
+      const f = G.track().friends[r] ?? { clean: 0, chapter: 0 };
       const ch = REGULARS[r]?.chapters[f.chapter];
       if (ch && f.clean >= ch.need && s.night >= ch.minNight && s.regularsSeen.includes(r)) unlocked.push(r);
     }
@@ -202,12 +202,12 @@ export class ResultScene extends Phaser.Scene {
     if (!unlocked.length) { buttons(); return; }
     await new Promise((r) => this.time.delayedCall(700, r));
     for (const r of unlocked) {
-      const f = G.data.friends[r] ?? { clean: 0, chapter: 0 };
+      const f = G.track().friends[r] ?? { clean: 0, chapter: 0 };
       const ch = REGULARS[r]!.chapters[f.chapter];
       const banner = txt(this, W / 2, 10, `${REGULARS[r]!.name} – kapitola ${f.chapter + 1}/3`, { size: 'm', color: C.yellow, origin: [0.5, 0], shadow: true }).setDepth(2001);
       await playDialogue(this, ch.lines);
       banner.destroy();
-      G.data.friends[r] = { ...f, chapter: f.chapter + 1 };
+      G.track().friends[r] = { ...f, chapter: f.chapter + 1 };
       if (r === 'kim' && f.chapter + 1 === 3) toast(this, 'Nové v obchodě: pomocník 김 대리!', C.green, 40);
     }
     G.save.save();

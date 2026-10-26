@@ -35,7 +35,7 @@ export class RecipesScene extends Phaser.Scene {
     this.add.rectangle(0, 0, W, H, 0x5a3a2a).setOrigin(0, 0);
     // book page
     panel(this, 2, 26, W - 4, H - 60, 'paper');
-    const known = WORDS.filter((w) => (G.data.words[w.id]?.seen ?? 0) > 0).length;
+    const known = WORDS.filter((w) => (G.track().words[w.id]?.seen ?? 0) > 0).length;
     this.add.rectangle(0, 0, W, 26, 0x3e2731).setOrigin(0, 0).setDepth(10);
     txt(this, 8, 13, 'Babiččin receptář', { size: 'l', color: C.cream, origin: [0, 0.5] }).setDepth(10);
     txt(this, W - 8, 13, `${known}/${WORDS.length}`, { size: 's', color: C.yellow, origin: [1, 0.5] }).setDepth(10);
@@ -49,7 +49,7 @@ export class RecipesScene extends Phaser.Scene {
     for (const sec of SECTIONS) {
       const ws = WORDS.filter((w) => sec.cats.includes(w.category)).sort((a, b) => a.difficulty - b.difficulty);
       if (!ws.length) continue;
-      const k = ws.filter((w) => (G.data.words[w.id]?.seen ?? 0) > 0).length;
+      const k = ws.filter((w) => (G.track().words[w.id]?.seen ?? 0) > 0).length;
       this.list.add(this.add.rectangle(0, y + 1, W - 12, 14, 0xb86f50, 0.35).setOrigin(0, 0));
       this.list.add(txt(this, 4, y + 8, sec.name, { size: 's', color: C.ink, origin: [0, 0.5] }));
       this.list.add(txt(this, W - 16, y + 8, `${k}/${ws.length}`, { size: 'xs', color: C.brown, origin: [1, 0.5] }));
@@ -90,7 +90,7 @@ export class RecipesScene extends Phaser.Scene {
   }
 
   private card(w: Word, x: number, y: number, cw: number, ch: number) {
-    const st = G.data.words[w.id];
+    const st = G.track().words[w.id];
     const known = (st?.seen ?? 0) > 0;
     const c = this.add.container(x, y);
     const bg = this.add.rectangle(0, 0, cw, ch, known ? 0xead4aa : 0xc28569, 1).setOrigin(0, 0).setStrokeStyle(1, 0xb86f50);

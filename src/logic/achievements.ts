@@ -1,5 +1,6 @@
 // Achievements (odznáčky): pure evaluation over the save + game data.
 import type { SaveData } from './save';
+import { TRACKS } from './track';
 
 export interface AchievementDef {
   id: string;
@@ -32,6 +33,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: 'stories', name: 'Štamgasti', desc: 'Všechny kapitoly všech štamgastů.' },
   { id: 'daily', name: 'Denní výzva', desc: 'Dohraj denní výzvu.' },
   { id: 'pharmacy', name: 'Zástup', desc: 'Dokonči vedlejší linku 약국.' },
+  { id: 'listen_first', name: 'Dobré ucho', desc: 'Dohraj první noc v Poslechu.' },
+  { id: 'listen_noreplay', name: 'Bez opakování', desc: 'Noc v Poslechu bez jediného přehrání navíc.' },
+  { id: 'listen_boss', name: 'Slyším Soul', desc: 'Poraz kritika 미식가 v Poslechu.' },
 ];
 
 export interface AchievementInput {
@@ -53,24 +57,31 @@ export const SHIFT_JAMO = ['ㄲ', 'ㄸ', 'ㅃ', 'ㅆ', 'ㅉ', 'ㅒ', 'ㅖ'];
 
 export function evaluate(a: AchievementInput): string[] {
   const s = a.save;
-  const seen = (id: string) => (s.words[id]?.seen ?? 0) > 0;
+  // progress badges count in either track (Čtení / Poslech)
+  const ts = TRACKS.map((t) => s.tracks[t]);
+  const seen = (id: string) => ts.some((t) => (t.words[id]?.seen ?? 0) > 0);
+  const stars = (n: number) => Math.max(...ts.map((t) => t.nights[n]?.stars ?? 0));
+  const listen = s.tracks.listen;
   const got: string[] = [];
   const add = (id: string, ok: boolean) => { if (ok) got.push(id); };
-  add('first_night', Object.values(s.nights).some((r) => r.stars > 0));
+  add('first_night', ts.some((t) => Object.values(t.nights).some((r) => r.stars > 0)));
   add('combo10', (s.stats.bestCombo ?? 0) >= 10);
   add('clean100', (s.stats.cleanServed ?? 0) >= 100);
   add('shift', SHIFT_JAMO.every((j) => (s.stats.shiftClean?.[j] ?? 0) >= 3));
   add('all_jamo', a.allJamo.every((j) => a.metJamo.has(j)));
   add('polite', (s.stats.greetings ?? 0) >= 50);
   for (const g of ['food', 'ddm', 'hgd', 'ysn', 'phm', 'bsn']) add(`book_${g}`, (a.groups[g]?.length ?? 0) > 0 && a.groups[g].every(seen));
-  for (const [boss, n] of Object.entries(a.bossNights)) add(`boss_${boss}`, (s.nights[n]?.stars ?? 0) >= 5);
+  for (const [boss, n] of Object.entries(a.bossNights)) add(`boss_${boss}`, stars(n) >= 5);
   add('streak7', a.streak >= 7);
   add('colors', a.colors.every((c) => s.cosmetics.owned.some((k) => k.endsWith(':' + c) && !k.startsWith('hat:'))));
   add('hats', a.hats.every((h) => s.cosmetics.owned.includes('hat:' + h)));
   add('helper', s.upgrades.includes('helper'));
-  add('stories', a.regulars.every((r) => (s.friends[r]?.chapter ?? 0) >= 3));
-  add('daily', Object.keys(s.daily ?? {}).length > 0);
-  add('pharmacy', (s.nights[204]?.stars ?? 0) > 0);
+  add('stories', a.regulars.every((r) => ts.some((t) => (t.friends[r]?.chapter ?? 0) >= 3)));
+  add('daily', ts.some((t) => Object.keys(t.daily).length > 0));
+  add('pharmacy', stars(204) > 0);
+  add('listen_first', Object.values(listen.nights).some((r) => r.stars > 0));
+  add('listen_noreplay', (s.stats.listenNoReplay ?? 0) > 0);
+  add('listen_boss', (listen.nights[a.bossNights.critic]?.stars ?? 0) > 0);
   return got;
 }
 

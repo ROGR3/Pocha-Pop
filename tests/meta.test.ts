@@ -20,22 +20,51 @@ describe('achievements', () => {
   });
   it('unlocks from progress', () => {
     const s = defaultSave();
-    s.nights[1] = { stars: 1, bestCoins: 1, plays: 1 };
-    s.nights[11] = { stars: 5, bestCoins: 1, plays: 1 };
+    const r = s.tracks.read;
+    r.nights[1] = { stars: 1, bestCoins: 1, plays: 1 };
+    r.nights[11] = { stars: 5, bestCoins: 1, plays: 1 };
     s.stats.bestCombo = 12;
     s.stats.cleanServed = 100;
     s.stats.greetings = 50;
     s.stats.shiftClean = Object.fromEntries(SHIFT_JAMO.map((j) => [j, 3]));
-    s.words.a = { ...newStat(), seen: 1 };
-    s.words.b = { ...newStat(), seen: 2 };
+    r.words.a = { ...newStat(), seen: 1 };
+    r.words.b = { ...newStat(), seen: 2 };
     s.upgrades.push('helper');
-    s.friends.kim = { clean: 9, chapter: 3 };
+    r.friends.kim = { clean: 9, chapter: 3 };
     s.cosmetics.owned = ['roof:red', 'stools:blue', 'hat:cap'];
-    s.daily['2026-10-25'] = { stars: 3, coins: 50, served: 8, total: 8 };
+    r.daily['2026-10-25'] = { stars: 3, coins: 50, served: 8, total: 8 };
     const got = evaluate(input({ save: s, metJamo: new Set(['ㄱ', 'ㄴ']), streak: 7 }));
     for (const id of ['first_night', 'combo10', 'clean100', 'shift', 'all_jamo', 'polite', 'book_food', 'boss_critic', 'streak7', 'colors', 'hats', 'helper', 'stories', 'daily']) expect(got, id).toContain(id);
     expect(got).not.toContain('book_ddm');
     expect(got).not.toContain('boss_captain');
+    expect(got).not.toContain('listen_first');
+  });
+  it('Poslech badges: first night, no replay, the critic', () => {
+    const s = defaultSave();
+    s.tracks.listen.nights[1] = { stars: 2, bestCoins: 1, plays: 1 };
+    let got = evaluate(input({ save: s }));
+    expect(got).toContain('listen_first');
+    expect(got).toContain('first_night');
+    expect(got).not.toContain('listen_noreplay');
+    expect(got).not.toContain('listen_boss');
+    s.stats.listenNoReplay = 1;
+    s.tracks.listen.nights[11] = { stars: 1, bestCoins: 1, plays: 1 };
+    got = evaluate(input({ save: s }));
+    expect(got).toContain('listen_noreplay');
+    expect(got).toContain('listen_boss');
+    // the critic in Čtení does not count for Poslech
+    const t = defaultSave();
+    t.tracks.read.nights[11] = { stars: 5, bestCoins: 1, plays: 1 };
+    expect(evaluate(input({ save: t }))).not.toContain('listen_boss');
+  });
+  it('progress badges count in either track', () => {
+    const s = defaultSave();
+    s.tracks.listen.words.a = { ...newStat(), seen: 1 };
+    s.tracks.read.words.b = { ...newStat(), seen: 1 };
+    s.tracks.listen.friends.kim = { clean: 9, chapter: 3 };
+    const got = evaluate(input({ save: s }));
+    expect(got).toContain('book_food');
+    expect(got).toContain('stories');
   });
   it('hat purchases do not count as colours', () => {
     const s = defaultSave();
@@ -50,8 +79,8 @@ describe('achievements', () => {
   it('save keeps achievements / daily / training', () => {
     const m = migrate({ achievements: ['x'], daily: { d: { stars: 1, coins: 2, served: 1, total: 1 } }, training: { sessions: 3 } });
     expect(m.achievements).toEqual(['x']);
-    expect(m.daily.d.coins).toBe(2);
-    expect(m.training).toEqual({ sessions: 3, best: 0 });
+    expect(m.tracks.read.daily.d.coins).toBe(2);
+    expect(m.tracks.read.training).toEqual({ sessions: 3, best: 0 });
   });
 });
 

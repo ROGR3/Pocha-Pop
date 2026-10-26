@@ -37,7 +37,7 @@ export class StoryScene extends Phaser.Scene {
         ['char_imo', 'char_minsu', 'char_park', 'char_kang'].forEach((k, i) => this.add.sprite(this.street.wx(-30 + i * 34), this.street.wy(2), k).setOrigin(0.5, 1).setDepth(DEPTH.stool + 2).play(`${k}:happy`));
       }
       ['char_kim', 'char_haeun'].forEach((k, i) => this.add.sprite(this.street.wx(this.street.seatX[i]), this.street.wy(-40), k).setOrigin(0.5, 1).setDepth(DEPTH.customer).play(`${k}:happy`));
-      const cat = G.data.friends.nabi?.chapter >= 2 ? 'nabi_fat' : 'nabi';
+      const cat = G.track().friends.nabi?.chapter >= 2 ? 'nabi_fat' : 'nabi';
       attachHat(this, this.add.sprite(this.street.wx(this.street.seatX[2]), this.street.wy(-41), cat).setOrigin(0.5, 1).setDepth(DEPTH.customer).play(`${cat}:sit`));
     }
     const W = this.scale.width;
