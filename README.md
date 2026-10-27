@@ -226,8 +226,9 @@ npm run mp-e2e               # obsahuje i noc v Poslechu (hostitel poslouchá, h
 
 Autoplay v Poslechu zároveň hlídá, že bublina nikdy neobsahuje text objednávky.
 
-Telefon (Pixel 8a): zatím **neověřeno** – skutečný hlas, `tts_status` a `tts://done` čekají na instalaci debug buildu
-(jen se souhlasem). Kotlin plugin se přeloží a v release APK zůstane (R8).
+Telefon (Pixel 8a, Google TTS): ověřeno `node scripts/tts-phone.mjs` (debug build, **potichu** – hlasitost 0, žádné
+dotyky): `tts_status` = engine + korejský hlas, tři promluvy po sobě s mezerou ~250 ms, konec hlásí `tts://done`
+(ne pojistný timeout), ducking 0,4 → 1, logcat `tts: init status=0 korean=true`. Release 0.4.0 nainstalované přes 0.3.0.
 
 ## Přidání slov
 

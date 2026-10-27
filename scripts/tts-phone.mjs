@@ -46,7 +46,7 @@ check(L.every((x) => x.end - x.start > 150 && x.end - x.start < 3500), 'finished
 check(r.ducked[0] === 0.4 && r.ducked[1] === 1, 'ambience ducked to 40 % while speaking, back after', JSON.stringify(r.ducked));
 
 // 4. the plugin's own log
-const lc = adb('logcat', '-d').split('\n').filter((l) => /init status=|tts/i.test(l) && /pochapop|Tauri|tts/.test(l)).slice(-4).join('\n');
+const lc = adb('logcat', '-d').split('\n').filter((l) => /\btts\s*:\s*init status=/.test(l)).slice(-1).join('\n');
 console.log(lc);
 check(/init status=0/.test(lc), 'logcat: TextToSpeech initialised');
 
