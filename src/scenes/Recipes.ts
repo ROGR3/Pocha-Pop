@@ -4,7 +4,8 @@ import { JAMO_TIPS } from '../data/story';
 import { hasRawJamo, toJamo } from '../logic/hangul';
 import { MAX_MASTERY } from '../logic/srs';
 import { G, WORDS, iconTex, type Word } from '../game/state';
-import { C, button, fadeIn, goto, iconButton, panel, txt } from '../game/ui';
+import { C, button, fadeIn, goto, iconButton, panel, snapText, txt } from '../game/ui';
+import { TRACKS, seenAnywhere } from '../logic/track';
 
 /** Recipe book sections (word categories). */
 const SECTIONS: { name: string; cats: string[] }[] = [
@@ -35,21 +36,21 @@ export class RecipesScene extends Phaser.Scene {
     this.add.rectangle(0, 0, W, H, 0x5a3a2a).setOrigin(0, 0);
     // book page
     panel(this, 2, 26, W - 4, H - 60, 'paper');
-    const known = WORDS.filter((w) => (G.track().words[w.id]?.seen ?? 0) > 0).length;
+    const known = WORDS.filter((w) => seenAnywhere(G.data, w.id)).length;
     this.add.rectangle(0, 0, W, 26, 0x3e2731).setOrigin(0, 0).setDepth(10);
     txt(this, 8, 13, 'Babiččin receptář', { size: 'l', color: C.cream, origin: [0, 0.5] }).setDepth(10);
     txt(this, W - 8, 13, `${known}/${WORDS.length}`, { size: 's', color: C.yellow, origin: [1, 0.5] }).setDepth(10);
 
     const cols = Math.max(3, Math.floor((W - 12) / 50));
     const cw = Math.floor((W - 12) / cols);
-    const ch = 60;
+    const ch = 66;
     const top = 30, viewH = H - 30 - 38;
     this.list = this.add.container(6, top);
     let y = 0;
     for (const sec of SECTIONS) {
       const ws = WORDS.filter((w) => sec.cats.includes(w.category)).sort((a, b) => a.difficulty - b.difficulty);
       if (!ws.length) continue;
-      const k = ws.filter((w) => (G.track().words[w.id]?.seen ?? 0) > 0).length;
+      const k = ws.filter((w) => seenAnywhere(G.data, w.id)).length;
       this.list.add(this.add.rectangle(0, y + 1, W - 12, 14, 0xb86f50, 0.35).setOrigin(0, 0));
       this.list.add(txt(this, 4, y + 8, sec.name, { size: 's', color: C.ink, origin: [0, 0.5] }));
       this.list.add(txt(this, W - 16, y + 8, `${k}/${ws.length}`, { size: 'xs', color: C.brown, origin: [1, 0.5] }));
@@ -90,19 +91,23 @@ export class RecipesScene extends Phaser.Scene {
   }
 
   private card(w: Word, x: number, y: number, cw: number, ch: number) {
-    const st = G.track().words[w.id];
-    const known = (st?.seen ?? 0) > 0;
+    const known = seenAnywhere(G.data, w.id);
     const c = this.add.container(x, y);
     const bg = this.add.rectangle(0, 0, cw, ch, known ? 0xead4aa : 0xc28569, 1).setOrigin(0, 0).setStrokeStyle(1, 0xb86f50);
     c.add(bg);
     const icon = this.add.image(Math.round(cw / 2), 15, ...iconTex(w.icon));
     if (!known) icon.setTintFill(0x3e2731).setAlpha(0.8);
     c.add(icon);
-    c.add(txt(this, cw / 2, 29, known ? w.ko : '???', { size: 'm', color: known ? C.ink : C.brown, origin: [0.5, 0] }));
+    c.add(txt(this, cw / 2, 28, known ? w.ko : '???', { size: 'm', color: known ? C.ink : C.brown, origin: [0.5, 0] }));
     if (known) {
-      c.add(txt(this, cw / 2, 42, w.cs, { size: 'xs', color: C.brown, origin: [0.5, 0], wrap: cw - 2, align: 'center' }).setCrop(0, 0, cw, 9));
-      const m = st!.mastery;
-      for (let i = 0; i < MAX_MASTERY; i++) c.add(this.add.rectangle(Math.round(cw / 2 - 12 + i * 5), ch - 4, 3, 3, i < m ? 0xf77622 : 0xb86f50).setOrigin(0, 0));
+      c.add(txt(this, cw / 2, 41, w.cs, { size: 'xs', color: C.brown, origin: [0.5, 0], wrap: cw - 2, align: 'center' }).setCrop(0, 0, cw, 9));
+      // mastery per track: eye = Čtení, ear = Poslech
+      TRACKS.forEach((t, k) => {
+        const m = G.stat(w.id, t).mastery;
+        const ry = ch - 13 + k * 7;
+        c.add(this.add.image(Math.round(cw / 2 - 18), ry + 1, 'track_s', k).setScale(0.75));
+        for (let i = 0; i < MAX_MASTERY; i++) c.add(this.add.rectangle(Math.round(cw / 2 - 12 + i * 5), ry, 3, 3, i < m ? (t === 'listen' ? 0x0099db : 0xf77622) : 0xb86f50).setOrigin(0, 0));
+      });
     }
     bg.setInteractive({ useHandCursor: true });
     bg.on('pointerup', () => { if (((this as any)._moved?.() ?? 0) < 6 && !this.popup) this.detail(w, known); });
@@ -115,7 +120,7 @@ export class RecipesScene extends Phaser.Scene {
     const c = this.add.container(0, 0).setDepth(100);
     const shade = this.add.rectangle(0, 0, W, H, 0x181425, 0.6).setOrigin(0, 0).setInteractive();
     c.add(shade);
-    const pw = Math.min(W - 20, 230), ph = 176;
+    const pw = Math.min(W - 20, 230), ph = 198;
     const px = Math.round((W - pw) / 2), py = Math.round((H - ph) / 2);
     c.add(panel(this, px, py, pw, ph, 'paper'));
     const icon = this.add.image(px + 30, py + 30, ...iconTex(w.icon)).setScale(2);
@@ -134,13 +139,23 @@ export class RecipesScene extends Phaser.Scene {
       if (tips.length) { c.add(txt(this, px + 10, y, tips.join(' · '), { size: 's', color: C.blue, wrap: pw - 20 })); y += 14; }
       c.add(txt(this, px + 10, y + 2, `Správně: ${st.correct}   Chyby: ${st.errors}   Viděno: ${st.seen}×`, { size: 'xs', color: C.brown }));
       c.add(txt(this, px + 10, y + 16, 'Mistrovství:', { size: 'xs', color: C.brown }));
-      for (let i = 0; i < MAX_MASTERY; i++) c.add(this.add.image(px + 70 + i * 10, y + 20, 'star_s', i < st.mastery ? 0 : 1));
-      c.add(txt(this, px + 10, y + 30, st.mastery >= 2 ? 'Bublina už korejštinu neukazuje – vybavuješ si.' : st.mastery === 1 ? 'Bublina ukazuje jen první slabiku.' : 'Bublina ukazuje celé slovo – opisuješ.', { size: 'xs', color: C.grey, wrap: pw - 20 }));
+      TRACKS.forEach((t, k) => {
+        const m = G.stat(w.id, t).mastery;
+        c.add(this.add.image(px + 64, y + 20 + k * 11, 'track_s', k));
+        for (let i = 0; i < MAX_MASTERY; i++) c.add(this.add.image(px + 78 + i * 10, y + 20 + k * 11, 'star_s', i < m ? 0 : 1));
+      });
+      // hear the word (Poslech voice)
+      const play = button(this, px + pw - 34, y + 25, 52, 18, 'Přehrát', () => { G.speech.stop(); void G.speech.speak(w.ko, { rate: G.voiceRate() }); }, { size: 'xs', style: 'wood', disabled: !G.speech.ok });
+      play.label.x += 5; snapText(play.label);
+      play.add(this.add.image(play.label.x - play.label.width / 2 - 7, -1, 'track_s', 1));
+      c.add(play);
+      y += 11;
+      c.add(txt(this, px + 10, y + 30, G.listening ? (st.mastery >= 2 ? 'Bublina v Poslechu už nic nenapoví.' : st.mastery === 1 ? 'Bublina v Poslechu ukazuje počet slabik.' : 'Bublina v Poslechu ukazuje první souhlásku.') : st.mastery >= 2 ? 'Bublina už korejštinu neukazuje – vybavuješ si.' : st.mastery === 1 ? 'Bublina ukazuje jen první slabiku.' : 'Bublina ukazuje celé slovo – opisuješ.', { size: 'xs', color: C.grey, wrap: pw - 20 }));
     } else {
       c.add(txt(this, px + 60, py + 18, 'Tohle slovo ještě neznáš.', { size: 's', color: C.brown, wrap: pw - 70 }));
       c.add(txt(this, px + 60, py + 36, 'Objeví se v dalších nocích, v menu z obchodu nebo v tréninku.', { size: 'xs', color: C.grey, wrap: pw - 70 }));
     }
-    const close = () => { c.destroy(); this.popup = undefined; };
+    const close = () => { G.speech.stop(); c.destroy(); this.popup = undefined; };
     c.add(button(this, px + pw / 2, py + ph - 14, 80, 18, 'Zavřít', close, { size: 's', style: 'wood' }));
     shade.on('pointerup', close);
     this.popup = c;

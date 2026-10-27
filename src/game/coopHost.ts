@@ -7,6 +7,10 @@ import { answerMatches, type Msg, type OrderData } from '../logic/netproto';
 import { makeOrder } from './orders';
 import type { NetSession } from './net';
 import { word } from './state';
+import { speechMs } from '../logic/track';
+
+/** Poslech: every phone speaks locally, so patience gets the speaking time on top (shared host clock). */
+const LISTEN_EXTRA_MS = 1500;
 
 /** Customer eats this long after the dish arrives before leaving. */
 const EAT_MS = 3400;
@@ -43,7 +47,7 @@ export class CoopDirector {
   private off: () => void;
 
   constructor(private s: NetSession, private def: NightDef, private total: number, seats: number, private pool: string[], private rand: () => number,
-    private patMul: number, private newTonight: Set<string>) {
+    private patMul: number, private newTonight: Set<string>, private listen = false) {
     this.referee = new CoopReferee(s.players);
     this.seats = Array.from({ length: seats }, () => null);
     this.off = s.onHostMsg((m, pid) => this.onMsg(m, pid));
@@ -140,7 +144,7 @@ export class CoopDirector {
     const generics = DISTRICTS[homeDistrict(this.def)].generics;
     const look = generics[Math.floor(this.rand() * generics.length)];
     const cid = this.nextCid++;
-    const patienceMs = Math.round(this.def.patience * this.patMul * 1000);
+    const patienceMs = Math.round(this.def.patience * this.patMul * 1000 + (this.listen ? speechMs(o.target) * 2 + LISTEN_EXTRA_MS : 0));
     const difficulty = o.tokens.reduce((a, t) => a + word(t.id).difficulty, 0);
     const c: HostCustomer = { cid, seat, at: this.clock, patienceMs, order, difficulty, state: 'wait' };
     this.customers.push(c);

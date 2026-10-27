@@ -1,7 +1,7 @@
 // Cut-scenes: prologue with 할머니 and the ending cliffhanger.
 import Phaser from 'phaser';
 import { CLIFFHANGER, FINALE, PROLOGUE, type Line } from '../data/story';
-import { playDialogue } from '../game/dialogue';
+import { playStory } from '../game/dialogue';
 import { G } from '../game/state';
 import { attachHat } from '../game/hats';
 import { DEPTH, Street } from '../game/street';
@@ -44,7 +44,7 @@ export class StoryScene extends Phaser.Scene {
     txt(this, W / 2, 14, finale ? 'Finále' : ending ? 'Epilog' : 'Prolog', { size: 'l', color: C.yellow, origin: [0.5, 0], shadow: true }).setDepth(DEPTH.hud);
     const lines: Line[] = finale ? FINALE : ending ? CLIFFHANGER : PROLOGUE;
     this.time.delayedCall(ending ? 600 : 1900, async () => {
-      await playDialogue(this, lines);
+      await playStory(this, this.kind, lines);
       if (ending) {
         txt(this, W / 2, 60, finale ? 'Ulička zachráněna!\nDíky za hraní ♥' : 'Pokračování: trh 동대문 →', { size: 'm', color: C.cream, origin: [0.5, 0], align: 'center', shadow: true }).setDepth(DEPTH.hud);
         this.time.delayedCall(2200, () => goto(this, 'Map', {}, 600));

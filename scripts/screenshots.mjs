@@ -154,6 +154,9 @@ const SHOTS = [
   ['53-night-listen', async (p) => { await ev(p, "P.seed(9); P.listenTo(3); P.start('Night',{night:4,seats:3})"); await p.waitForTimeout(5200);
     await ev(p, "(async()=>{const n=P.night(); for(let k=0;k<60;k++){ if(n.customers.some(c=>c.bubble&&P.G.speech.speaking(c))) return; await P.sleep(50);} })()"); await p.waitForTimeout(120); }],
   ['54-night-listen-reveal', async (p) => { await p.waitForTimeout(2500); await ev(p, 'P.typeHeard(false)'); await p.waitForTimeout(450); }],
+  ['55-recipes-tracks', async (p) => { await ev(p, "P.seed(6); P.listenTo(2); P.G.data.settings.track='read'; P.start('Recipes')"); await p.waitForTimeout(900); }],
+  ['56-recipe-detail-listen', async (p) => { await ev(p, "P.game.scene.getScene('Recipes').detail(P.WORDS.find(w=>w.id==='uyu'), true)"); await p.waitForTimeout(400); }],
+  ['57-training-listen', async (p) => { await ev(p, "P.seed(6); P.listenTo(3); P.start('Training')"); await p.waitForTimeout(2600); }],
   ['21-epilogue', async (p) => { await ev(p, "P.seed(10); P.G.track().friends.nabi.chapter=3; P.start('Story',{kind:'ending'})"); await p.waitForTimeout(2600); }],
 ];
 

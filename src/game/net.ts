@@ -130,6 +130,8 @@ export class NetSession {
   pid = 0;
   players: PlayerInfo[] = [];
   night = 0;
+  /** Čtení / Poslech for the next night (host picks; default = the host's own track). */
+  track: 'read' | 'listen' = 'read';
   info: HostInfo | null = null;
   /** 'lobby' → 'night' → back to 'lobby' after the results. */
   phase: 'lobby' | 'night' = 'lobby';
@@ -182,7 +184,7 @@ export class NetSession {
       if (this.isHost) { this.hostReceive(m, e.pid); return; }
       if (m.t === 'hostLeft') { this.shutdown('Hostitel zavřel stánek'); return; }
       if (m.t === 'kick') { this.shutdown('Hostitel tě odpojil'); return; }
-      if (m.t === 'lobby') { this.players = m.players; this.night = m.night; }
+      if (m.t === 'lobby') { this.players = m.players; this.night = m.night; this.track = m.track ?? 'read'; }
       this.guestMsgs.forEach((f) => f(m, 0));
       if (m.t === 'lobby') this.onLobby?.();
       return;
@@ -203,7 +205,7 @@ export class NetSession {
       const color = taken.has(m.color) ? PLAYER_COLORS.find((c) => !taken.has(c))! : m.color;
       this.players.push({ pid, name: cleanName(m.name) || `Hráč ${pid + 1}`, color });
       this.sendTo(pid, { t: 'welcome', pid, players: this.players });
-      this.broadcast({ t: 'lobby', players: this.players, night: this.night });
+      this.broadcast(this.lobbyMsg());
       this.onLobby?.();
       return;
     }
@@ -222,13 +224,20 @@ export class NetSession {
     if (!this.players.some((p) => p.pid === pid)) return;
     this.players = this.players.filter((p) => p.pid !== pid);
     this.hostMsgs.forEach((f) => f({ t: 'bye' }, pid));
-    this.broadcast({ t: 'lobby', players: this.players, night: this.night });
+    this.broadcast(this.lobbyMsg());
     this.onLobby?.();
   }
 
+  private lobbyMsg(): Msg { return { t: 'lobby', players: this.players, night: this.night, track: this.track }; }
+
   setNight(n: number) {
     this.night = n;
-    this.broadcast({ t: 'lobby', players: this.players, night: n });
+    this.broadcast(this.lobbyMsg());
+  }
+
+  setTrack(t: 'read' | 'listen') {
+    this.track = t;
+    this.broadcast(this.lobbyMsg());
   }
 
   // ---------------------------------------------------------------- lifecycle
@@ -262,6 +271,7 @@ export async function hostSession(game: Phaser.Game): Promise<NetSession> {
   const s = new NetSession(t, 'host', game);
   s.info = await t.host();
   s.players = [{ pid: 0, name: G.data.settings.coopName || 'Hostitel', color: G.data.settings.coopColor }];
+  s.track = G.trackId;
   G.net = s;
   return s;
 }

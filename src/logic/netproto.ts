@@ -57,7 +57,7 @@ export type Msg =
   // host → clients
   | { t: 'welcome'; pid: number; players: PlayerInfo[] }
   | { t: 'reject'; reason: RejectReason }
-  | { t: 'lobby'; players: PlayerInfo[]; night: number }
+  | { t: 'lobby'; players: PlayerInfo[]; night: number; track?: 'read' | 'listen' }
   | { t: 'start'; night: number; seed: number; district: string; seats: number; total: number; track?: 'read' | 'listen' }
   | { t: 'spawn'; cid: number; seat: number; look: string; order: OrderData; patienceMs: number; at: number }
   | { t: 'served'; cid: number; pid: number; coins: number }
@@ -118,7 +118,7 @@ const CHECK: Record<MsgType, (m: Record<string, unknown>) => boolean> = {
   bye: () => true,
   welcome: (m) => isInt(m.pid) && players(m.players),
   reject: (m) => m.reason === 'full' || m.reason === 'proto' || m.reason === 'started',
-  lobby: (m) => players(m.players) && isInt(m.night),
+  lobby: (m) => players(m.players) && isInt(m.night) && (m.track === undefined || m.track === 'read' || m.track === 'listen'),
   start: (m) => isInt(m.night) && isInt(m.seed) && isStr(m.district, 20) && isInt(m.seats) && m.seats >= 2 && m.seats <= 4 && isInt(m.total) && m.total > 0 && (m.track === undefined || m.track === 'read' || m.track === 'listen'),
   spawn: (m) => isInt(m.cid) && isInt(m.seat) && m.seat >= 0 && m.seat < 4 && isStr(m.look, 40) && isOrder(m.order) && isNum(m.patienceMs) && m.patienceMs > 0 && isNum(m.at),
   served: (m) => isInt(m.cid) && isInt(m.pid) && isInt(m.coins),

@@ -6,7 +6,8 @@ import { hasRawJamo } from '../logic/hangul';
 import { seatMultiplier } from '../logic/rules';
 import { dailyBest } from '../logic/daily';
 import { checkAchievements } from '../game/achievements';
-import { playDialogue } from '../game/dialogue';
+import { playStory } from '../game/dialogue';
+import { markSeen } from '../logic/save';
 import { G, iconTex, word } from '../game/state';
 import { BG_PREFIX } from '../game/street';
 import { C, button, fadeIn, goto, panel, snapText, toast, txt } from '../game/ui';
@@ -117,12 +118,24 @@ export class ResultScene extends Phaser.Scene {
       y += 40;
     }
     const by = Math.min(H - 18, y + 20);
-    L.add(button(this, W / 2, by, 140, 22, 'Pohled od babičky', () => this.postcard()));
+    // Poslech: a postcard read before in Čtení can be skipped
+    if (G.listening && G.data.storySeen.includes(`night:${s.night}`)) {
+      L.add(button(this, W / 2 - 34, by, 124, 22, 'Pohled od babičky', () => this.postcard()));
+      L.add(button(this, W / 2 + 66, by, 64, 22, 'Přeskočit', () => this.skipPostcard(), { size: 's', style: 'wood' }));
+    } else L.add(button(this, W / 2, by, 140, 22, 'Pohled od babičky', () => this.postcard()));
+  }
+
+  private skipPostcard() {
+    const old = this.layer;
+    this.tweens.add({ targets: old, alpha: 0, duration: 200, onComplete: () => old.destroy() });
+    this.layer = this.add.container(0, 0);
+    void this.stories(Math.round(this.scale.height / 2));
   }
 
   // ------------------------------------------------------------ phase 2
   private postcard() {
     const s = this.s;
+    markSeen(G.data, `night:${s.night}`);
     const W = this.scale.width, H = this.scale.height;
     G.audio.play('paper');
     const old = this.layer;
@@ -194,7 +207,7 @@ export class ResultScene extends Phaser.Scene {
     // 약국 done for the first time: the pharmacist's thanks + grandma's mug
     if (s.night === PHARMACY_LAST && s.stars > 0 && !G.hasUpgrade('mug')) {
       await new Promise((r) => this.time.delayedCall(600, r));
-      await playDialogue(this, PHARMACY_OUTRO);
+      await playStory(this, 'pharmacy_outro', PHARMACY_OUTRO);
       G.data.upgrades.push('mug');
       G.save.save();
       toast(this, 'Nový hrnek na pultu!', C.green, 40);
@@ -205,7 +218,7 @@ export class ResultScene extends Phaser.Scene {
       const f = G.track().friends[r] ?? { clean: 0, chapter: 0 };
       const ch = REGULARS[r]!.chapters[f.chapter];
       const banner = txt(this, W / 2, 10, `${REGULARS[r]!.name} – kapitola ${f.chapter + 1}/3`, { size: 'm', color: C.yellow, origin: [0.5, 0], shadow: true }).setDepth(2001);
-      await playDialogue(this, ch.lines);
+      await playStory(this, `chapter:${r}:${f.chapter}`, ch.lines);
       banner.destroy();
       G.track().friends[r] = { ...f, chapter: f.chapter + 1 };
       if (r === 'kim' && f.chapter + 1 === 3) toast(this, 'Nové v obchodě: pomocník 김 대리!', C.green, 40);

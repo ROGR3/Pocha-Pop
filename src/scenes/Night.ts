@@ -13,7 +13,7 @@ import { COMPOUND_VOWELS, SHIFT_VOWELS, jamoSet, matchKind, rawJamo } from '../l
 import { hintLevel } from '../logic/srs';
 import { recordMissed, recordMistake, recordServe, rng } from '../logic/srs';
 import { Bubble } from '../game/bubble';
-import { playDialogue } from '../game/dialogue';
+import { playStory } from '../game/dialogue';
 import { joinTokens, makeOrder, orderTargets, tokenAt, type Kind, type Order } from '../game/orders';
 import { G, WORDS, iconTex, word } from '../game/state';
 import { dailyPool, daySeed, recordDaily } from '../logic/daily';
@@ -243,6 +243,7 @@ export class NightScene extends Phaser.Scene {
       this.coop = { s, start: d.coop, me: s.pid, tags: new Map(), coins: new Map(), lastTick: 0, tickAt: performance.now(), offs: [], paid: false, roster: [...s.players] };
       // a player without a Korean voice plays the listening night by reading
       this.listen = d.coop.track === 'listen' && G.speech.ok;
+      G.trackOverride = this.listen ? 'listen' : 'read';
     }
   }
 
@@ -287,6 +288,7 @@ export class NightScene extends Phaser.Scene {
     this.game.events.on('layout', this.layout, this);
     this.events.once('shutdown', () => {
       G.speech.stop();
+      G.trackOverride = null;
       G.ime.el.removeEventListener('pointerdown', this.onImeTap);
       this.unsub?.();
       G.ime.onKey = null;
@@ -320,7 +322,7 @@ export class NightScene extends Phaser.Scene {
       this.intro = true;
       this.time.delayedCall(900, async () => {
         this.updateTapArea();
-        await playDialogue(this, introLines, { bottom: this.scale.height - INPUT_H - 4 });
+        await playStory(this, `night:${this.n}`, introLines, { bottom: this.scale.height - INPUT_H - 4 });
         this.intro = false;
         this.updateTapArea();
       });
@@ -1297,7 +1299,7 @@ export class NightScene extends Phaser.Scene {
     if (s.isHost) {
       // the host's own settings decide patience (no personal "relaxed" in co-op)
       const patMul = patienceMultiplier(G.data.upgrades, false, this.street.raining);
-      k.director = new CoopDirector(s, this.def, k.start.total, k.start.seats, this.pool, rng(k.start.seed + 1), patMul, this.newTonight);
+      k.director = new CoopDirector(s, this.def, k.start.total, k.start.seats, this.pool, rng(k.start.seed + 1), patMul, this.newTonight, k.start.track === 'listen');
     }
     for (const p of s.players) k.coins.set(p.pid, 0);
     this.coinIcon.setVisible(false);
@@ -1377,6 +1379,7 @@ export class NightScene extends Phaser.Scene {
         const c = this.byCid(m.cid);
         if (c && c.state === 'wait' && c.bubble) {
           this.dropTyping(c);
+          G.speech.cancel(c);
           const b = c.bubble;
           c.bubble = null;
           c.order = null;
@@ -1416,12 +1419,13 @@ export class NightScene extends Phaser.Scene {
       hinted: false, mistakes: d.tokens.map(() => false), kind: 'generic',
     };
     c.order = order;
-    const b = new Bubble(this, order, 70);
+    const b = new Bubble(this, order, 70, { listen: this.listen });
     c.bubble = b;
     c.coop!.shownAt = performance.now();
     this.placeBubble(c);
     b.setScale(0.2).setAlpha(0);
     this.tweens.add({ targets: b, scale: 1, alpha: 1, duration: 260, ease: 'Back.easeOut' });
+    this.tellOrder(c);
     this.onInput(G.ime.state.text, G.ime.state.composing, true);
   }
 
@@ -1445,11 +1449,13 @@ export class NightScene extends Phaser.Scene {
     o.tokens.forEach((t) => this.recent.push(t.id));
     cc.mine = true;
     cc.clean = clean;
-    k.s.toHost({ t: 'done', cid: cc.cid, words: o.tokens.map((t) => t.id), ms: Math.round(performance.now() - (cc.shownAt ?? performance.now())), clean, hinted: o.hinted });
+    k.s.toHost({ t: 'done', cid: cc.cid, words: o.tokens.map((t) => t.id), ms: Math.round(performance.now() - (cc.shownAt ?? performance.now())), clean, hinted: o.hinted || !!o.noTip });
     c.state = 'eat';
     c.order = null;
     c.bubble = null;
-    if (cc.runoffAt !== undefined) this.tweens.add({ targets: b, scale: 1.12, alpha: 0, duration: 160, onComplete: () => b.destroy() });
+    G.speech.cancel(c);
+    if (b.listen) this.reveal(c, b, o);
+    else if (cc.runoffAt !== undefined) this.tweens.add({ targets: b, scale: 1.12, alpha: 0, duration: 160, onComplete: () => b.destroy() });
     else this.popBubble(b);
     this.onInput('', false, true);
   }

@@ -38,6 +38,9 @@ export class TrainingScene extends Phaser.Scene {
   private hud!: Phaser.GameObjects.Container;
   private hintBtn!: Phaser.GameObjects.Container;
   private unsub?: () => void;
+  /** Poslech: the words are said, the bubble shows a speaker (tap = again, free here). */
+  private listen = false;
+  private onImeTap = (e: PointerEvent) => this.tapAt(e.clientX, e.clientY);
 
   constructor() { super('Training'); }
 
@@ -47,6 +50,7 @@ export class TrainingScene extends Phaser.Scene {
     this.done = this.mistakes = 0;
     this.ended = this.inError = this.started = false;
     this.rand = rng(Date.now() & 0xffffffff);
+    this.listen = G.listening && G.speech.ok;
   }
 
   create() {
@@ -70,7 +74,7 @@ export class TrainingScene extends Phaser.Scene {
     this.countText = txt(this, W - 8, 11, '0', { size: 'm', color: C.yellow, origin: [1, 0.5] });
     this.hud.add([this.timerBg, this.timerBar, this.countText]);
 
-    this.box = new TypeBox(this, 4, 0, 10, INPUT_H - 6, 'Napiš slovo z bubliny…');
+    this.box = new TypeBox(this, 4, 0, 10, INPUT_H - 6, this.listen ? 'Napiš, co slyšíš…' : 'Napiš slovo z bubliny…');
     this.box.root.setDepth(DEPTH.input);
     this.hintBtn = iconButton(this, 0, 0, 'help', () => this.hint(), 'wood').setDepth(DEPTH.input + 1);
     this.box.bg.setInteractive().on('pointerdown', () => G.ime.reopen());
@@ -80,7 +84,10 @@ export class TrainingScene extends Phaser.Scene {
     this.unsub = G.ime.subscribe((s) => this.onInput(s.text, s.composing));
     G.ime.onKey = (e) => { if (e.key === 'Tab') this.hint(); };
     this.game.events.on('layout', this.layout, this);
+    if (this.listen) G.ime.el.addEventListener('pointerdown', this.onImeTap);
     this.events.once('shutdown', () => {
+      G.speech.stop();
+      G.ime.el.removeEventListener('pointerdown', this.onImeTap);
       this.unsub?.();
       G.ime.onKey = null;
       G.ime.deactivate();
@@ -126,7 +133,7 @@ export class TrainingScene extends Phaser.Scene {
     if (!id) return;
     const w = word(id);
     const order: Order = { tokens: [{ id, ko: w.ko }], target: w.ko, cs: w.cs, icons: [w.icon], extra: w.loan, hinted: false, mistakes: [false], kind: 'generic' };
-    const b = new Bubble(this, order, 66);
+    const b = new Bubble(this, order, 66, { listen: this.listen });
     b.setPatience(1);
     // no patience in training: drop the bar row
     b.bar.setVisible(false); b.barBg.setVisible(false); b.face.setVisible(false);
@@ -137,6 +144,7 @@ export class TrainingScene extends Phaser.Scene {
     b.setScale(0.2).setAlpha(0);
     this.tweens.add({ targets: b, scale: 1, alpha: 1, duration: 240, ease: 'Back.easeOut' });
     this.tweens.add({ targets: b, y: b.y - 2, yoyo: true, repeat: -1, duration: 900 + i * 130, ease: 'Sine.easeInOut', delay: 260 });
+    if (this.listen) void G.speech.speak(order.target, { tag: order, rate: G.voiceRate() });
     this.onInput(G.ime.state.text, G.ime.state.composing, true);
   }
 
@@ -190,11 +198,32 @@ export class TrainingScene extends Phaser.Scene {
     this.time.delayedCall(500, () => em.destroy());
     floatText(this, b.x + b.bw / 2, b.y, clean && !o.hinted ? '+1 ★' : '+1', clean ? C.yellow : C.grey);
     this.tweens.killTweensOf(b);
-    this.tweens.add({ targets: b, scale: 1.25, alpha: 0, duration: 120, onComplete: () => b.destroy() });
+    G.speech.cancel(o);
+    if (this.listen) {
+      // what it was: picture + Korean + Czech for a moment
+      const r = new Bubble(this, { ...o, hinted: true }, 66);
+      r.hidePatience();
+      r.tail.setVisible(false);
+      r.setPosition(Math.max(2, Math.min(this.scale.width - r.bw - 2, Math.round(b.x + b.bw / 2 - r.bw / 2))), Math.max(26, Math.round(b.y + b.bh - r.bh + 10)));
+      b.destroy();
+      this.time.delayedCall(1100, () => this.tweens.add({ targets: r, scale: 1.25, alpha: 0, duration: 120, onComplete: () => r.destroy() }));
+    } else this.tweens.add({ targets: b, scale: 1.25, alpha: 0, duration: 120, onComplete: () => b.destroy() });
     this.street.chef.play('chef:cook');
     this.slots[i] = { order: null, bubble: null, dirty: false };
-    this.time.delayedCall(350, () => this.fill(i));
+    this.time.delayedCall(this.listen ? 1300 : 350, () => this.fill(i));
     this.onInput('', false, true);
+  }
+
+  /** Poslech: tap on a bubble = hear it again (training has no tips to lose). */
+  private tapAt(cx: number, cy: number) {
+    if (this.ended) return;
+    const r = this.game.canvas.getBoundingClientRect();
+    const k = r.width / this.scale.width;
+    const x = (cx - r.left) / k, y = (cy - r.top) / k;
+    const hit = this.active().find(({ s: sl }) => x >= sl.bubble!.x && x <= sl.bubble!.x + sl.bubble!.bw && y >= sl.bubble!.y && y <= sl.bubble!.y + sl.bubble!.bh);
+    if (!hit || G.speech.pending(hit.s.order)) return;
+    G.audio.play('replay');
+    void G.speech.speak(hit.s.order!.target, { tag: hit.s.order, rate: G.voiceRate() });
   }
 
   private hint() {
@@ -205,6 +234,7 @@ export class TrainingScene extends Phaser.Scene {
 
   update(_t: number, dtMs: number) {
     this.street.update(dtMs);
+    if (this.listen) for (const sl of this.slots) sl.bubble?.setTalking(G.speech.speaking(sl.order));
     if (!this.started || this.ended) return;
     this.left -= dtMs / 1000;
     const f = Math.max(0, this.left / TRAINING_SECONDS);
@@ -216,6 +246,7 @@ export class TrainingScene extends Phaser.Scene {
   private finish() {
     if (this.ended) return;
     this.ended = true;
+    G.speech.stop();
     G.ime.deactivate();
     G.track().training.sessions++;
     const best = this.done > G.track().training.best;

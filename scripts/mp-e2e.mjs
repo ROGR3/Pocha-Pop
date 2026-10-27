@@ -2,7 +2,8 @@
 // lobby → night → results through the real UI code (IME emulation).
 // Checks: first = full coins, second in the runoff = half, third after the
 // runoff = nothing (and a late "done" is ignored), the 4th player is turned
-// away (full), a guest leaving mid-night, the host closing the stall.
+// away (full), a guest leaving mid-night, the host closing the stall, and a Poslech night
+// (MockTts: the host's bot types what it heard, a guest without a voice reads the bubbles).
 // Usage: npm run mp-e2e        (NO_BUILD=1 skips the build, --shots saves screenshots/)
 import { chromium } from 'playwright';
 import { build, preview } from 'vite';
@@ -15,7 +16,7 @@ const OUT = path.resolve('screenshots');
 const RELAY = 47210;
 if (!process.env.NO_BUILD) await build({ logLevel: 'error' });
 const server = await preview({ preview: { port: 4176, strictPort: false }, logLevel: 'error' });
-const url = server.resolvedUrls.local[0] + `?relay=ws://localhost:${RELAY}`;
+const url = server.resolvedUrls.local[0] + `?relay=ws://localhost:${RELAY}&tts=mock`;
 const relay = await startRelay(RELAY);
 const base = path.join(process.env.HOME, '.cache/ms-playwright');
 const d = fs.existsSync(base) ? fs.readdirSync(base).filter((x) => x.startsWith('chromium_headless_shell')).sort().pop() : null;
@@ -55,6 +56,25 @@ async function player(name, color, big) {
         const n = P.night();
         const c = n.customers.find((x) => x.state === 'wait' && x.order && x.bubble && (o.runoff || x.coop.runoffAt === undefined));
         if (c) { await P.type(c.order.target, o.key); await P.sleep(o.think + Math.random() * 300); } else await P.sleep(80);
+      }
+    };
+    /** Poslech bot: types only what it heard (__pocha.spoken), never reads the bubble. */
+    P.botListen = async (o) => {
+      window.__botStop = false;
+      let cursor = P.spoken.length;
+      const pending = [];
+      window.__leaks = 0;
+      while (!window.__botStop && P.scene() === 'Night' && !P.night().ended) {
+        const n = P.night();
+        for (const x of P.spoken.slice(cursor)) pending.push(x.text);
+        cursor = P.spoken.length;
+        const ws = n.customers.filter((x) => x.state === 'wait' && x.order && x.bubble);
+        for (const x of ws) if (!x.order.hinted && x.bubble.ko.text.includes(x.order.target)) window.__leaks++;
+        const t = pending.shift();
+        if (t === undefined) { await P.sleep(80); continue; }
+        if (!ws.some((x) => x.order.target === t)) continue; // somebody else was faster
+        await P.type(t, o.key);
+        await P.sleep(o.think);
       }
     };
     P.log = () => { const s = P.G.net; if (s && !s.__logged) { s.__logged = true; s.onMsg((m) => window.__mlog.push(m)); } };
@@ -178,6 +198,39 @@ const bAfter = await ev(B, () => window.__pocha.G.data.coins);
 check(bErr.includes('Hostitel zavřel stánek') && bAfter > bBefore, 'guest told + coins so far kept', `${bErr} (${bBefore}→${bAfter})`);
 await sleep(600);
 await shot(B, '66-coop-host-left');
+
+// ------------------------------------------------------------------ night 3: Poslech
+await ev(A, () => { window.__pocha.G.net?.close(); window.__pocha.game.scene.getScenes(true)[0].scene.start('Coop'); });
+await sleep(800);
+await ev(A, () => window.__pocha.game.scene.getScene('Coop').host());
+await sleep(800);
+const port3 = await ev(A, () => window.__pocha.G.net.info.port);
+// B has no Korean voice: it must still play (reading)
+await ev(B, () => { window.__pocha.G.speech.status = { available: false, korean: false }; });
+await join(B, `127.0.0.1:${port3}`);
+await ev(A, () => { const s = window.__pocha.G.net; s.setNight(3); s.setTrack('listen'); window.__pocha.game.scene.getScene('Coop').renderNight(); });
+await sleep(400);
+const bTrack = await ev(B, () => ({ t: window.__pocha.G.net.track, txt: window.__pocha.game.scene.getScene('Coop').trackText?.text }));
+check(bTrack.t === 'listen' && bTrack.txt.includes('hlas'), 'guest sees the Poslech choice + no-voice warning', JSON.stringify(bTrack));
+await shot(A, '67-coop-listen-lobby');
+await shot(B, '68-coop-listen-novoice');
+const aSpoken0 = await ev(A, () => window.__pocha.spoken.length);
+await ev(A, () => window.__pocha.game.scene.getScene('Coop').open(window.__pocha.G.net));
+check(await waitFor(B, () => window.__pocha.scene() === 'Night'), 'Poslech night started');
+const modes = { a: await ev(A, () => window.__pocha.night().listen), b: await ev(B, () => window.__pocha.night().listen) };
+check(modes.a === true && modes.b === false, 'host listens, the guest without a voice reads', JSON.stringify(modes));
+const bots3 = [ev(A, () => window.__pocha.botListen({ key: 30, think: 150 })), ev(B, () => window.__pocha.bot({ key: 60, think: 700, runoff: false }))];
+await waitFor(A, () => window.__pocha.night()?.customers.some((x) => x.bubble?.listen && window.__pocha.G.speech.speaking(x)), null, 20000);
+await shot(A, '69-coop-listen-night');
+check(await waitFor(A, () => window.__pocha.scene() === 'CoopResult', null, 150000), 'Poslech co-op night finished');
+await Promise.all(bots3);
+const a3 = await ev(A, (n0) => ({ said: window.__pocha.spoken.length - n0, leaks: window.__leaks, listenWords: Object.keys(window.__pocha.G.track('listen').words).length, ov: window.__pocha.G.trackOverride }), aSpoken0);
+const b3 = await ev(B, () => ({ said: window.__pocha.spoken.length, listenWords: Object.keys(window.__pocha.G.track('listen').words).length }));
+const sum3 = await ev(A, () => window.__pocha.game.scene.getScene('CoopResult').s);
+check(a3.said > 0 && a3.leaks === 0, 'orders were spoken, bubbles hid them', JSON.stringify(a3));
+check(a3.listenWords > 0 && a3.ov === null, 'host mastery went to the Poslech track');
+check(b3.said === 0 && b3.listenWords === 0, 'reading guest: no voice, Čtení mastery', JSON.stringify(b3));
+check(sum3.players[0].first > 0 && sum3.served + sum3.angry === sum3.total, 'host served by ear', `${sum3.players[0].first} first, ${sum3.served}+${sum3.angry}/${sum3.total}`);
 
 if (errors.length) { console.log('page errors:', errors); failed = true; }
 await browser.close();

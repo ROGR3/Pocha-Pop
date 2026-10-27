@@ -9,7 +9,7 @@ import { PCOL, PCS, PFRAME, coopNights } from '../game/coopui';
 import { hostSession, type NetSession } from '../game/net';
 import { G } from '../game/state';
 import { TypeBox } from '../game/typebox';
-import { Button, C, button, cssRect, fadeIn, goto, iconButton, panel, snapText, toast, txt } from '../game/ui';
+import { Button, C, button, cssRect, fadeIn, goto, iconButton, panel, segmented, snapText, toast, txt } from '../game/ui';
 
 type View = 'menu' | 'lobby';
 
@@ -24,6 +24,7 @@ export class CoopScene extends Phaser.Scene {
   private openBtn?: Button;
   private nightText?: Phaser.GameObjects.Text;
   private districtText?: Phaser.GameObjects.Text;
+  private trackText?: Phaser.GameObjects.Text;
   private confirm?: Phaser.GameObjects.Container;
   private builtW = 0;
 
@@ -206,14 +207,22 @@ export class CoopScene extends Phaser.Scene {
       iconButton(this, 26, y + 9, 'back', () => step(0, -1));
       this.nightText = txt(this, W / 2, y + 9, '', { size: 'm', color: C.yellow, origin: [0.5, 0.5] });
       button(this, W - 26, y + 9, 20, 20, '', () => step(0, 1), { icon: 'play', style: 'wood' });
-      y += 38;
+      y += 24;
+      // Čtení · Poslech for everyone (each phone speaks for itself)
+      const tracks = ['read', 'listen'] as const;
+      segmented(this, 16, y + 9, W - 32, 18, ['Čtení', 'Poslech'], tracks.indexOf(s.track), (i) => { s.setTrack(tracks[i]); this.renderNight(); }, { size: 's' })
+        .forEach((b, i) => { b.label.x += 7; snapText(b.label); b.add(this.add.image(Math.round(b.label.x - b.label.width / 2 - 9), -1, 'track_m', i)); });
+      y += 20;
+      this.trackText = txt(this, W / 2, y + 2, '', { size: 'xs', color: C.orange, origin: [0.5, 0], align: 'center', wrap: W - 24 });
+      y += 22;
       this.openBtn = button(this, W / 2, y, W - 60, 24, 'Otevřít stánek', () => this.open(s), { icon: 'together' });
       y += 28;
       button(this, W / 2, Math.min(H - 16, y), 120, 18, 'Zavřít stánek', () => this.onBack(), { size: 's', style: 'wood' });
     } else {
       this.districtText = txt(this, W / 2, y, '', { size: 'm', color: C.white, origin: [0.5, 0] });
       this.nightText = txt(this, W / 2, y + 16, '', { size: 'm', color: C.yellow, origin: [0.5, 0] });
-      y += 40;
+      this.trackText = txt(this, W / 2, y + 32, '', { size: 'xs', color: C.cream, origin: [0.5, 0], align: 'center', wrap: W - 24 });
+      y += 52;
       const wait = txt(this, W / 2, y, 'Čekáme, až hostitel otevře stánek…', { size: 's', color: C.light, origin: [0.5, 0], align: 'center', wrap: W - 24 });
       this.tweens.add({ targets: wait, alpha: { from: 1, to: 0.4 }, yoyo: true, repeat: -1, duration: 700 });
       y += 30;
@@ -283,6 +292,14 @@ export class CoopScene extends Phaser.Scene {
     const def = nightDef(s.night);
     const d = DISTRICTS[def.district as keyof typeof DISTRICTS];
     this.districtText.setText(`${d.ko} · ${d.cs}`);
+    if (this.trackText) {
+      // without a Korean voice this phone reads the bubbles, nobody is left out
+      const t = s.track === 'listen'
+        ? (G.speech.ok ? (s.isHost ? '' : 'Poslech – objednávky se říkají nahlas') : 'Nemáš korejský hlas – budeš mít bubliny se čtením.')
+        : (s.isHost ? '' : 'Čtení');
+      this.trackText.setText(t).setColor(G.speech.ok || s.track === 'read' ? C.cream : C.orange);
+      snapText(this.trackText);
+    }
     this.nightText.setText(`Noc ${s.night} · ${coopCustomers(def.customers, Math.max(2, s.players.length))} hostů`);
     snapText(this.districtText);
     snapText(this.nightText);
@@ -292,7 +309,7 @@ export class CoopScene extends Phaser.Scene {
     if (s.players.length < 2) return;
     const def = nightDef(s.night);
     s.phase = 'night';
-    s.broadcast({ t: 'start', night: s.night, seed: (Date.now() & 0x7fffffff), district: def.district, seats: coopSeats(s.players.length), total: coopCustomers(def.customers, s.players.length) });
+    s.broadcast({ t: 'start', night: s.night, seed: (Date.now() & 0x7fffffff), district: def.district, seats: coopSeats(s.players.length), total: coopCustomers(def.customers, s.players.length), track: s.track });
   }
 
   // ---------------------------------------------------------------- leaving

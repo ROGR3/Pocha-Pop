@@ -73,8 +73,11 @@ class GameState {
   get trackId(): Track { return this.data.settings.track; }
   get listening(): boolean { return this.data.settings.track === 'listen'; }
 
+  /** Co-op night: mastery goes to the track that night is played in (not the own setting). */
+  trackOverride: Track | null = null;
+
   /** Progress of the current track (nights, words, friends, daily, training). */
-  track(t?: Track): TrackData { return trackData(this.data, t); }
+  track(t?: Track): TrackData { return trackData(this.data, t ?? this.trackOverride ?? this.data.settings.track); }
 
   stat(id: string, t?: Track): WordStat {
     return this.track(t).words[id] ?? newStat();
