@@ -8,6 +8,9 @@ export ANDROID_HOME="${ANDROID_HOME:-/opt/android-sdk}" NDK_HOME="${NDK_HOME:-/o
 export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-4}" GRADLE_OPTS="${GRADLE_OPTS:--Dorg.gradle.workers.max=4}"
 BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
 VER=$(node -p "require('./package.json').version")
+# Gradle / Kotlin daemons stay resident (GBs) after a build – stop them (kernel crashed twice right after builds)
+stop_daemons() { (cd src-tauri/gen/android && ./gradlew --stop >/dev/null 2>&1) || true; pkill -f '^[^ ]*java .*KotlinCompileDaemon' 2>/dev/null || true; }
+trap stop_daemons EXIT
 [[ "${1:-}" == "--no-build" ]] || npx tauri android build --apk --target aarch64
 mkdir -p signing release
 if [[ ! -f signing/key.properties ]]; then

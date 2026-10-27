@@ -126,3 +126,5 @@ USB kabel občas vypadne (adb forward/reverse pak zmizí). Systémové věci (bl
 ## Zdroje počítače
 Na tomhle stroji už jednou spadlo jádro při souběhu `cargo build` (16 vláken) + headless Chromium +
 Vite + Aseprite. Těžké úlohy pouštěj **po jedné**, cargo s `CARGO_BUILD_JOBS=4`, po sobě zavírej dev servery.
+Po každém Android buildu ukonči Gradle/Kotlin démony (`bash scripts/stop-daemons.sh`; `sign-apk.sh` to dělá sám) –
+drží v paměti několik GB a jádro dvakrát spadlo (oops v `kswapd0`) chvíli po buildu APK.
