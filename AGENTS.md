@@ -78,6 +78,7 @@ src-tauri/             Rust + gen/android (commitované; AndroidManifest má adj
 | `npm run mp-e2e` | co-op E2E: relay + 3 Playwright stránky (`--shots` uloží screenshoty, `NO_BUILD=1`) |
 | `npm run mp-relay` | dev relay pro co-op v prohlížeči (port 47200, stránka `?relay=ws://…:47200`) |
 | `node scripts/mp-bot.mjs [ip:port]` | bot jako host přes skutečný protokol (Tauri pod Xvfb, telefon přes `adb forward`) |
+| `node scripts/tts-phone.mjs` | Poslech na telefonu přes adb: tts_status, fronta, tts://done, ducking – **potichu** (hlasitost 0, bez dotyků; `LOUD=1` nahlas) |
 | `cd src-tauri && CARGO_BUILD_JOBS=4 cargo test --lib` | testy Rust relay |
 | `node scripts/mp-phone.mjs host\|guest` | co-op na telefonu přes adb (debug APK `cz.rogr.pochapop.debug`, CDP v `scripts/adb-cdp.mjs`) |
 | `ANDROID_HOME=/opt/android-sdk NDK_HOME=/opt/android-sdk/ndk/27.0.12077973 npm run tauri android build -- --apk` | APK |
