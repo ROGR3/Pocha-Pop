@@ -4,7 +4,7 @@ Pixel-art hra na učení psaní korejsky (두벌식) na **systémové** korejsk�
 Babička 할머니 ti předala noční stánek 포장마차 v Soulu – zákazníci objednávají v bublinách,
 ty objednávku napíšeš korejsky a tím je obsloužíš. Linux desktop + Android.
 
-Obsah (etapy 1–3, zadání `DESIGN.md`, `DESIGN-2.md` a `DESIGN-3.md`):
+Obsah (etapy 1–4, zadání `DESIGN.md`, `DESIGN-2.md`, `DESIGN-3.md` a `DESIGN-4.md`):
 
 | Čtvrť | Noci | Herní prvek | Štamgast · boss |
 |---|---|---|---|
@@ -19,8 +19,9 @@ Obsah (etapy 1–3, zadání `DESIGN.md`, `DESIGN-2.md` a `DESIGN-3.md`):
 
 198 slov (Recallo balíček + 12 ručně doplněných: 11 barev a 얘기 kvůli ㅒ), všechna jamo včetně ㅆ ㅑ ㅒ ㅖ ㅚ ㅝ ㅢ ㅙ ㅞ.
 Navíc: volba počtu míst před nocí (2 · 3 · 4), pomocník 김 대리, pozdravy a poděkování, Barvírna (barvy stánku
-a čepičky pro 나비), trénink, denní výzva a 24 odznáčků. Etapa 3: **Spolu** – kooperativní noc pro 2–3 hráče
-přes Wi-Fi / hotspot s pravidlem „doběh“ (viz [Hrajeme spolu](#hrajeme-spolu)).
+a čepičky pro 나비), trénink, denní výzva a 27 odznáčků. Etapa 3: **Spolu** – kooperativní noc pro 2–3 hráče
+přes Wi-Fi / hotspot s pravidlem „doběh“ (viz [Hrajeme spolu](#hrajeme-spolu)). Etapa 4: **Poslech** – druhá
+kampaň, ve které zákazník objednávku vysloví a ty píšeš, co slyšíš (viz [Poslech](#poslech)).
 
 ## Spuštění
 
@@ -136,7 +137,7 @@ Desktop (Linux) funguje jako hostitel i host, jen ho neladíme: hostitel potřeb
   a `ws://` z `tauri.localhost` naráží na mixed-content. Příkazy `net_host_start/stop`, `net_join`, `net_send`,
   `net_kick`, `net_leave`, `net_local_ips`; eventy `net://open|msg|close|error`. Max. 2 hosté (3. dostane close 4001
   „full“), ping po 5 s, odpojení po 10 s ticha.
-- Protokol (`src/logic/netproto.ts`, `PROTO = 1`): JSON zprávy, `decode()` validuje. Hostitel je rozhodčí
+- Protokol (`src/logic/netproto.ts`, `PROTO = 2`; 2 = `lobby`/`start` nesou stopu Čtení/Poslech): JSON zprávy, `decode()` validuje. Hostitel je rozhodčí
   (`src/logic/coop.ts` `CoopReferee`, `src/game/coopHost.ts`); sám hraje stejnou cestou (lokální zprávy).
   Zákazníci jdou k pultu pevně 1,6 s a trpělivost se počítá z hodin hostitele (`tick` každé 2 s).
   Odchylky od zadání: `spawn` nese navíc `at` (čas hostitele) a `done` navíc `clean`/`hinted` (kvůli kombu
@@ -167,6 +168,66 @@ node scripts/mp-phone.mjs guest   # telefon se připojí k PC přes adb reverse 
 
 Ověřeno na Pixelu 8a (Android 17): telefon jako hostitel i jako host, celé noci, mince v uložení.
 QR skener se otevírá, Zpět ho zavře (samotné skenování kódu je potřeba vyzkoušet ručně).
+
+## Poslech
+
+Nastavení → **Režim kampaně: Čtení · Poslech** (nebo štítek s okem/uchem v hlavičce mapy). Poslech je zrcadlo celé
+kampaně: začíná se od noci 1 a všechno se hraje znovu (hvězdy, čtvrti, bossové, 약국, svátky). Přepnutím zpět jsi
+tam, kde jsi byl/a ve Čtení. Mapa je v Poslechu modřejší a nad nedohranými nocemi visí nota místo šipky.
+
+- **Zvlášť pro každou stopu:** noci, mastery slov, kapitoly štamgastů, denní výzva, trénink.
+  **Společné:** mince, vylepšení, Barvírna, odznáčky, statistiky, nastavení, co-op jméno, série dní.
+  Příběhové scény se v Poslechu přehrají znovu; když už je hráč viděl, mají tlačítko **Přeskočit**.
+- Zákazník si sedne a objednávku **řekne** korejsky (systémový hlas Androidu); bublina ukazuje jen reproduktor
+  (vlnky, dokud mluví) a trpělivost, která začne ubývat až po doznění. Bublina nikdy neukáže slovo: podle mastery
+  **z Poslechu** napoví první souhlásku (`ㄱ·`), pak jen počet slabik, pak nic. Nápověda „?“ ukáže celé slovo
+  (bez spropitného) jako vždy.
+- **Znovu:** ťuknout na bublinu, nebo na ucho vpravo od psaní (když čeká jen jeden). První opakování zdarma, každé
+  další = objednávka bez spropitného, a od druhého se mluví pomalu (0,75). Po překlepu se objednávka sama jednou
+  pomalu zopakuje.
+- Po obsloužení ukáže bublina na 1,5 s obrázek + korejštinu + češtinu, pak praskne.
+- Kočka 나비 jen řekne 야옹 a ukáže obrázek. Pozdravy beze změny. Reakce po jídle zákazník vysloví, obchodník
+  v 용산 řekne „할인?“.
+- Nastavení: rychlost hlasu Normální / Pomalá, hlasitost hlasu. Když zařízení nemá korejský hlas, Poslech je
+  zašedlý („Chybí korejský hlas“) a tlačítko **Stáhnout hlas** otevře systémovou instalaci hlasů.
+- Trénink a denní výzva běží v aktuální stopě, receptář má u slova dvě řady mistrovství (oko / ucho) a tlačítko
+  **Přehrát**. Co-op: hostitel v čekárně volí Čtení / Poslech (výchozí = jeho stopa); každý telefon mluví sám
+  a telefon bez korejského hlasu hraje stejnou noc se čtením (v čekárně vidí varování).
+- Odznáčky: **Dobré ucho** (první noc v Poslechu), **Bez opakování** (noc v Poslechu bez jediného přehrání navíc),
+  **Slyším Soul** (kritik 미식가 v Poslechu).
+
+### Jak to funguje uvnitř
+
+- Save v4 (`src/logic/save.ts`, `src/logic/track.ts`): `tracks: { read, listen }` s `nights/words/friends/daily/
+  training`, `settings.track`, `voiceRate`, `voice`, `storySeen`. Migrace v3 → v4 přesune dosavadní postup do
+  `tracks.read` a odvodí z něj už viděné scény. Scény pracují přes `G.track()` / `G.stat()`; sdílené odemykání
+  (obchod, rádio) bere lepší z obou stop.
+- Hlas: `src-tauri/gen/android/app/src/main/java/cz/rogr/pochapop/TtsPlugin.kt` (Tauri mobile plugin v app modulu,
+  `TextToSpeech` + `Locale.KOREAN`, inicializace při startu aplikace, kontrola nainstalovaného korejského hlasu)
+  a `src-tauri/src/tts.rs`: příkazy `tts_status`, `tts_speak(text, rate, volume, id)`, `tts_stop`,
+  `tts_install_data` (`ACTION_INSTALL_TTS_DATA`), event `tts://done {id}`. Na desktopu `tts_status` vrací
+  `available: false`. Manifest má `<queries>` s `TTS_SERVICE` (Android 11+ jinak engine nenajde).
+- `src/game/speech.ts`: fronta (zákazníci mluví po jednom, 250 ms pauza), ducking deště/rádia na 40 %, backendy
+  `TauriTts`, `WebSpeechTts` (prohlížeč s korejským hlasem) a `MockTts` (`?tts=mock`: „mluví“ 120 ms na slabiku
+  a zapisuje do `__pocha.spoken`).
+- **Odchylky od zadání:** plugin není samostatný crate, ale třída v app modulu registrovaná z `tts.rs`
+  (`register_android_plugin`), a hra ho volá přes app příkazy `tts_*` (příkazy `plugin:tts|…` by potřebovaly ACL
+  oprávnění); `tts://done` přeposílá Rust z kanálu pluginu. V co-opu běží trpělivost dál na hodinách hostitele –
+  v Poslechu k ní hostitel přičte čas mluvení (2 × odhad + 1,5 s), protože každý telefon mluví sám.
+  Šéfkuchař úvodního dialogu je nová postava `chef` (portrét kuchaře).
+
+### Testy Poslechu
+
+```bash
+npm test                     # track.ts, migrace v3→v4 i v1→v4, pravidla přehrání, fronta řeči, odznáčky, netproto v2
+npm run autoplay:listen      # LISTEN=1: MockTts, bot píše jen to, co slyšel (__pocha.spoken) – noci 1, 2, 11, 12 (동대문)
+npm run mp-e2e               # obsahuje i noc v Poslechu (hostitel poslouchá, host bez hlasu čte)
+```
+
+Autoplay v Poslechu zároveň hlídá, že bublina nikdy neobsahuje text objednávky.
+
+Telefon (Pixel 8a): zatím **neověřeno** – skutečný hlas, `tts_status` a `tts://done` čekají na instalaci debug buildu
+(jen se souhlasem). Kotlin plugin se přeloží a v release APK zůstane (R8).
 
 ## Přidání slov
 

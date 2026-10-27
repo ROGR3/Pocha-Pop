@@ -1,9 +1,9 @@
 # AGENTS.md – Pocha Pop 포차팝
 
-Zadání: `DESIGN.md` (etapa 1), `DESIGN-2.md` (etapa 2) a `DESIGN-3.md` (etapa 3, multiplayer). Uživatelské info: `README.md`.
+Zadání: `DESIGN.md` (etapa 1), `DESIGN-2.md` (etapa 2), `DESIGN-3.md` (etapa 3, multiplayer) a `DESIGN-4.md` (etapa 4, Poslech). Uživatelské info: `README.md`.
 
 ## Stack
-Tauri 2 (Rust shell, plugin-store, plugin-barcode-scanner jen mobil, co-op relay tokio-tungstenite) + Vite 7 + TypeScript 5.9 + **Phaser 3.90.0** (pinned).
+Tauri 2 (Rust shell, plugin-store, plugin-barcode-scanner jen mobil, co-op relay tokio-tungstenite, TTS plugin v app modulu) + Vite 7 + TypeScript 5.9 + **Phaser 3.90.0** (pinned).
 Testy vitest 3. Playwright jen pro screenshoty (`scripts/screenshots.mjs`).
 
 ## Struktura
@@ -15,12 +15,13 @@ src/
     difficulty.ts      skóre obtížnosti slova
     srs.ts             mastery 0..5, váhy výběru slov, rng
     rules.ts           mince, kombo, hvězdy, trpělivost, místa u pultu (seatMultiplier, spawnInterval)
-    save.ts            SaveData + migrace (v2: refund stool4), backendy (Tauri store / localStorage / memory), streak
+    save.ts            SaveData + migrace (v2: refund stool4, v4: tracks), backendy (Tauri store / localStorage / memory), streak, storySeen
+    track.ts           stopy Čtení/Poslech (TrackData, accessory), pravidla přehrání, nápověda v Poslechu
     helper.ts          pomocník 김 대리 (kdy zasáhne)
     polite.ts          pozdravy/poděkování jako dočasné cíle (matchPolite), reakce, smlouvání (konstanty)
     cosmetics.ts       Barvírna: stav/koupě barev a čepiček
     czech.ts           shoda barvy s rodem („červená čepice“, akuzativ)
-    achievements.ts    24 odznáčků (evaluate)
+    achievements.ts    27 odznáčků (evaluate; postup se počítá v obou stopách)
     daily.ts           denní výzva (seed z data, jeden zapsaný pokus)
     training.ts        trénink (výběr slov podle SRS váhy)
     coop.ts            pravidlo „doběh“: CoopReferee (první/doběh/pozdě, kombo, týmové hvězdy), škálování
@@ -32,7 +33,8 @@ src/
     story.ts           všechny texty příběhu (česky): štamgasti, bossové, pohlednice, finále
     colors.ts clothes.ts travel.ts pharmacy.ts family.ts reactions.ts   tabulky pro mechaniky čtvrtí
   game/                runtime helpery nad Phaserem
-    state.ts           singleton G (save, audio, ime, layout, net), WORDS, iconTex() (ikony i přebarvené oblečení)
+    state.ts           singleton G (save, audio, speech, ime, layout, net), G.track()/G.stat() dle stopy, WORDS, iconTex()
+    speech.ts          Poslech: fronta řeči, ducking, TauriTts / WebSpeechTts / MockTts (?tts=mock → __pocha.spoken)
     net.ts             Transport (TauriTransport = Rust, WsTransport = scripts/mp-relay.mjs) + NetSession (lobby, routing)
     coopHost.ts        CoopDirector: hostitelův rozvrh zákazníků, trpělivost, rozhodčí → zprávy všem
     coopui.ts          barvy hráčů, PlayerTag, výběr nocí pro co-op
@@ -53,6 +55,7 @@ art/
 public/assets/         exportované PNG/JSON (commitované), public/sfx/*.wav, public/fonts/
 tests/                 vitest
 src-tauri/             Rust + gen/android (commitované; AndroidManifest má adjustResize + portrait, síťová oprávnění)
+  src/tts.rs           TTS příkazy tts_status/speak/stop/install_data, event tts://done (Android: TtsPlugin.kt v gen/android/app)
   src/net.rs           co-op relay (host/klient WebSocket, tauri příkazy net_*, eventy net://*) + cargo testy
   capabilities/mobile.json   barcode-scanner jen pro android/iOS
 ```
@@ -69,6 +72,7 @@ src-tauri/             Rust + gen/android (commitované; AndroidManifest má adj
 | `npm run sfx` | regenerace zvuků |
 | `npm run screenshots` | Playwright screenshoty do `screenshots/` (`ONLY=23,24` = jen některé) |
 | `npm run autoplay` | bot dohraje vybrané noci přes UI (`node scripts/autoplay.mjs 12 116`) |
+| `npm run autoplay:listen` | totéž v Poslechu s MockTts (`LISTEN=1`): bot píše jen z `__pocha.spoken` |
 | `bash scripts/preview-icons.sh <část>` | izolovaný náhled části ikon (nesahá na public/assets) |
 | `npx vite-node scripts/economy.ts` | simulace ekonomiky (výsledky v README) |
 | `npm run mp-e2e` | co-op E2E: relay + 3 Playwright stránky (`--shots` uloží screenshoty, `NO_BUILD=1`) |
@@ -97,6 +101,10 @@ src-tauri/             Rust + gen/android (commitované; AndroidManifest má adj
   nabídne až po nocí, která ㅝ představila.
 - Přebarvitelné věci kreslit rampou `{hi, main, shade, dark}` z `L.RAMPS`, nikdy runtime tint.
 - Scény s klávesnicí (Night, Training, Paint, Setup, Coop při psaní jména, CoopJoin) se při změně výšky **nerestartují**, jen přepočítají rozložení.
+- Poslech: progres čti/zapisuj jen přes `G.track()` / `G.stat()` / `G.setStat()` (nikdy `G.data.tracks.*` ve scénách);
+  sdílené odemykání přes `G.chapter()` / `playedAnywhere()`. Každá Poslech větev v Night je za `if (this.listen)` /
+  `bubble.listen`, Čtení se nesmí změnit. Bublina v Poslechu nesmí ukázat slovo (hlídá `autoplay:listen`).
+  Příběhové dialogy přes `playStory(scene, key, lines)` (storySeen + Přeskočit). V prohlížeči `?tts=mock`.
 - Co-op: Night má režim `coop` (data zprávy `start`); vše o zákaznících jde přes zprávy (`onCoopMsg`), i u hostitele
   (`NetSession.broadcast` doručí i jemu, `toHost` od hostitele nejde po síti). Single player se nesmí změnit –
   každá co-op větev je za `if (this.coop)`, regresi hlídá `npm run autoplay`. Nová zpráva = typ + `CHECK` v netproto.ts + test.
