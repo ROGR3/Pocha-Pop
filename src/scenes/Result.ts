@@ -181,7 +181,7 @@ export class ResultScene extends Phaser.Scene {
       parts.push(tr);
       y += tr.height + 6;
     }
-    const tip = txt(this, cx + 8, y, pc.tip, { size: 's', color: C.blue, wrap: cw - 16, lineSpacing: 2 });
+    const tip = txt(this, cx + 8, y, pc.tip, { size: 's', color: C.blue, wrap: cw - 56, lineSpacing: 2 });
     parts.push(tip);
     y += tip.height + 6;
     const sign = txt(this, cx + cw - 10, y, '— tvoje 할머니', { size: 'm', color: C.red, origin: [1, 0] });
