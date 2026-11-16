@@ -23,6 +23,13 @@ a čepičky pro 나비), trénink, denní výzva a 27 odznáčků. Etapa 3: **Sp
 přes Wi-Fi / hotspot s pravidlem „doběh“ (viz [Hrajeme spolu](#hrajeme-spolu)). Etapa 4: **Poslech** – druhá
 kampaň, ve které zákazník objednávku vysloví a ty píšeš, co slyšíš (viz [Poslech](#poslech)).
 
+## Stažení
+
+**[Nejnovější APK pro Android](https://github.com/ROGR3/Pocha-Pop/releases/latest)** (arm64, Android 7+).
+Všechny verze s popisem změn jsou v [Releases](https://github.com/ROGR3/Pocha-Pop/releases). Novější verze
+se instalují přes starší a uložená hra zůstává. Hra cílí na Android, ale jde spustit i na Linuxu
+(viz [Spuštění](#spuštění)).
+
 ## Proč „Pocha Pop“
 
 **포차** (pocha) je hovorová zkratka slova **포장마차** (pojangmacha), korejského nočního stánku s jídlem.
