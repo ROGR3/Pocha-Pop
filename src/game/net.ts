@@ -35,6 +35,9 @@ class Emitter {
   emit(e: NetEvent) { this.fns.forEach((f) => f(e)); }
 }
 
+/** Shown when the player refuses Android's local network permission. */
+export const NO_LAN = 'Povol hře přístup k místní síti (Zařízení v okolí)';
+
 // ------------------------------------------------------------------ Tauri (Rust relay)
 class TauriTransport extends Emitter implements Transport {
   private ready: Promise<void>;
@@ -55,8 +58,13 @@ class TauriTransport extends Emitter implements Transport {
     return (await this.core).invoke<T>(cmd, args);
   }
 
-  host() { return this.call<HostInfo>('net_host_start'); }
-  join(addr: string) { return this.call<void>('net_join', { addr }); }
+  /** Android 17: the system dialog for local network access (no-op elsewhere). */
+  private async lan() {
+    if (!(await this.call<boolean>('net_permission').catch(() => true))) throw new Error(NO_LAN);
+  }
+
+  async host() { await this.lan(); return this.call<HostInfo>('net_host_start'); }
+  async join(addr: string) { await this.lan(); return this.call<void>('net_join', { addr }); }
   send(to: number | null, msg: string) { void this.call('net_send', { to, msg }).catch((e) => console.warn('net_send', e)); }
   kick(pid: number) { void this.call('net_kick', { pid }).catch(() => {}); }
   async leave() { await this.call('net_leave').catch(() => {}); }
@@ -283,9 +291,9 @@ export async function joinSession(game: Phaser.Game, addr: string): Promise<NetS
   const unsub = t.on((e) => { if (e.type === 'error' && e.msg === 'full') fail?.(REJECT_TEXT.full); });
   try {
     await t.join(addr);
-  } catch {
+  } catch (e) {
     unsub();
-    throw new Error(REJECT_TEXT.notfound);
+    throw new Error(e instanceof Error && e.message === NO_LAN ? NO_LAN : REJECT_TEXT.notfound);
   }
   const s = new NetSession(t, 'client', game);
   try {

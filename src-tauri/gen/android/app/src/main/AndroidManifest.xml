@@ -4,6 +4,8 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Co-op: Android 17 blocks LAN traffic without it (asked at runtime, NetPlugin.kt) -->
+    <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK" />
 
     <!-- Poslech: Android 11+ only sees TTS engines it declares it queries -->
     <queries>

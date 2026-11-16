@@ -6,7 +6,7 @@ import { DISTRICTS, nightDef } from '../data/levels';
 import { MAX_PLAYERS, coopCustomers, coopSeats } from '../logic/coop';
 import { PLAYER_COLORS, cleanName, qrPayload, shortCode, type Msg, type PlayerColor } from '../logic/netproto';
 import { PCOL, PCS, PFRAME, coopNights } from '../game/coopui';
-import { hostSession, type NetSession } from '../game/net';
+import { NO_LAN, hostSession, type NetSession } from '../game/net';
 import { G } from '../game/state';
 import { TypeBox } from '../game/typebox';
 import { Button, C, button, cssRect, fadeIn, goto, iconButton, panel, segmented, snapText, toast, txt } from '../game/ui';
@@ -158,7 +158,7 @@ export class CoopScene extends Phaser.Scene {
       this.scene.restart({});
     } catch (e) {
       console.warn(e);
-      this.scene.restart({ error: 'Stánek se nepodařilo otevřít (síť).' });
+      this.scene.restart({ error: e instanceof Error && e.message === NO_LAN ? NO_LAN : 'Stánek se nepodařilo otevřít (síť).' });
     }
   }
 

@@ -1,3 +1,4 @@
+mod localnet;
 mod net;
 mod tts;
 
@@ -9,6 +10,7 @@ pub fn run() {
   builder
     .plugin(tauri_plugin_store::Builder::default().build())
     .plugin(tts::init())
+    .plugin(localnet::init())
     .manage(net::NetState::default())
     .invoke_handler(tauri::generate_handler![
       net::net_host_start,
@@ -18,6 +20,7 @@ pub fn run() {
       net::net_kick,
       net::net_leave,
       net::net_local_ips,
+      localnet::net_permission,
       tts::tts_status,
       tts::tts_speak,
       tts::tts_stop,
