@@ -92,14 +92,15 @@ export class CoopJoinScene extends Phaser.Scene {
   }
 
   private async scan() {
-    if (this.busy) return;
+    // a second tap while the camera starts would stack a second preview that is never removed (black screen)
+    if (this.busy || this.scanning) return;
+    this.scanning = true;
     try {
       const bs = await import('@tauri-apps/plugin-barcode-scanner');
       let perm = await bs.checkPermissions();
       if (perm !== 'granted') perm = await bs.requestPermissions();
-      if (perm !== 'granted') { this.say('Bez fotoaparátu to nepůjde – napiš kód.', C.orange); return; }
+      if (perm !== 'granted') { this.scanning = false; this.say('Bez fotoaparátu to nepůjde – napiš kód.', C.orange); return; }
       G.ime.deactivate();
-      this.scanning = true;
       this.say('Namiř na QR kód hostitele… (Zpět = zrušit)', C.light);
       const r = await bs.scan({ windowed: false, formats: [bs.Format.QRCode] });
       this.scanning = false;
