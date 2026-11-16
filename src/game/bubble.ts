@@ -70,7 +70,7 @@ export class Bubble extends Phaser.GameObjects.Container {
     const probe = txt(scene, 0, 0, order.target, { size: 'm', wrap: bw - 6, lineSpacing: 0 });
     const koLines = Math.max(1, Math.round(probe.height / 13));
     probe.destroy();
-    y += order.kind === 'nabi' ? 0 : 15 * koLines;
+    y += 15 * koLines;
     // patience
     this.face = scene.add.image(pad + 5, y + 4, 'faces', 0).setOrigin(0.5);
     this.barBg = scene.add.rectangle(pad + 12, y + 3, bw - pad * 2 - 13, 4, 0x3e2731).setOrigin(0, 0);
