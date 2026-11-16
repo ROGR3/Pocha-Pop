@@ -1,7 +1,7 @@
 // Order bubble: food icon(s), Czech meaning, Korean hint (by mastery),
 // patience bar with mood face. 9-slice, highlighted while it matches input.
 import Phaser from 'phaser';
-import { mood } from '../logic/rules';
+import { bubbleDepth, mood } from '../logic/rules';
 import { koreanHint, listenKoreanHint, type Order } from './orders';
 import { iconTex } from './state';
 import { DEPTH } from './street';
@@ -82,7 +82,7 @@ export class Bubble extends Phaser.GameObjects.Container {
     this.tail = scene.add.image(Math.round(bw / 2) - 3, bh - 2, 'bubble_tail').setOrigin(0, 0);
     this.add([this.bg, this.tail, ...parts]);
     this.setKorean(kh.text, kh.alpha);
-    this.setDepth(DEPTH.bubble);
+    this.setDepth(bubbleDepth(DEPTH.bubble, 1));
     this.setSize(bw, bh + 6);
     scene.add.existing(this);
   }
@@ -113,8 +113,15 @@ export class Bubble extends Phaser.GameObjects.Container {
     this.setKorean(k.text, k.alpha);
   }
 
+  /** setDepth always re-sorts the display list, so only call it when the depth changes. */
+  private stack(d: number) { if (this.depth !== d) this.setDepth(d); }
+
+  /** Poslech answer reveal: above every live order bubble. */
+  toTop() { this.setDepth(DEPTH.bubble + 0.6); return this; }
+
   setPatience(frac: number) {
     const f = Math.max(0, Math.min(1, frac));
+    this.stack(bubbleDepth(DEPTH.bubble, f));
     const full = this.barBg.width - 2;
     this.bar.width = Math.max(0, Math.round(full * f));
     const m = mood(f);
@@ -141,6 +148,7 @@ export class Bubble extends Phaser.GameObjects.Container {
    */
   markTaken(color: string, frame: number, initial: string) {
     this.taken = `bubble_p_${color}`;
+    this.stack(bubbleDepth(DEPTH.bubble, 1));
     if (this.matchState !== 'hi') this.bg.setTexture(this.taken);
     const badge = this.scene.add.image(3, 3, 'pdot', frame).setScale(2);
     const t = txt(this.scene, 3, 2, initial, { size: 'xs', color: C.white, origin: [0.5, 0.5], shadow: true });

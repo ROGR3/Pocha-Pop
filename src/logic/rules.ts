@@ -68,6 +68,16 @@ export function spawnInterval(base: [number, number], seats: number): [number, n
   return [base[0] * k, base[1] * k];
 }
 
+/**
+ * Depth of an order bubble inside the bubble band: less patience left = drawn higher,
+ * so a nearly angry customer is never covered by a newer one. Quantised to 20 steps so
+ * the depth (and Phaser's display-list sort) changes rarely. Range base+0.1 .. base+0.5.
+ */
+export function bubbleDepth(base: number, frac: number): number {
+  const f = Number.isFinite(frac) ? Math.max(0, Math.min(1, frac)) : 1;
+  return base + 0.1 + Math.round((1 - f) * 20) / 50;
+}
+
 /** 4 seats ("Nával") unlock after the first 3★ night. */
 export function seatsAvailable(nights: Record<number, { stars: number }>, bossNights: number[] = []): number[] {
   const three = Object.entries(nights).some(([n, r]) => !bossNights.includes(Number(n)) && r.stars >= 3);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { HELPER_THRESHOLD, helperCharges, helperPick } from '../src/logic/helper';
-import { seatMultiplier, seatsAvailable, spawnInterval } from '../src/logic/rules';
+import { bubbleDepth, seatMultiplier, seatsAvailable, spawnInterval } from '../src/logic/rules';
 
 describe('seats', () => {
   it('multiplier grows with seats', () => {
@@ -40,5 +40,30 @@ describe('helper 김 대리', () => {
     expect(helperPick([c(0.1)], 1, 4, true)).toBe(0);
     expect(helperPick([c(0.1)], 2, 4, true)).toBe(-1);
     expect(helperPick([c(0.1)], 0, 3, false)).toBe(-1);
+  });
+});
+
+describe('bubbleDepth', () => {
+  it('full patience at the bottom, none at the top of the band', () => {
+    expect(bubbleDepth(40, 1)).toBeCloseTo(40.1);
+    expect(bubbleDepth(40, 0)).toBeCloseTo(40.5);
+    expect(bubbleDepth(40, NaN)).toBeCloseTo(40.1);
+  });
+  it('clamps out-of-range input', () => {
+    expect(bubbleDepth(40, -1)).toBe(bubbleDepth(40, 0));
+    expect(bubbleDepth(40, 2)).toBe(bubbleDepth(40, 1));
+  });
+  it('less patience never draws lower and stays inside the band', () => {
+    let prev = Infinity;
+    for (let f = 0; f <= 1.0001; f += 0.01) {
+      const d = bubbleDepth(40, f);
+      expect(d).toBeLessThanOrEqual(prev);
+      expect(d).toBeGreaterThan(40);
+      expect(d).toBeLessThan(41);
+      prev = d;
+    }
+  });
+  it('is quantised so the depth changes rarely', () => {
+    expect(bubbleDepth(40, 0.501)).toBe(bubbleDepth(40, 0.509));
   });
 });

@@ -526,7 +526,11 @@ export class NightScene extends Phaser.Scene {
       y = (y - r.top) / k;
     }
     if (performance.now() - this.lastTap < 250) return;
-    const c = this.waiting().find((w) => w.bubble!.listen && x >= w.bubble!.x && x <= w.bubble!.x + w.bubble!.bw && y >= w.bubble!.y && y <= w.bubble!.y + w.bubble!.bh);
+    // Overlapping bubbles: replay the one drawn on top (highest depth, then display-list order).
+    const c = this.waiting()
+      .filter((w) => w.bubble!.listen && x >= w.bubble!.x && x <= w.bubble!.x + w.bubble!.bw && y >= w.bubble!.y && y <= w.bubble!.y + w.bubble!.bh)
+      .sort((a, b) => (a.bubble!.depth - b.bubble!.depth) || (this.children.getIndex(a.bubble!) - this.children.getIndex(b.bubble!)))
+      .pop();
     if (!c) return;
     this.lastTap = performance.now();
     this.replay(c);
@@ -557,7 +561,7 @@ export class NightScene extends Phaser.Scene {
 
   /** After serving in Poslech: picture + Korean + Czech for 1.5 s, then pop. */
   private reveal(c: Customer, b: Bubble, o: Order) {
-    const r = new Bubble(this, { ...o, hinted: true }, this.bubbleW(c));
+    const r = new Bubble(this, { ...o, hinted: true }, this.bubbleW(c)).toTop();
     r.hidePatience();
     r.setPosition(Phaser.Math.Clamp(Math.round(b.x + b.bw / 2 - r.bw / 2), 2, this.scale.width - r.bw - 2), Math.max(26, Math.round(b.y + b.bh - r.bh)));
     r.tail.x = Phaser.Math.Clamp(b.tail.x + b.x - r.x, 4, r.bw - 13);
