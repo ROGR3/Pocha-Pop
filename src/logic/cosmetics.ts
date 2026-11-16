@@ -12,6 +12,8 @@ export interface Cosmetics {
   hats: string[];
   /** "part:id" keys, e.g. "roof:red", "hat:crown" (a hat type ever bought). */
   owned: string[];
+  /** Hat types bought before the tower (v4) and not worn then: one free placement each. */
+  freeHats?: string[];
 }
 
 export type ColorSlot = 'roof' | 'sign' | 'stools' | 'lanterns';
@@ -20,7 +22,7 @@ export type Slot = ColorSlot | 'hat';
 export const HAT_STACK_MAX = 1000;
 
 export function defaultCosmetics(): Cosmetics {
-  return { roof: null, sign: null, stools: null, lanterns: null, hats: [], owned: [] };
+  return { roof: null, sign: null, stools: null, lanterns: null, hats: [], owned: [], freeHats: [] };
 }
 
 export const ownKey = (slot: Slot, id: string) => `${slot}:${id}`;
@@ -49,20 +51,23 @@ export function unequip(c: Cosmetics, slot: ColorSlot) {
 }
 
 // ------------------------------------------------------------------ hat tower
-export type HatState = 'buy' | 'poor' | 'full';
+export type HatState = 'buy' | 'free' | 'poor' | 'full';
 
-/** Every hat costs its flat price, however tall the tower already is. */
-export function hatState(c: Cosmetics, price: number, coins: number): HatState {
+/** Every hat costs its flat price, however tall the tower already is (a pre-tower hat goes back on once for free). */
+export function hatState(c: Cosmetics, price: number, coins: number, id?: string): HatState {
   if (c.hats.length >= HAT_STACK_MAX) return 'full';
+  if (id && c.freeHats?.includes(id)) return 'free';
   return coins >= price ? 'buy' : 'poor';
 }
 
 /** Put one hat on top. Returns the coins left, or null if not possible. */
 export function pushHat(c: Cosmetics, id: string, price: number, coins: number): number | null {
-  if (hatState(c, price, coins) !== 'buy') return null;
+  const st = hatState(c, price, coins, id);
+  if (st !== 'buy' && st !== 'free') return null;
   c.hats.push(id);
   const k = ownKey('hat', id);
   if (!c.owned.includes(k)) c.owned.push(k);
+  if (st === 'free') { c.freeHats = c.freeHats!.filter((x) => x !== id); return coins; }
   return coins - price;
 }
 
@@ -86,8 +91,8 @@ export interface HatMetrics {
 
 /**
  * Offsets of every hat relative to where hat 0 sits on the head (dy up is
- * negative). Each hat's bottom outline overlaps the top outline of the hat
- * below by 1 px; upper hats are centred on the base hat.
+ * negative). Each hat's bottom outline row covers the top outline row of the
+ * hat below (top/bottom are inclusive rows); upper hats are centred on the base hat.
  */
 export function hatStackLayout(ids: string[], metrics: Record<string, HatMetrics>): { dx: number; dy: number }[] {
   const out: { dx: number; dy: number }[] = [];
@@ -96,7 +101,7 @@ export function hatStackLayout(ids: string[], metrics: Record<string, HatMetrics
   out.push({ dx: 0, dy: 0 });
   for (let i = 1; i < ids.length; i++) {
     const prev = metrics[ids[i - 1]], m = metrics[ids[i]];
-    out.push({ dx: Math.round(base.cx - m.cx), dy: out[i - 1].dy + prev.top + 1 - m.bottom });
+    out.push({ dx: Math.round(base.cx - m.cx), dy: out[i - 1].dy + prev.top - m.bottom });
   }
   return out;
 }
@@ -110,9 +115,15 @@ export function mergeCosmetics(raw: (Partial<Cosmetics> & { hat?: unknown }) | u
   const d = defaultCosmetics();
   if (!raw || typeof raw !== 'object') return d;
   const isStr = (x: unknown): x is string => typeof x === 'string';
-  const hats = Array.isArray(raw.hats) ? raw.hats.filter(isStr).slice(0, HAT_STACK_MAX)
+  const owned = Array.isArray(raw.owned) ? raw.owned.filter(isStr) : [];
+  const preTower = !Array.isArray(raw.hats);
+  const hats = !preTower ? (raw.hats as unknown[]).filter(isStr).slice(0, HAT_STACK_MAX)
     : isStr(raw.hat) ? [raw.hat] : [];
-  const out = { ...d, ...raw, hats, owned: Array.isArray(raw.owned) ? raw.owned.filter(isStr) : [] };
+  // v4 → v5: hats bought before the tower and not worn may go back on once for free.
+  const freeHats = preTower
+    ? owned.filter((k) => k.startsWith('hat:')).map((k) => k.slice(4)).filter((id) => id !== raw.hat)
+    : Array.isArray(raw.freeHats) ? raw.freeHats.filter(isStr) : [];
+  const out = { ...d, ...raw, hats, owned, freeHats };
   delete (out as { hat?: unknown }).hat;
   return out;
 }

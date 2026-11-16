@@ -61,6 +61,19 @@ describe('buying cosmetics', () => {
     expect(migrate({ cosmetics: { hats: ['cap', 3, null, 'bow'] } }).cosmetics.hats).toEqual(['cap', 'bow']);
     expect(migrate({ cosmetics: { hats: Array(1200).fill('cap') } }).cosmetics.hats.length).toBe(HAT_STACK_MAX);
   });
+  it('hats bought before the tower go back on once for free', () => {
+    const c = migrate({ cosmetics: { hat: 'crown', owned: ['hat:crown', 'hat:cap', 'roof:red'] } }).cosmetics;
+    expect(c.freeHats).toEqual(['cap']);
+    expect(hatState(c, 20, 0, 'cap')).toBe('free');
+    expect(pushHat(c, 'cap', 20, 0)).toBe(0);
+    expect(c.hats).toEqual(['crown', 'cap']);
+    expect(c.freeHats).toEqual([]);
+    expect(hatState(c, 20, 0, 'cap')).toBe('poor');
+    expect(pushHat(c, 'crown', 40, 100)).toBe(60); // the worn one stays worn, a second costs coins
+    // already-v5 saves keep their credits and get no new ones
+    expect(migrate({ cosmetics: { hats: [], owned: ['hat:bow'], freeHats: ['straw', 1] } }).cosmetics.freeHats).toEqual(['straw']);
+    expect(migrate({ cosmetics: { hats: [], owned: ['hat:bow'] } }).cosmetics.freeHats).toEqual([]);
+  });
 });
 
 describe('hat tower', () => {
@@ -107,14 +120,16 @@ describe('hat tower layout', () => {
       expect(h.cx).toBeLessThan(14);
     }
   });
-  it('hat 0 sits where the single hat used to, upper hats overlap the outline by 1 px', () => {
+  it('hat 0 sits where the single hat used to, upper hats share exactly one outline row', () => {
     expect(hatStackLayout([], HAT_METRICS)).toEqual([]);
     const l = hatStackLayout(['cap', 'beanie'], HAT_METRICS);
     expect(l[0]).toEqual({ dx: 0, dy: 0 });
-    expect(l[1].dy).toBe(3 + 1 - 9);
+    // beanie's bottom row 9 lands on cap's top row 3, its row 8 sits above cap
+    expect(l[1].dy + 9).toBe(3);
+    expect(l[1].dy + 8).toBeLessThan(3);
     expect(l[1].dx).toBe(Math.round(5.5 - 7));
   });
-  it('a random mix always climbs 3..9 px per hat, 1000 hats included', () => {
+  it('a random mix always climbs 4..9 px per hat, 1000 hats included', () => {
     const ids = HATS.map((h) => h.id);
     let seed = 7;
     const mix = Array.from({ length: HAT_STACK_MAX }, () => ids[(seed = (seed * 48271) % 2147483647) % ids.length]);
@@ -122,7 +137,7 @@ describe('hat tower layout', () => {
     expect(l.length).toBe(HAT_STACK_MAX);
     for (let i = 1; i < l.length; i++) {
       const step = l[i - 1].dy - l[i].dy;
-      expect(step).toBeGreaterThanOrEqual(3);
+      expect(step).toBeGreaterThanOrEqual(4);
       expect(step).toBeLessThanOrEqual(9);
       expect(Math.abs(l[i].dx)).toBeLessThanOrEqual(5);
     }

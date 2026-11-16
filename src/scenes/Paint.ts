@@ -153,7 +153,7 @@ export class PaintScene extends Phaser.Scene {
     if (this.tab === 'hat') {
       return [
         { id: null, name: 'Sundat', price: 0, state: c.hats.length ? 'owned' : 'empty' },
-        ...HATS.map((h) => ({ id: h.id, name: h.name, price: h.price, state: hatState(c, h.price, coins) })),
+        ...HATS.map((h) => ({ id: h.id, name: h.name, price: h.price, state: hatState(c, h.price, coins, h.id) })),
       ];
     }
     const tab = this.tab;
@@ -253,8 +253,9 @@ export class PaintScene extends Phaser.Scene {
         this.buyBtn2 = button(this, x + w / 2 + bw / 2 + 3, y + 16, bw, 22, this.clearArmed ? 'Opravdu?' : 'Sundat vše', () => this.takeOff(true), { style: this.clearArmed ? 'red' : 'wood' });
         this.ui.add([this.buyBtn, this.buyBtn2]);
       } else {
-        this.info.setText(`${s.name} navrch za ${s.price} mincí? Věž: ${n}`).setColor(C.cream);
-        this.buyBtn = button(this, x + w / 2, y + 16, 120, 22, `Koupit · ${s.price}`, () => this.buyHat(s));
+        const free = s.state === 'free';
+        this.info.setText(free ? `${s.name} už máš, navrch zdarma? Věž: ${n}` : `${s.name} navrch za ${s.price} mincí? Věž: ${n}`).setColor(C.cream);
+        this.buyBtn = button(this, x + w / 2, y + 16, 120, 22, free ? 'Nasadit' : `Koupit · ${s.price}`, () => this.buyHat(s));
         this.ui.add(this.buyBtn);
       }
       snapText(this.info);
@@ -300,7 +301,7 @@ export class PaintScene extends Phaser.Scene {
     const first = !c.owned.includes(`hat:${cell.id}`);
     const left = pushHat(c, cell.id, cell.price, G.data.coins);
     if (left === null) return;
-    floatText(this, this.scale.width - 30, 30, `−${G.data.coins - left}`, C.pink);
+    if (left < G.data.coins) floatText(this, this.scale.width - 30, 30, `−${G.data.coins - left}`, C.pink);
     G.data.coins = left;
     G.save.save();
     G.audio.play('buy');
