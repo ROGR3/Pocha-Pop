@@ -148,6 +148,13 @@ export function prevNight(n: number): number {
   return i > 0 ? NIGHTS[i - 1].n : 0;
 }
 
+/** Post-meal reactions start after the 동대문 boss (홍대 and the holidays unlocked then); grandma announces them on the 116 postcard. */
+export const REACTIONS_AFTER = 116;
+export function reactionsOn(n: number): boolean {
+  for (let p = prevNight(n); p; p = prevNight(p)) if (p === REACTIONS_AFTER) return true;
+  return false;
+}
+
 export function isBoss(n: number): boolean {
   return !!NIGHTS.find((x) => x.n === n)?.boss;
 }

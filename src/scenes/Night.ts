@@ -1,12 +1,12 @@
 // One night = one level. Customers order in bubbles, the player types the
 // Korean with the system IME, matching orders are served.
 import Phaser from 'phaser';
-import { DAILY_NIGHT, NIGHTS, nightTitle, CRITIC_ORDERS, CRITIC_PATIENCE, DISTRICTS, homeDistrict, nightDef, nightPool, type NightDef, type RegularId } from '../data/levels';
+import { DAILY_NIGHT, NIGHTS, nightTitle, CRITIC_ORDERS, CRITIC_PATIENCE, DISTRICTS, homeDistrict, nightDef, nightPool, reactionsOn, type NightDef, type RegularId } from '../data/levels';
 import { BOSS_INTRO, HOLIDAY_INTRO, NAMES, PHARMACY_INTRO } from '../data/story';
 import { matchAgainst } from '../logic/hangul';
-import { BOSS_SEATS, DEFAULT_SEATS, comboMultiplier, criticStars, nightStars, pairPatience, patienceMultiplier, seatMultiplier, serveCoins, spawnInterval } from '../logic/rules';
+import { BOSS_SEATS, DEFAULT_SEATS, ERROR_CLEAR_MS, comboMultiplier, criticStars, nightStars, pairPatience, patienceMultiplier, seatMultiplier, serveCoins, spawnInterval } from '../logic/rules';
 import { helperPick } from '../logic/helper';
-import { DISCOUNT_MUL, HAGGLE_CHANCE, HAGGLE_WINDOW, HAGGLE_WORDS, INSIST_LEAVE, INSIST_MUL, BOSS_GREET_WINDOW, BYE_COINS, BYE_WORDS, GREET_WINDOW, HELLO_COINS, HELLO_PATIENCE, HELLO_WORDS, REACTIONS, REACTIONS_FROM, REACTION_CHANCE, REACTION_COINS, REACTION_TIME, matchPolite, pickReaction, type GreetKind, type Greeting, type ReactionId } from '../logic/polite';
+import { DISCOUNT_MUL, HAGGLE_CHANCE, HAGGLE_WINDOW, HAGGLE_WORDS, INSIST_LEAVE, INSIST_MUL, BOSS_GREET_WINDOW, BYE_COINS, BYE_WORDS, GREET_WINDOW, HELLO_COINS, HELLO_PATIENCE, HELLO_WORDS, REACTIONS, REACTION_CHANCE, REACTION_COINS, REACTION_TIME, matchPolite, pickReaction, type GreetKind, type Greeting, type ReactionId } from '../logic/polite';
 import { ITEM_REACTIONS } from '../data/reactions';
 import { jamoKnown } from '../data/levels';
 import { COMPOUND_VOWELS, SHIFT_VOWELS, jamoSet, matchKind, rawJamo } from '../logic/hangul';
@@ -664,7 +664,7 @@ export class NightScene extends Phaser.Scene {
       } else this.waiting().forEach((c) => c.bubble!.shake());
     }
     this.errorTimer?.remove();
-    this.errorTimer = this.time.delayedCall(900, () => { if (this.inError) G.ime.clear(); });
+    this.errorTimer = this.time.delayedCall(ERROR_CLEAR_MS, () => { if (this.inError) G.ime.clear(); });
   }
 
   private setError(on: boolean) {
@@ -1212,7 +1212,7 @@ export class NightScene extends Phaser.Scene {
 
   /** After the meal: maybe a reaction bubble the player answers with an adjective. */
   private maybeReact(c: Customer): boolean {
-    if (this.n < REACTIONS_FROM || this.def.district === 'pharmacy' || c.kind === 'nabi' || c.kind === 'boss' || !c.lastItem) return false;
+    if (!reactionsOn(this.n) || this.def.district === 'pharmacy' || c.kind === 'nabi' || c.kind === 'boss' || !c.lastItem) return false;
     if (this.rand() >= REACTION_CHANCE) return false;
     // things that are not food are never "tasty"
     const table = ITEM_REACTIONS[c.lastItem] ? ITEM_REACTIONS : { [c.lastItem]: (word(c.lastItem).category === 'food' ? ['tasty', 'good', 'okay'] : ['good', 'okay']) as ReactionId[] };

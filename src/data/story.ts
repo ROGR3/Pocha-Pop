@@ -94,12 +94,12 @@ export const POSTCARDS: Record<number, Postcard> = {
   11: {
     title: 'Jsem na tebe pyšná',
     text: 'Ať napsal cokoli, uličku jsi oživil/a. Developer se nevzdává – zkus trh 동대문, šije tam moje kamarádka 이모. Chtějí tam věci v barvách: „빨간색 모자“ = červená čepice. Nově ㅆ (Shift + ㅅ) a ㅑ – jako ㅏ, jen se dvěma čárkami.',
-    tip: 'Novinka: po jídle zákazník řekne, jak mu bylo. „Levné!“ → napiš 싸다, „Výborné!“ → 맛있다. Základní tvar končí na -다.',
+    tip: 'Tip: barva jde před věc, stejně jako v češtině: 빨간색 모자, 파란색 가방.',
   },
   13: {
     title: 'Šedé ráno na Jeju',
     text: 'Barvy skoro vždycky končí na 색 (barva): 하얀색, 노란색. Další novinky: ㅖ = Shift + ㅔ (시계 – hodinky, 예쁘다 – hezký) a ㅚ = ㅗ + ㅣ v 회색 – šedá jako dnešní mlha.',
-    tip: 'Tip: když zákazník řekne „Hezké!“, napiš 예쁘다.',
+    tip: 'Tip: 예쁘다 = hezký. Až se ti hosté začnou svěřovat, bude se hodit.',
   },
   16: {
     title: 'Blogerka přichází',
@@ -109,8 +109,8 @@ export const POSTCARDS: Record<number, Postcard> = {
   },
   116: {
     title: 'Video koluje po Soulu',
-    text: 'Vnoučata mi ukazovala video z tvého stánku! Mladí teď chtějí do 홍대 – hudba a slova z angličtiny. Píšou se podle zvuku: party → 파티, game → 게임. Brzy přibude ㅞ = ㅜ + ㅔ (웨이터).',
-    tip: 'Pravidlo: f se píše ㅍ (coffee → 커피), v se píše ㅂ.',
+    text: 'Vnoučata mi ukazovala video z tvého stánku! Mladí teď chtějí do 홍대 – hudba a slova z angličtiny. Píšou se podle zvuku: party → 파티, coffee → 커피 (f je ㅍ). Brzy přibude ㅞ = ㅜ + ㅔ (웨이터).',
+    tip: 'Novinka: po jídle ti host řekne, jak mu bylo. „Pálivé!“ → napiš 맵다. Máš na to pár vteřin.',
   },
 };
 

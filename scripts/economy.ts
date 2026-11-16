@@ -2,10 +2,10 @@
 // speed) plays every night once in unlock order. Prints cumulative coins vs.
 // the cost of everything there is to buy.  Run: npx vite-node scripts/economy.ts
 import words from '../src/data/words.json';
-import { NIGHTS, UPGRADES, nightPool, DISTRICTS, homeDistrict } from '../src/data/levels';
+import { NIGHTS, UPGRADES, nightPool, DISTRICTS, homeDistrict, reactionsOn } from '../src/data/levels';
 import { COLORS, HATS, PARTS } from '../src/data/colors';
 import { serveCoins, seatMultiplier, comboMultiplier, criticStars, nightStars } from '../src/logic/rules';
-import { BYE_COINS, HELLO_COINS, REACTION_CHANCE, REACTION_COINS, REACTIONS_FROM } from '../src/logic/polite';
+import { BYE_COINS, HELLO_COINS, REACTION_CHANCE, REACTION_COINS } from '../src/logic/polite';
 import { rng } from '../src/logic/srs';
 
 const diff = new Map(words.map((w) => [w.id, w.difficulty]));
@@ -35,7 +35,7 @@ function night(n: number, p: Profile): { coins: number; stars: number } {
     coins += Math.round(pay.total * seatMultiplier(seats));
     if (rand() < p.politeRate) coins += HELLO_COINS;
     if (rand() < p.politeRate * 0.7) coins += BYE_COINS;
-    if (n >= REACTIONS_FROM && rand() < REACTION_CHANCE * p.politeRate) coins += REACTION_COINS;
+    if (reactionsOn(n) && rand() < REACTION_CHANCE * p.politeRate) coins += REACTION_COINS;
   }
   void comboMultiplier;
   const stars = def.boss ? criticStars(Math.round(mistakes / 2), 0) : nightStars({ total: customers, served, angry: customers - served, mistakes });

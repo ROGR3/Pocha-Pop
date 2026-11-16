@@ -33,11 +33,11 @@ export const PARTS: { id: PartId; name: string; price: number }[] = [
 
 /** top/bottom/cx = visible pixel bounds of the 14×10 frame in hats.png (for stacking). */
 export const HATS: { id: string; name: string; price: number; top: number; bottom: number; cx: number }[] = [
-  { id: 'cap', name: 'Kšiltovka', price: 20, top: 3, bottom: 9, cx: 5.5 },
-  { id: 'bow', name: 'Mašle', price: 20, top: 4, bottom: 9, cx: 10 },
-  { id: 'crown', name: 'Korunka', price: 40, top: 2, bottom: 8, cx: 7 },
-  { id: 'beanie', name: 'Kulich', price: 25, top: 0, bottom: 9, cx: 7 },
-  { id: 'straw', name: 'Slamák', price: 30, top: 2, bottom: 9, cx: 6.5 },
+  { id: 'cap', name: 'Kšiltovka', price: 200, top: 3, bottom: 9, cx: 5.5 },
+  { id: 'bow', name: 'Mašle', price: 200, top: 4, bottom: 9, cx: 10 },
+  { id: 'crown', name: 'Korunka', price: 400, top: 2, bottom: 8, cx: 7 },
+  { id: 'beanie', name: 'Kulich', price: 250, top: 0, bottom: 9, cx: 7 },
+  { id: 'straw', name: 'Slamák', price: 300, top: 2, bottom: 9, cx: 6.5 },
 ];
 
 export const HAT_METRICS: Record<string, { top: number; bottom: number; cx: number }> = Object.fromEntries(HATS.map((h) => [h.id, h]));

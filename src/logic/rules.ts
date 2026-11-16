@@ -49,6 +49,9 @@ export function mood(fraction: number): 0 | 1 | 2 {
   return 0;
 }
 
+/** After a typo the typed text stays this long so it can still be fixed with backspace. */
+export const ERROR_CLEAR_MS = 1500;
+
 // ------------------------------------------------------------------ seats
 /** Seats at the counter the player can pick before a night. */
 export const SEAT_OPTIONS = [2, 3, 4] as const;

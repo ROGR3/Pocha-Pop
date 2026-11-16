@@ -10,8 +10,8 @@ Obsah (etapy 1–4, zadání `DESIGN.md`, `DESIGN-2.md`, `DESIGN-3.md` a `DESIGN
 |---|---|---|---|
 | 을지로 | 1–5 | jídlo | 김 대리, 하은, kočka 나비 |
 | 한강 | 6–10 + 11 | jídlo, pozdravy | kritik 미식가 (věty) |
-| 동대문 trh | 12–16 + 116 | barva + věc („빨간색 모자“), reakce přídavnými jmény | 이모 · módní blogerka |
-| 홍대 | 17–21 + 121 | přejatá slova (bublina ukáže originál) | 민수 · manažer K-popové skupiny |
+| 동대문 trh | 12–16 + 116 | barva + věc („빨간색 모자“) | 이모 · módní blogerka |
+| 홍대 | 17–21 + 121 | přejatá slova (bublina ukáže originál), reakce přídavnými jmény | 민수 · manažer K-popové skupiny |
 | 용산 | 22–26 + 126 | smlouvání 할인 / 싸다, dlouhá slova | 박 사장 · obchodník |
 | 부산 přístav | 27–31 + 131 | cíl → doprava (+ 표) | 강 이사 · kapitán (finále) |
 | 약국 (vedlejší) | L1–L4 | část těla na obrázku, příznak → lék | lékárnice 약사 |
@@ -132,7 +132,7 @@ Testy desktopového okna bez otevírání okna na reálné ploše: `scripts/xvfb
 - **Pozdravy:** když si host sedne, ukáže se ruka (napiš 안녕하세요 / 환영해요 / 반가워요 → +15 % trpělivosti, +1 mince),
   když odchází, dveře (감사합니다 / 또 오세요 / 또 봐요 / 잘 가요 → +2). Pozdravy jsou dočasné cíle v matchingu;
   když prefix sedí na objednávku i pozdrav, vyhrává objednávka.
-- **Reakce** (od 동대문): po jídle host řekne česky „Pálivé!“ → napiš 맵다 (5 s, +2 mince).
+- **Reakce** (od 홍대, babička je ohlásí v dopise): po jídle host řekne česky „Pálivé!“ → napiš 맵다 (8 s, +2 mince).
 - Mince → obchod: lampiony, plachta, rádio (2. stanice po opravě u 박 사장), pomocník 김 대리, menu balíčky;
   **Barvírna** (z obchodu): plachta, cedule, stoličky a lampiony v 11 barvách (barvu „objednáš“ napsáním jejího
   korejského názvu), čepičky pro 나비 – dají se vršit do věže (až 1000, každá za svou pevnou cenu, sundat jde vrchní nebo všechny bez vrácení mincí).
@@ -308,13 +308,13 @@ bash scripts/make-icons.sh           # app ikony (desktop + Android) z public/as
 
 | Hráč | po 미식가 (11) | po 용산 (126) | po 부산 (131) | na konci (303) |
 |---|---|---|---|---|
-| pomalejší (2★, 2 místa) | 709 | 2 255 | 2 698 | 3 099 |
-| normální (2–3★, 3 místa) | 922 | 2 934 | 3 543 | 4 086 |
-| zkušený (3★, 4 místa) | 1 626 | 4 905 | 5 875 | 6 781 |
+| pomalejší (2★, 2 místa) | 709 | 2 289 | 2 772 | 3 212 |
+| normální (2–3★, 3 místa) | 873 | 2 893 | 3 500 | 4 029 |
+| zkušený (3★, 4 místa) | 1 713 | 4 996 | 6 075 | 6 914 |
 
 Kombo platí ×1 / ×1,5 (od 5) / ×2 (od 10), místa u pultu ×1 / ×1,15 / ×1,3 (co-op ×1,15).
-Ceny: upgrady a menu balíčky 2 500, jedna od každé čepičky 135, každá barva na každé části stánku 5 500 – dohromady 8 135.
-Čepičky se dají vršit (20–40 za kus), takže věž pro 나비 je nekonečné místo pro přebytečné mince.
+Ceny: upgrady a menu balíčky 2 500, jedna od každé čepičky 1 350, každá barva na každé části stánku 5 500 – dohromady 9 350.
+Čepičky se dají vršit (200–400 za kus): věž pro 나비 je cíl na konec hry, kam jdou přebytečné mince.
 Normální hráč si za první průchod koupí všechny upgrady a pár oblíbených barev (500 za barvu na celý stánek),
 na všechno nemá nikdo; zbytek je na opakování nocí, denní výzvy a co-op.
 

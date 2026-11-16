@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import words from '../src/data/words.json';
 import icons from '../public/assets/icons.json';
 import clothes from '../public/assets/clothes.json';
-import { NIGHTS, UPGRADES, nightPool } from '../src/data/levels';
+import { NIGHTS, UPGRADES, nightPool, reactionsOn } from '../src/data/levels';
+import { POSTCARDS } from '../src/data/story';
 import { jamoSet } from '../src/logic/hangul';
 import { colorOrderShape, comboMultiplier, criticStars, nightStars, pairPatience, serveCoins } from '../src/logic/rules';
 
@@ -98,5 +99,13 @@ describe('동대문 ramp', () => {
     expect(pairPatience(2, true)).toBe(1.3);
     expect(pairPatience(1, true)).toBe(1);
     expect(pairPatience(2, false)).toBe(1);
+  });
+});
+
+describe('reactionsOn', () => {
+  it('starts after the 동대문 boss, announced on its postcard', () => {
+    for (const n of [1, 11, 12, 16, 116, 201, 204, 900]) expect(reactionsOn(n)).toBe(false);
+    for (const n of [17, 121, 22, 131, 301, 302, 303]) expect(reactionsOn(n)).toBe(true);
+    expect(POSTCARDS[116].tip).toContain('맵다');
   });
 });

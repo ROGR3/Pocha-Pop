@@ -57,10 +57,9 @@ export function matchPolite<T>(typed: string, orders: T[], target: (t: T) => str
 
 // ------------------------------------------------------------------ reactions
 export const REACTION_CHANCE = 0.3;
-export const REACTION_TIME = 5;
+export const REACTION_TIME = 8;
 export const REACTION_COINS = 2;
 /** First night with reactions (동대문). */
-export const REACTIONS_FROM = 12;
 
 export type ReactionId = 'spicy' | 'hot' | 'sweet' | 'tasty' | 'good' | 'okay' | 'pricey' | 'cheap' | 'pretty' | 'big' | 'small';
 

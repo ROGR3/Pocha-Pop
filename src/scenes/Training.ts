@@ -6,6 +6,7 @@ import { COLORS } from '../data/colors';
 import { DISTRICTS, NIGHTS, homeDistrict, jamoKnown, nightDef } from '../data/levels';
 import { jamoSet, matchAgainst } from '../logic/hangul';
 import { recordMistake, recordServe, rng } from '../logic/srs';
+import { ERROR_CLEAR_MS } from '../logic/rules';
 import { TRAINING_BUBBLES, TRAINING_SECONDS, trainingPick, trainingPool } from '../logic/training';
 import { Bubble } from '../game/bubble';
 import { tokenAt, type Order } from '../game/orders';
@@ -172,7 +173,7 @@ export class TrainingScene extends Phaser.Scene {
         G.setStat(o.tokens[0].id, recordMistake(G.stat(o.tokens[0].id)));
         x.s.bubble!.shake();
       }
-      this.time.delayedCall(700, () => { if (this.inError) G.ime.clear(); });
+      this.time.delayedCall(ERROR_CLEAR_MS, () => { if (this.inError) G.ime.clear(); });
       return;
     }
     this.inError = false;
