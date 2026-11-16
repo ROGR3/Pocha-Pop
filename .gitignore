@@ -8,3 +8,6 @@ signing/
 *.jks
 release/
 src-tauri/gen/android/.kotlin/
+
+# local editor caches
+/target/

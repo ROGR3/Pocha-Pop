@@ -23,6 +23,42 @@ a čepičky pro 나비), trénink, denní výzva a 27 odznáčků. Etapa 3: **Sp
 přes Wi-Fi / hotspot s pravidlem „doběh“ (viz [Hrajeme spolu](#hrajeme-spolu)). Etapa 4: **Poslech** – druhá
 kampaň, ve které zákazník objednávku vysloví a ty píšeš, co slyšíš (viz [Poslech](#poslech)).
 
+## Proč „Pocha Pop“
+
+**포차** (pocha) je hovorová zkratka slova **포장마차** (pojangmacha), korejského nočního stánku s jídlem.
+Typicky má oranžovou plachtu a plastové stoličky a lidé tam večer jedí 떡볶이 a pijí soju. Přesně takový
+stánek ve hře provozuješ. **Pop** je zvuk, se kterým praskne bublina s objednávkou, když slovo napíšeš
+správně (a odkaz na hru Hangul Pop, ze které nápad vzešel). **팝** je jen „pop“ napsané hangulem.
+
+## Děj
+
+Babička 할머니 odjíždí na venkov a předá ti svůj stánek v uličce 을지로. Každý večer přicházejí hosté:
+unavený úředník 김 대리, studentka 하은, toulavá kočka 나비 a další. Postupně se jim splní jejich malé
+příběhy, stánek se rozroste o lampiony, rádio a pomocníka a přestěhuješ se přes 한강, trh 동대문, 홍대
+a 용산 až do přístavu v 부산. Na konci každé čtvrti přijde náročný host (kritik, blogerka, manažer,
+obchodník, kapitán), který objednává celými větami. Babička ti mezitím posílá pohledy.
+
+## Co se naučíš
+
+- **Psát korejsky na skutečné klávesnici** (두벌식): přesně tu, kterou pak používáš v telefonu nebo na PC.
+  Hra porovnává po jednotlivých úhozech, takže vidíš, kde jsi udělal chybu.
+- **Slovní zásobu** z Duolinga (vlastní Anki balíček): jídlo, pití, oblečení, barvy, části těla, doprava,
+  pozdravy a přídavná jména. Nová písmena a slova přicházejí postupně, noc po noci.
+- **Vybavování místo poznávání:** bublina ukazuje obrázek a češtinu, korejštinu musíš vytáhnout z hlavy.
+  Čím líp slovo umíš, tím méně nápovědy dostaneš (jednoduché opakování s rozestupy, SRS).
+- **Poslech:** ve druhé kampani zákazník objednávku vysloví a ty píšeš, co slyšíš.
+- **Hrát spolu:** 2–3 kamarádi na jedné Wi-Fi nebo hotspotu obsluhují společný stánek. Kdo napíše
+  objednávku první, dostane plné mince, ostatní ji můžou ještě chvíli „doběhnout“ za polovinu.
+
+## Screenshoty
+
+| | | | |
+|---|---|---|---|
+| ![Titulní obrazovka](screenshots/mobile-01-title.png) | ![Noc v 을지로](screenshots/mobile-07-night-euljiro.png) | ![Obsloužení](screenshots/mobile-08-night-serve.png) | ![Mapa](screenshots/mobile-22-map-scroll.png) |
+| ![Trh 동대문](screenshots/mobile-23-night-dongdaemun.png) | ![Kritik](screenshots/mobile-12-night-boss.png) | ![Poslech](screenshots/mobile-53-night-listen.png) | ![Hrajeme spolu](screenshots/mobile-63-coop-runoff.png) |
+
+Všechny obrazovky jsou ve složce [`screenshots/`](screenshots/).
+
 ## Spuštění
 
 ```bash
