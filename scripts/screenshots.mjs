@@ -40,7 +40,7 @@ const helpers = () => {
     d.upgrades = upTo >= 6 ? ['lanterns', 'radio', 'awning'] : [];
     d.tracks.read.nights = {};
     d.achievements = [];
-    d.cosmetics = { roof: null, sign: null, stools: null, lanterns: null, hat: null, owned: [] };
+    d.cosmetics = { roof: null, sign: null, stools: null, lanterns: null, hats: [], owned: [] };
     for (let n = 1; n <= upTo; n++) d.tracks.read.nights[n] = { stars: n % 3 === 0 ? 2 : 3, bestCoins: 60 + n * 7, plays: 1, seats: 2 + (n % 3) };
     const ids = ['cha', 'uyu', 'dubu', 'mul', 'mandu', 'bap', 'gogi', 'ramyeon', 'kimchi', 'gimbap', 'ppang', 'tteok', 'danmuji', 'jjigae', 'japchae', 'galbi', 'gansik', 'eumsik', 'gwaja', 'tteokbokki', 'podo', 'juseu', 'keopi'];
     ids.slice(0, upTo * 4).forEach((id, i) => { d.tracks.read.words[id] = { mastery: i % 6, seen: 3 + i, correct: 2 + i, errors: i % 3, lapses: 0, lastNight: 1 }; });
@@ -141,7 +141,7 @@ const SHOTS = [
   ['15-result-boss', async (p) => { await ev(p, "P.start('Result',{night:11,stars:4,total:11,served:10,angry:1,mistakes:1,coins:210,tips:40,bestCombo:5,newWords:['hana','juseyo'],trouble:[],regularsSeen:[],clean:{},critic:{stars:4,mistakes:1,walkouts:0},firstClear:true})"); await p.waitForTimeout(3200); }],
   ['16-shop', async (p) => { await ev(p, "P.seed(4); P.G.data.coins=170; P.start('Shop')"); await p.waitForTimeout(900); }],
   ['17-shop-upgraded', async (p) => { await ev(p, "P.seed(9); P.G.data.upgrades=['lanterns','radio','awning','helper']; P.G.track().friends.kim.chapter=3; P.start('Shop')"); await p.waitForTimeout(900); }],
-  ['16b-paint', async (p) => { await ev(p, "P.seed(9); P.G.data.coins=300; ['ppalgansaek','paransaek','noransaek','choroksaek','bunhongsaek'].forEach((w,i)=>P.G.track().words[w]={mastery:i%3,seen:2,correct:1,errors:0,lapses:0,lastNight:12}); P.G.data.cosmetics={roof:'blue',sign:'yellow',stools:'yellow',lanterns:'green',hat:'crown',owned:['roof:blue','sign:yellow','stools:yellow','lanterns:green','hat:crown']}; P.G.data.upgrades=['lanterns','awning']; P.start('Paint')"); await p.waitForTimeout(900); }],
+  ['16b-paint', async (p) => { await ev(p, "P.seed(9); P.G.data.coins=300; ['ppalgansaek','paransaek','noransaek','choroksaek','bunhongsaek'].forEach((w,i)=>P.G.track().words[w]={mastery:i%3,seen:2,correct:1,errors:0,lapses:0,lastNight:12}); P.G.data.cosmetics={roof:'blue',sign:'yellow',stools:'yellow',lanterns:'green',hats:['crown'],owned:['roof:blue','sign:yellow','stools:yellow','lanterns:green','hat:crown']}; P.G.data.upgrades=['lanterns','awning']; P.start('Paint')"); await p.waitForTimeout(900); }],
   ['16c-paint-typing', async (p) => { await ev(p, "(()=>{const sc=P.game.scene.getScene('Paint'); const c=sc.cells().find(x=>x.id==='red'); sc.select(c);})()"); await p.waitForTimeout(400);
     await ev(p, "(async()=>{const el=P.G.ime.el; for(const s of P.imeStates('빨간').slice(0,-1)){el.value=s;el.dispatchEvent(new InputEvent('input'));await P.sleep(40);}})()"); await p.waitForTimeout(500); }],
   ['16d-paint-hats', async (p) => { await ev(p, "P.start('Paint',{tab:'hat'})"); await p.waitForTimeout(900); }],
