@@ -29,6 +29,8 @@ export class RecipesScene extends Phaser.Scene {
   private popup?: Phaser.GameObjects.Container;
   constructor() { super('Recipes'); }
 
+  init() { this.popup = undefined; }
+
   create() {
     fadeIn(this);
     G.ime.deactivate();

@@ -225,6 +225,7 @@ export class NightScene extends Phaser.Scene {
     this.clock = 0;
     this.combo = this.bestCombo = this.coins = this.tips = this.served = this.angry = this.mistakes = this.arrived = 0;
     this.paused = this.ended = this.inError = this.intro = false;
+    this.pauseLayer = undefined;
     this.recent = [];
     this.trouble = new Map();
     this.regularsSeen = [];

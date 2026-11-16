@@ -43,6 +43,9 @@ export class MapScene extends Phaser.Scene {
   private dragMoved = 0;
   constructor() { super('Map'); }
 
+  // Phaser reuses the scene instance: a popup left open when a night started would block the map.
+  init() { this.popup = undefined; this.dragMoved = 0; }
+
   create() {
     fadeIn(this);
     G.ime.deactivate();
