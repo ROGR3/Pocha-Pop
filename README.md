@@ -135,7 +135,7 @@ Testy desktopového okna bez otevírání okna na reálné ploše: `scripts/xvfb
 - **Reakce** (od 동대문): po jídle host řekne česky „Pálivé!“ → napiš 맵다 (5 s, +2 mince).
 - Mince → obchod: lampiony, plachta, rádio (2. stanice po opravě u 박 사장), pomocník 김 대리, menu balíčky;
   **Barvírna** (z obchodu): plachta, cedule, stoličky a lampiony v 11 barvách (barvu „objednáš“ napsáním jejího
-  korejského názvu), čepičky pro 나비.
+  korejského názvu), čepičky pro 나비 – dají se vršit do věže (až 1000, každá za svou pevnou cenu, sundat jde vrchní nebo všechny bez vrácení mincí).
 - **Trénink** (mapa): 60 s bublin se slovy s nejvyšší SRS vahou, bez mincí. Tady se dají potkat i barvy.
 - **Denní výzva** (nahoře na mapě): stejná noc pro celý den (seed z data), zapisuje se první pokus.
 - **Odznáčky** (mapa → Odznaky): 24 úspěchů, získané jsou připnuté na plachtě stánku.
@@ -313,7 +313,8 @@ bash scripts/make-icons.sh           # app ikony (desktop + Android) z public/as
 | zkušený (3★, 4 místa) | 1 626 | 4 905 | 5 875 | 6 781 |
 
 Kombo platí ×1 / ×1,5 (od 5) / ×2 (od 10), místa u pultu ×1 / ×1,15 / ×1,3 (co-op ×1,15).
-Ceny: upgrady a menu balíčky 2 500, čepičky 135, každá barva na každé části stánku 5 500 – dohromady 8 135.
+Ceny: upgrady a menu balíčky 2 500, jedna od každé čepičky 135, každá barva na každé části stánku 5 500 – dohromady 8 135.
+Čepičky se dají vršit (20–40 za kus), takže věž pro 나비 je nekonečné místo pro přebytečné mince.
 Normální hráč si za první průchod koupí všechny upgrady a pár oblíbených barev (500 za barvu na celý stánek),
 na všechno nemá nikdo; zbytek je na opakování nocí, denní výzvy a co-op.
 

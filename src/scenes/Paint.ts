@@ -3,10 +3,10 @@
 // locked (Czech name only) until the player met the word in a night / training.
 import Phaser from 'phaser';
 import { COLORS, HATS, PARTS } from '../data/colors';
-import { buyAndEquip, itemState, unequip, type ShopState, type Slot } from '../logic/cosmetics';
+import { HAT_STACK_MAX, buyAndEquip, clearHats, hatState, itemState, popHat, pushHat, unequip, type ColorSlot, type HatState, type ShopState } from '../logic/cosmetics';
 import { matchKind } from '../logic/hangul';
 import { hintLevel, recordMistake, recordServe } from '../logic/srs';
-import { attachHat } from '../game/hats';
+import { attachHat, type HatTower } from '../game/hats';
 import { checkAchievements } from '../game/achievements';
 import { G, iconTex, word } from '../game/state';
 import { seenAnywhere } from '../logic/track';
@@ -14,15 +14,18 @@ import { DEPTH, Street } from '../game/street';
 import { TypeBox } from '../game/typebox';
 import { Button, C, button, cssRect, fadeIn, floatText, goto, iconButton, iconFrame, panel, segmented, snapText, toast, txt } from '../game/ui';
 
-const TABS: { slot: Slot; name: string }[] = [
+type Tab = ColorSlot | 'hat';
+
+const TABS: { slot: Tab; name: string }[] = [
   { slot: 'roof', name: 'Plachta' }, { slot: 'sign', name: 'Cedule' }, { slot: 'stools', name: 'Stoličky' },
   { slot: 'lanterns', name: 'Lampiony' }, { slot: 'hat', name: 'Čepice' },
 ];
 
-interface Cell { id: string | null; name: string; price: number; state: ShopState }
+/** Hat tab: 'full' = the tower is at its cap, 'empty' = nothing to take off. */
+interface Cell { id: string | null; name: string; price: number; state: ShopState | HatState | 'empty' }
 
 export class PaintScene extends Phaser.Scene {
-  private tab: Slot = 'roof';
+  private tab: Tab = 'roof';
   private selected: Cell | null = null;
   private street!: Street;
   private cat!: Phaser.GameObjects.Sprite;
@@ -30,6 +33,9 @@ export class PaintScene extends Phaser.Scene {
   private box!: TypeBox;
   private info!: Phaser.GameObjects.Text;
   private buyBtn?: Button;
+  private buyBtn2?: Button;
+  private hatStack!: HatTower;
+  private clearArmed = false;
   private coinText!: Phaser.GameObjects.Text;
   private unsub?: () => void;
   private builtW = 0;
@@ -40,7 +46,7 @@ export class PaintScene extends Phaser.Scene {
 
   constructor() { super('Paint'); }
 
-  init(d: { tab?: Slot; flash?: string; from?: string }) {
+  init(d: { tab?: Tab; flash?: string; from?: string }) {
     this.tab = d?.tab ?? 'roof';
     this.flash = d?.flash ?? '';
     this.from = d?.from ?? this.from;
@@ -55,7 +61,7 @@ export class PaintScene extends Phaser.Scene {
     this.street = new Street(this, { backdrop: 'euljiro', weather: false });
     const cat = G.track().friends.nabi?.chapter >= 2 ? 'nabi_fat' : 'nabi';
     this.cat = this.add.sprite(0, 0, cat).setOrigin(0.5, 1).setDepth(DEPTH.customer).play(`${cat}:sit`);
-    attachHat(this, this.cat);
+    this.hatStack = attachHat(this, this.cat);
     this.box = new TypeBox(this, 0, 0, 100, 34, 'Klepni sem a piš');
     this.box.root.setDepth(DEPTH.input);
     this.box.bg.setInteractive().on('pointerdown', () => G.ime.reopen());
@@ -124,6 +130,7 @@ export class PaintScene extends Phaser.Scene {
     this.info = txt(this, W / 2, by + 2, '', { size: 's', color: C.light, origin: [0.5, 0], align: 'center', wrap: W - 16 });
     this.ui.add(this.info);
     this.buyBtn = undefined;
+    this.buyBtn2 = undefined;
     if (typing) {
       this.boxRect = [6, by + 14, W - 12, boxH];
       this.box.setPosition(6, by + 14, W - 12);
@@ -137,7 +144,7 @@ export class PaintScene extends Phaser.Scene {
     // footer
     this.ui.add(this.add.rectangle(0, H - footer, W, footer, 0x262b44).setOrigin(0, 0));
     this.ui.add(iconButton(this, 16, H - footer / 2, 'back', () => this.onBack()));
-    this.ui.add(txt(this, 32, H - footer / 2, hat ? 'Čepičky pro 나비.' : 'Barvu objednáš korejsky.', { size: 'xs', color: C.grey, origin: [0, 0.5] }));
+    this.ui.add(txt(this, 32, H - footer / 2, hat ? 'Čepičky se dají vršit.' : 'Barvu objednáš korejsky.', { size: 'xs', color: C.grey, origin: [0, 0.5] }));
   }
 
   private cells(): Cell[] {
@@ -145,16 +152,17 @@ export class PaintScene extends Phaser.Scene {
     const coins = G.data.coins;
     if (this.tab === 'hat') {
       return [
-        { id: null, name: 'Bez čepice', price: 0, state: c.hat ? 'owned' : 'equipped' },
-        ...HATS.map((h) => ({ id: h.id, name: h.name, price: h.price, state: itemState(c, 'hat', h.id, h.price, coins, true) })),
+        { id: null, name: 'Sundat', price: 0, state: c.hats.length ? 'owned' : 'empty' },
+        ...HATS.map((h) => ({ id: h.id, name: h.name, price: h.price, state: hatState(c, h.price, coins) })),
       ];
     }
-    const part = PARTS.find((p) => p.id === this.tab)!;
+    const tab = this.tab;
+    const part = PARTS.find((p) => p.id === tab)!;
     return [
-      { id: null, name: 'Původní', price: 0, state: c[this.tab] ? 'owned' : 'equipped' },
+      { id: null, name: 'Původní', price: 0, state: c[tab] ? 'owned' : 'equipped' },
       ...COLORS.map((col) => ({
         id: col.id, name: col.cs, price: part.price,
-        state: itemState(c, this.tab, col.id, part.price, coins, seenAnywhere(G.data, col.word)),
+        state: itemState(c, tab, col.id, part.price, coins, seenAnywhere(G.data, col.word)),
       })),
     ];
   }
@@ -175,7 +183,12 @@ export class PaintScene extends Phaser.Scene {
       icon = this.add.image(cx, y + 14, ...iconTex('saek'));
     }
     if (locked) icon.setTintFill(0x3a4466);
+    if (cell.state === 'empty') icon.setAlpha(0.3);
     this.ui.add(icon);
+    if (this.tab === 'hat' && cell.id) {
+      const n = G.data.cosmetics.hats.filter((id) => id === cell.id).length;
+      if (n > 0) this.ui.add(txt(this, x + 2, y + 2, `×${n}`, { size: 'xs', color: C.cream, origin: [0, 0], shadow: true }));
+    }
     this.ui.add(txt(this, cx, y + h - 11, locked ? cell.name : cell.name, { size: 'xs', color: locked ? C.grey : C.cream, origin: [0.5, 0] }).setCrop(0, 0, w, 10));
     // badge
     let badge: Phaser.GameObjects.GameObject | null = null;
@@ -196,13 +209,15 @@ export class PaintScene extends Phaser.Scene {
       toast(this, 'Tuhle barvu ještě neznáš. Potkáš ji v 동대문 nebo v tréninku.', C.orange, this.scale.height - 60);
       return;
     }
-    if (cell.state === 'equipped') return;
+    if (cell.state === 'equipped' || cell.state === 'empty') return;
+    if (this.tab === 'hat') { this.select(cell); return; }
     if (cell.state === 'owned') { this.equip(cell, 0); return; }
     this.select(cell);
   }
 
   private select(cell: Cell | null) {
     this.selected = cell;
+    this.clearArmed = false;
     this.typingDirty = false;
     if (cell && cell.state === 'buy' && this.tab !== 'hat') G.ime.activate();
     else G.ime.deactivate();
@@ -212,6 +227,8 @@ export class PaintScene extends Phaser.Scene {
   private updateInfo() {
     const s = this.selected;
     this.buyBtn?.destroy();
+    this.buyBtn2?.destroy();
+    this.buyBtn = this.buyBtn2 = undefined;
     if (!s) {
       this.info.setText(this.tab === 'hat' ? 'Vyber čepičku.' : 'Vyber barvu. Zamčené potkáš ve hře.').setColor(C.grey);
       snapText(this.info);
@@ -224,12 +241,23 @@ export class PaintScene extends Phaser.Scene {
       return;
     }
     if (this.tab === 'hat') {
-      this.info.setText(`${s.name} za ${s.price} mincí?`).setColor(C.cream);
-      snapText(this.info);
       this.box.root.setVisible(false);
+      const n = G.data.cosmetics.hats.length;
       const [x, y, w] = this.boxRect[2] ? this.boxRect : [6, this.info.y + 14, this.scale.width - 12];
-      this.buyBtn = button(this, x + w / 2, y + 16, 120, 22, `Koupit · ${s.price}`, () => this.equip(s, s.price), { icon: undefined });
-      this.ui.add(this.buyBtn);
+      if (s.state === 'full') {
+        this.info.setText(`Víc se jich na 나비 nevejde (${HAT_STACK_MAX}).`).setColor(C.orange);
+      } else if (s.id === null) {
+        this.info.setText(`Věž: ${n} ${n >= 1 && n <= 4 ? 'čepice' : 'čepic'}. Mince se nevrací.`).setColor(C.cream);
+        const bw = Math.min(110, Math.floor((w - 6) / 2));
+        this.buyBtn = button(this, x + w / 2 - bw / 2 - 3, y + 16, bw, 22, 'Sundat vrchní', () => this.takeOff(false), { style: 'wood' });
+        this.buyBtn2 = button(this, x + w / 2 + bw / 2 + 3, y + 16, bw, 22, this.clearArmed ? 'Opravdu?' : 'Sundat vše', () => this.takeOff(true), { style: this.clearArmed ? 'red' : 'wood' });
+        this.ui.add([this.buyBtn, this.buyBtn2]);
+      } else {
+        this.info.setText(`${s.name} navrch za ${s.price} mincí? Věž: ${n}`).setColor(C.cream);
+        this.buyBtn = button(this, x + w / 2, y + 16, 120, 22, `Koupit · ${s.price}`, () => this.buyHat(s));
+        this.ui.add(this.buyBtn);
+      }
+      snapText(this.info);
       return;
     }
     const col = COLORS.find((c) => c.id === s.id)!;
@@ -265,9 +293,44 @@ export class PaintScene extends Phaser.Scene {
     }
   }
 
+  /** Put one more hat on 나비's tower; stays on the same cell so repeat buys are one tap each. */
+  private buyHat(cell: Cell) {
+    const c = G.data.cosmetics;
+    if (!cell.id) return;
+    const first = !c.owned.includes(`hat:${cell.id}`);
+    const left = pushHat(c, cell.id, cell.price, G.data.coins);
+    if (left === null) return;
+    floatText(this, this.scale.width - 30, 30, `−${G.data.coins - left}`, C.pink);
+    G.data.coins = left;
+    G.save.save();
+    G.audio.play('buy');
+    this.street.flash(1);
+    this.hatsChanged(cell.id);
+    if (first) this.time.delayedCall(400, () => checkAchievements(this));
+  }
+
+  /** 'Sundat vrchní' / 'Sundat vše' (the latter needs a second tap to confirm). */
+  private takeOff(all: boolean) {
+    const c = G.data.cosmetics;
+    if (all && !this.clearArmed) { this.clearArmed = true; this.updateInfo(); return; }
+    if (all) clearHats(c); else popHat(c);
+    G.save.save();
+    G.audio.play('paper');
+    this.hatsChanged(null);
+  }
+
+  private hatsChanged(id: string | null) {
+    this.hatStack.refresh();
+    const keep = this.cells().find((x) => x.id === id) ?? null;
+    this.selected = keep && keep.state !== 'empty' ? keep : null;
+    this.clearArmed = false;
+    this.build();
+  }
+
   private equip(cell: Cell, price: number) {
     const c = G.data.cosmetics;
     const slot = this.tab;
+    if (slot === 'hat') return;
     if (cell.id === null) unequip(c, slot);
     else {
       const left = buyAndEquip(c, slot, cell.id, price, G.data.coins, true);
@@ -277,7 +340,7 @@ export class PaintScene extends Phaser.Scene {
     }
     G.save.save();
     G.ime.deactivate();
-    const flash = price > 0 ? (slot === 'hat' ? `${cell.name} pro 나비!` : `${TABS.find((t) => t.slot === slot)!.name}: ${cell.name}!`) : '';
+    const flash = price > 0 ? `${TABS.find((t) => t.slot === slot)!.name}: ${cell.name}!` : '';
     if (!flash) G.audio.play('paper');
     this.time.delayedCall(price > 0 ? 250 : 0, () => this.scene.restart({ tab: slot, flash, from: this.from }));
   }

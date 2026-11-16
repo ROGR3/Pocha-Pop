@@ -119,7 +119,7 @@ describe('migration v3 → v4 (tracks)', () => {
   };
   it('moves progress into Čtení, Poslech starts empty, shared stays shared', () => {
     const m = migrate(v3);
-    expect(m.version).toBe(4);
+    expect(m.version).toBe(SAVE_VERSION);
     expect(m.tracks.read.nights[1].stars).toBe(3);
     expect(m.tracks.read.words.uyu.mastery).toBe(3);
     expect(m.tracks.read.friends.kim.chapter).toBe(2);

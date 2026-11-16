@@ -6,7 +6,7 @@ import { RATE_NORMAL, RATE_SLOW, emptyTrack, isTrack, migrateTrack, type Track, 
 
 export type { FriendState, NightRecord, TrackData, Track } from './track';
 
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5; // v5: cosmetics.hat → cosmetics.hats (stack)
 /** Coins refunded for the removed "4th stool" upgrade (stage 1 → 2). */
 export const STOOL4_REFUND = 150;
 
