@@ -313,7 +313,7 @@ Normální hráč má tedy na všechno zhruba na začátku 부산, pomalejší a
 `npm run sfx` vygeneruje SFX (`npm run sfx -- beaten runoff_ok` jen vybrané – šum není seedovaný) (`scripts/gen-sfx.mjs`, sfxr-style syntéza) do `public/sfx/*.wav`.
 Déšť / řeka a lo-fi smyčka rádia jsou procedurální WebAudio (`src/game/audio.ts`).
 
-## Screenshoty
+## Generování screenshotů
 
 `npm run screenshots` – build + `vite preview` + Playwright, všechny obrazovky v rozlišení
 mobil 412×915 (@2.625) a desktop 450×800 do `screenshots/`. Jen část: `ONLY=23,24 npm run screenshots`
