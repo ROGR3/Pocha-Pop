@@ -42,7 +42,7 @@ export class TitleScene extends Phaser.Scene {
     else button(this, 16, by, 20, 20, '', () => this.coop(), { icon: 'together', style: 'wood' }).setDepth(DEPTH.hud);
     this.tweens.add({ targets: start, scale: { from: 1, to: 1.05 }, yoyo: true, repeat: -1, duration: 700, ease: 'Sine.easeInOut' });
     button(this, W - 16, by, 20, 20, '', () => goto(this, 'Settings', { from: 'Title' }), { icon: 'gear', style: 'wood' }).setDepth(DEPTH.hud);
-    txt(this, 4, H - 3, 'v0.5', { size: 'xs', color: C.grey, origin: [0, 1] }).setDepth(DEPTH.hud);
+    txt(this, 4, H - 3, 'v0.5.1', { size: 'xs', color: C.grey, origin: [0, 1] }).setDepth(DEPTH.hud);
     this.input.keyboard?.on('keydown-ENTER', () => this.open());
     this.game.events.on('layout', this.onLayout, this);
     this.events.once('shutdown', () => this.game.events.off('layout', this.onLayout, this));
