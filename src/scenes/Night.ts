@@ -124,6 +124,8 @@ export interface NightSummary {
   /** Poslech night: replays the player asked for. */
   listen?: boolean;
   replays?: number;
+  /** First time this night got a star in the active track (grandma's postcard shows only then). */
+  firstClear?: boolean;
 }
 
 /** Ambient sound per backdrop. */
@@ -1292,7 +1294,7 @@ export class NightScene extends Phaser.Scene {
       night: this.n, stars, total, served: this.served, angry: this.angry, mistakes: this.mistakes, coins: this.coins, tips: this.tips,
       bestCombo: this.bestCombo, newWords, trouble, regularsSeen: this.regularsSeen, clean: this.cleanServes, seats: this.seats, helped: this.helped, greetings: this.greetings, reactions: this.reactions, haggles: this.haggles,
       critic: boss ? { stars, mistakes: this.critic.mistakes, walkouts: this.critic.walkouts } : undefined,
-      dailyCounted, listen: this.listen, replays: this.replaysAsked,
+      dailyCounted, listen: this.listen, replays: this.replaysAsked, firstClear: stars > 0 && rec.stars === 0,
     };
     G.ime.deactivate();
     goto(this, 'Result', summary, 500);

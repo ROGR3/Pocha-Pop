@@ -1,8 +1,8 @@
-// End of night: stars, coins, new words → grandma's postcard → regulars' stories.
+// End of night: stars, coins, new words → grandma's postcard (first clear only) → regulars' stories.
 import Phaser from 'phaser';
-import { DAILY_NIGHT, nightTitle, BOSS_NIGHT, DISTRICTS, FINAL_NIGHT, PHARMACY_LAST, homeDistrict, nightDef } from '../data/levels';
+import { DAILY_NIGHT, nightTitle, BOSS_NIGHT, DISTRICTS, FINAL_NIGHT, NIGHTS, PHARMACY_LAST, homeDistrict, nightDef } from '../data/levels';
 import { BOSS_REVIEW, JAMO_TIPS, NAMES, PHARMACY_OUTRO, POSTCARDS, REGULARS } from '../data/story';
-import { hasRawJamo } from '../logic/hangul';
+import { districtRecap, troubleLine } from '../logic/postcard';
 import { seatMultiplier } from '../logic/rules';
 import { dailyBest } from '../logic/daily';
 import { checkAchievements } from '../game/achievements';
@@ -117,6 +117,16 @@ export class ResultScene extends Phaser.Scene {
       });
       y += 40;
     }
+    // grandma writes only after the first clear of a night that has a card
+    if (!(s.firstClear && POSTCARDS[s.night])) {
+      if (s.trouble.length) {
+        const tr = txt(this, W / 2, y, 'Pozor na: ' + troubleLine(s.trouble.map(word), JAMO_TIPS), { size: 's', color: C.cream, origin: [0.5, 0], align: 'center', wrap: W - 24 });
+        L.add(tr);
+        y += tr.height;
+      }
+      void this.stories(Math.min(y + 4, H - 28));
+      return;
+    }
     const by = Math.min(H - 18, y + 20);
     // Poslech: a postcard read before in Čtení can be skipped
     if (G.listening && G.data.storySeen.includes(`night:${s.night}`)) {
@@ -135,15 +145,14 @@ export class ResultScene extends Phaser.Scene {
   // ------------------------------------------------------------ phase 2
   private postcard() {
     const s = this.s;
-    markSeen(G.data, `night:${s.night}`);
     const W = this.scale.width, H = this.scale.height;
     G.audio.play('paper');
     const old = this.layer;
     this.tweens.add({ targets: old, alpha: 0, duration: 200, onComplete: () => old.destroy() });
     this.layer = this.add.container(0, 0);
-    const pc = s.night === DAILY_NIGHT
-      ? { title: 'Denní výzva', text: 'Každý den jiná směs slov, která už znáš. Zítra zase – babička drží palce!', tip: 'Tip: denní výzva se počítá i do denní série.' }
-      : POSTCARDS[s.night] ?? { title: 'Pozdrav z Jeju', text: 'Další noc za tebou! Jsem na tebe pyšná.', tip: 'Tip: opakování je matka moudrosti.' };
+    const pc = POSTCARDS[s.night];
+    if (!pc) { this.skipPostcard(); return; }
+    markSeen(G.data, `night:${s.night}`);
     const c = this.add.container(0, H);
     const cw = Math.min(W - 12, 240);
     const cx = Math.round((W - cw) / 2);
@@ -157,13 +166,18 @@ export class ResultScene extends Phaser.Scene {
     const body = txt(this, cx + 8, y, pc.text, { size: 's', color: C.ink, wrap: cw - 16, lineSpacing: 2 });
     parts.push(body);
     y += body.height + 6;
+    if (pc.recap) {
+      const dist = nightDef(s.night).district;
+      const ids = NIGHTS.filter((d) => d.district === dist && !d.boss).flatMap((d) => d.newWords);
+      const r = districtRecap(ids, G.track().words);
+      const name = dist === 'boss' ? '' : DISTRICTS[dist].ko;
+      const msg = `Ve čtvrti ${name} už píšeš ${r.known} z ${r.total} slov bez nápovědy.${r.weakest.length ? ` Procvič: ${r.weakest.map((id) => word(id).ko).join(', ')}.` : ''}`;
+      const rt = txt(this, cx + 8, y, msg, { size: 's', color: C.blue, wrap: cw - 16, lineSpacing: 2 });
+      parts.push(rt);
+      y += rt.height + 6;
+    }
     if (s.trouble.length) {
-      const tips = s.trouble.map((id) => {
-        const w = word(id);
-        const t = Object.keys(JAMO_TIPS).filter((k) => [...w.ko].some((ch) => hasRawJamo(ch, k))).map((k) => JAMO_TIPS[k]);
-        return `${w.ko} (${w.cs})${t.length ? ' – ' + t[0] : ''}`;
-      });
-      const tr = txt(this, cx + 8, y, 'Pozor na: ' + tips.join(', '), { size: 's', color: C.brown, wrap: cw - 16, lineSpacing: 2 });
+      const tr = txt(this, cx + 8, y, 'Pozor na: ' + troubleLine(s.trouble.map(word), JAMO_TIPS), { size: 's', color: C.brown, wrap: cw - 16, lineSpacing: 2 });
       parts.push(tr);
       y += tr.height + 6;
     }

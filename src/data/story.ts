@@ -40,9 +40,14 @@ export interface Postcard {
   title: string;
   text: string;
   tip: string;
+  /** Add a recap of the district's words (last night before the move / boss). */
+  recap?: boolean;
 }
 
-/** Postcard after night n (index = night). It introduces the jamo of night n+1. */
+/**
+ * Postcard after the first clear of night n. It introduces the new jamo of every
+ * following night up to the next card (tests/postcard.test.ts checks the coverage).
+ */
 export const POSTCARDS: Record<number, Postcard> = {
   1: {
     title: 'Pozdrav z Jeju',
@@ -68,6 +73,7 @@ export const POSTCARDS: Record<number, Postcard> = {
     title: 'Stěhujeme se k řece',
     text: 'Stánek se přesouvá k 한강 – v létě tam jsou pikniky. Zákazníci chtějí ovoce a pití. Nové jamo: ㅍ, ㅋ a ㅎ.',
     tip: 'Zdvořilost: když host odchází (ikonka dveří), napiš 감사합니다 = děkuji. Dostaneš mince navíc!',
+    recap: true,
   },
   6: {
     title: 'Ryby na trhu',
@@ -79,55 +85,32 @@ export const POSTCARDS: Record<number, Postcard> = {
     text: 'Jsou ty mosty pořád tak barevné? Nové samohlásky: ㅔ (멜론) a ㅟ = ㅜ + ㅣ (샌드위치). S ㅔ umíš i 안녕하세요 a 또 오세요 (přijďte zas).',
     tip: 'Tip: 치킨 a pivo 맥주 – „치맥“ je u řeky povinnost.',
   },
-  8: {
-    title: 'Babička se učí plavat',
-    text: 'Nových písmen už moc není – teď jde o rychlost. Čekají tě 빙수, 과일 a dlouhá 아이스크림.',
-    tip: 'Tip: na 빙수 dej hodně sladkých fazolí.',
-  },
-  9: {
-    title: 'Skoro hotovo',
-    text: 'Zítra přijde dav – poslední noc před velkou návštěvou. Opakuj, co tě zlobilo.',
-    tip: 'Tip: kdo se nehoní, tomu jídlo nepřeteče.',
-  },
   10: {
     title: 'Přijede 미식가!',
     text: 'Kritik je tu. Objednává celými větami: „김치찌개 하나 주세요“ = kimči polévka, jednou, prosím. Mezery psát nemusíš. Každá chyba ho mrzí – piš pečlivě.',
     tip: 'Nová slova: 하나 (jeden), 둘 (dva), 하고 (a), 주세요 (dejte mi, prosím).',
+    recap: true,
   },
   11: {
     title: 'Jsem na tebe pyšná',
-    text: 'Ať napsal cokoli, uličku jsi oživil/a. Developer se ale nevzdává – potřebuješ víc slávy. Zkus trh 동대문: moje kamarádka 이모 tam šije. Lidi tam chtějí věci v barvách: „빨간색 모자“ = červená čepice. Nové písmeno: ㅆ (Shift + ㅅ).',
+    text: 'Ať napsal cokoli, uličku jsi oživil/a. Developer se nevzdává – zkus trh 동대문, šije tam moje kamarádka 이모. Chtějí tam věci v barvách: „빨간색 모자“ = červená čepice. Nově ㅆ (Shift + ㅅ) a ㅑ – jako ㅏ, jen se dvěma čárkami.',
     tip: 'Novinka: po jídle zákazník řekne, jak mu bylo. „Levné!“ → napiš 싸다, „Výborné!“ → 맛있다. Základní tvar končí na -다.',
   },
-  12: {
-    title: 'Hedvábí a knoflíky',
-    text: 'Barvy jsou snadné: skoro všechny končí na 색 (barva). Zítra přidám ㅑ – s ní napíšeš 하얀색 (bílá). ㅑ je jako ㅏ, jen s dvěma čárkami.',
-    tip: 'Tip: mezeru mezi barvou a věcí psát nemusíš. 빨간색모자 platí taky.',
-  },
   13: {
-    title: 'Mandarinky v košíku',
-    text: 'Další novinka: ㅖ = Shift + ㅔ. Najdeš ji v 시계 (hodinky) a v 예쁘다 (hezký). Zákazníci na trhu to slovo rádi slyší!',
-    tip: 'Tip: když zákazník řekne „Hezké!“, napiš 예쁘다.',
-  },
-  14: {
     title: 'Šedé ráno na Jeju',
-    text: 'Dnes je tu mlha, všechno je 회색 – šedé. To je nová samohláska ㅚ = ㅗ + ㅣ. A 색 samotné znamená „barva“.',
-    tip: 'Tip: 이모 má ráda 보라색. Ale psst!',
-  },
-  15: {
-    title: 'Poslední den trhu',
-    text: 'Zítra přijde dav – všechny barvy, všechny věci. Pak se na tebe chce podívat slavná módní blogerka. Pozdrav ji hezky!',
-    tip: 'Tip: dívej se nejdřív na barvu, pak na věc. Barva se píše první.',
+    text: 'Barvy skoro vždycky končí na 색 (barva): 하얀색, 노란색. Další novinky: ㅖ = Shift + ㅔ (시계 – hodinky, 예쁘다 – hezký) a ㅚ = ㅗ + ㅣ v 회색 – šedá jako dnešní mlha.',
+    tip: 'Tip: když zákazník řekne „Hezké!“, napiš 예쁘다.',
   },
   16: {
     title: 'Blogerka přichází',
     text: 'Objednává celými větami: „파란색 모자하고 가방 주세요“ = modrou čepici a tašku, prosím. 하고 je „a“, 하나/둘 je kolik. Nezapomeň na 안녕하세요!',
     tip: 'Tip: věta je jen několik slov za sebou. Piš je jedno po druhém.',
+    recap: true,
   },
   116: {
     title: 'Video koluje po Soulu',
-    text: 'Vnoučata mi ukazovala video z tvého stánku! Mladí teď chtějí do 홍대 – hudba, kluby a slova z angličtiny. Já si zatím zkouším 한복 od 이모.',
-    tip: 'P.S. Fialová mi sluší, co myslíš?',
+    text: 'Vnoučata mi ukazovala video z tvého stánku! Mladí teď chtějí do 홍대 – hudba a slova z angličtiny. Píšou se podle zvuku: party → 파티, game → 게임. Brzy přibude ㅞ = ㅜ + ㅔ (웨이터).',
+    tip: 'Pravidlo: f se píše ㅍ (coffee → 커피), v se píše ㅂ.',
   },
 };
 
@@ -304,90 +287,48 @@ BOSS_REVIEW.captain = {
 };
 
 Object.assign(POSTCARDS, {
-  17: {
-    title: 'Hudba z rádia',
-    text: 'V 홍대 mluví mladí napůl anglicky. Přejatá slova se píšou podle zvuku: party → 파티, game → 게임. Zítra přibude ㅞ = ㅜ + ㅔ, třeba ve slově 웨이터 (waiter).',
-    tip: 'Pravidlo: f se píše ㅍ (coffee → 커피), v se píše ㅂ.',
-  },
   18: {
     title: 'Koncert na Jeju',
     text: 'Dnes hrála na pláži kapela! Další písmeno: ㅒ = Shift + ㅐ. Je jen v pár slovech, třeba 얘기 – povídání.',
     tip: 'Pravidlo: koncovka -ing se píše -잉 (camping → 캠핑).',
   },
-  19: {
-    title: 'Tichá noc u moře',
-    text: 'Všechna písmena hlavní linky už skoro znáš! Zbytek je o rychlosti a přejatých slovech.',
-    tip: 'Pravidlo: anglické souhlásky na konci dostanou ㅡ: test → 테스트, drum → 드럼, concert → 콘서트.',
-  },
-  20: {
-    title: 'Babička tančí',
-    text: 'Zítra poslední noc v 홍대. Pak tě navštíví manažer slavné skupiny – objednává pro celý tým.',
-    tip: 'Tip: „둘하고“ = dvakrát a… Pozor, kde končí jedno jídlo a začíná další.',
-  },
   21: {
     title: 'Manažer přichází',
     text: 'Manažer chce věty jako „떡볶이 둘하고 콜라 주세요“. Piš je klidně bez mezer. A pozdrav!',
     tip: 'Tip: kdo pozdraví, tomu se odpouští.',
+    recap: true,
   },
   121: {
     title: 'Píseň o stánku',
-    text: '민수 prý nahrál píseň o tvém stánku a hraje ji rádio! Další zastávka: 용산, trh s elektronikou. Tam se smlouvá: na „To je drahé!“ odpověz 할인 (sleva), nebo trvej na ceně slovem 싸다.',
-    tip: 'Nové písmeno: ㅝ = ㅜ + ㅓ, třeba v pozdravu 반가워요 (těší mě).',
-  },
-  22: {
-    title: 'Staré rádio',
-    text: 'Mé staré rádio u stánku už dlouho nechytá. Možná ho někdo na 용산 opraví? Zítra přibude ㅙ = ㅗ + ㅐ ve slově 괜찮다 (v pořádku).',
+    text: '민수 nahrál píseň o tvém stánku! Další zastávka: 용산, trh s elektronikou. Smlouvá se: na „To je drahé!“ odpověz 할인 (sleva), nebo trvej na 싸다. Nově ㅝ = ㅜ + ㅓ (반가워요) a ㅙ = ㅗ + ㅐ (괜찮다).',
     tip: 'Tip: sleva (할인) zákazníka udrží, 싸다 přinese víc mincí – ale může odejít.',
-  },
-  23: {
-    title: 'Mořské řasy',
-    text: 'Dlouhá slova se píšou po slabikách: 텔레비전 = 텔·레·비·전. Nikam nespěchej.',
-    tip: 'Tip: 냉장고 a 세탁기 mají každá slabika jasný tvar. Představ si je jako stavebnici.',
   },
   24: {
     title: 'Ventilátor v létě',
     text: 'Na Jeju je horko a já mám jen 선풍기. Zítra se ti hodí slova 너무 (moc) a 정말 (opravdu) – obchodníci je milují.',
-    tip: 'Tip: 비싸다 = drahý, 싸다 = levný. Liší se jen 비.',
-  },
-  25: {
-    title: 'Obchodník čeká',
-    text: 'Po poslední noci přijde obchodník, který prý nikdy neprohrál. Mluví o cenách: „카메라 너무 비싸다“.',
-    tip: 'Tip: jeho věty piš přesně, slovo po slově.',
+    tip: 'Tip: 비싸다 = drahý, 싸다 = levný. Dlouhá slova piš po slabikách: 텔·레·비·전.',
   },
   26: {
     title: 'Obchodník čeká',
     text: 'Zítra přijde 상인. Nezapomeň ho pozdravit – i drsní obchodníci mají rádi slušnost.',
     tip: 'Tip: 정말 = opravdu, 너무 = moc.',
+    recap: true,
   },
   126: {
     title: 'Jedu za tebou!',
     text: 'Za týden přijedu trajektem do 부산 – tam tě čeká poslední štace: výdejna lístků v přístavu. Lidé ti řeknou, kam jedou, a ty napíšeš čím: na Jeju 배, do Soulu 기차.',
     tip: 'Tip: na letiště jezdí 버스 i 지하철 – obojí platí.',
   },
-  27: {
-    title: 'Racci nad přístavem',
-    text: 'V 부산 je cítit moře. Zákazníci řeknou cíl a ty napíšeš dopravu. Do 강남 jezdí 지하철, do 인천 기차.',
-    tip: 'Tip: dívej se na ikonu cíle – mapa ti napoví.',
-  },
   28: {
     title: 'Lístky, prosím',
     text: 'Od zítřka chtějí lidé i lístek: 표. Napiš dopravu a 표 – třeba „기차 표“ (lístek na vlak). Mezera je nepovinná.',
-    tip: 'Tip: taxi lístek nepotřebuje. Taxík zaplatíš na místě.',
-  },
-  29: {
-    title: 'Pas a brána',
-    text: 'Na letišti potřebuješ 여권 (pas) a 게이트 (bránu). Na nádraží 출구 (východ). Všechno to tu uslyšíš.',
-    tip: 'Tip: 여권 má ㅝ – vzpomínáš na 반가워요?',
-  },
-  30: {
-    title: 'Zítra kapitán',
-    text: 'Poslední noc v přístavu! Pak tě čeká 선장 – kapitán mého trajektu. Chce dlouhé věty ze všeho, co umíš.',
-    tip: 'Tip: dýchej. Celá hra byla příprava na tuhle noc.',
+    tip: 'Tip: na letišti uslyšíš 여권 (pas) a 게이트, na nádraží 출구 (východ). Taxi lístek nepotřebuje.',
   },
   31: {
     title: 'Vidíme se na lodi',
     text: 'Kapitán je přísný, ale spravedlivý. Pozdrav ho a piš celé věty. Já budu na palubě.',
     tip: 'P.S. Vezu ti mandarinky.',
+    recap: true,
   },
   131: {
     title: 'Doma',
@@ -403,12 +344,7 @@ Object.assign(POSTCARDS, {
   202: {
     title: 'Bolí tě něco?',
     text: 'Od další směny lidé řeknou, co je trápí, a ty podáš správnou věc: 약 (lék), 반창고 (náplast), nebo pošleš do 병원 (nemocnice). ㅝ = ㅜ + ㅓ.',
-    tip: 'Tip: zlomená noha → 병원, říznutí → 반창고, rýma → 약.',
-  },
-  203: {
-    title: 'Babiččin čaj',
-    text: 'Ještě jedna směna a 약사 se vrací. Říkala, že ti za odměnu dá recept na můj zázvorový čaj!',
-    tip: 'Tip: 아프다 = bolet, 조심하다 = dávat pozor.',
+    tip: 'Tip: zlomená noha → 병원, říznutí → 반창고, rýma → 약. 약사 ti prý dá recept na můj čaj!',
   },
   204: {
     title: 'Recept na čaj',
