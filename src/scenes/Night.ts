@@ -4,7 +4,7 @@ import Phaser from 'phaser';
 import { DAILY_NIGHT, NIGHTS, nightTitle, CRITIC_ORDERS, CRITIC_PATIENCE, DISTRICTS, homeDistrict, nightDef, nightPool, type NightDef, type RegularId } from '../data/levels';
 import { BOSS_INTRO, HOLIDAY_INTRO, NAMES, PHARMACY_INTRO } from '../data/story';
 import { matchAgainst } from '../logic/hangul';
-import { BOSS_SEATS, DEFAULT_SEATS, comboMultiplier, criticStars, nightStars, patienceMultiplier, seatMultiplier, serveCoins, spawnInterval } from '../logic/rules';
+import { BOSS_SEATS, DEFAULT_SEATS, comboMultiplier, criticStars, nightStars, pairPatience, patienceMultiplier, seatMultiplier, serveCoins, spawnInterval } from '../logic/rules';
 import { helperPick } from '../logic/helper';
 import { DISCOUNT_MUL, HAGGLE_CHANCE, HAGGLE_WINDOW, HAGGLE_WORDS, INSIST_LEAVE, INSIST_MUL, BOSS_GREET_WINDOW, BYE_COINS, BYE_WORDS, GREET_WINDOW, HELLO_COINS, HELLO_PATIENCE, HELLO_WORDS, REACTIONS, REACTIONS_FROM, REACTION_CHANCE, REACTION_COINS, REACTION_TIME, matchPolite, pickReaction, type GreetKind, type Greeting, type ReactionId } from '../logic/polite';
 import { ITEM_REACTIONS } from '../data/reactions';
@@ -477,10 +477,11 @@ export class NightScene extends Phaser.Scene {
   private newOrder(c: Customer) {
     const exclude = new Set<string>([...this.recent.slice(-2)]);
     for (const o of this.customers) if (o.order) o.order.tokens.forEach((t) => exclude.add(t.id));
-    const order = makeOrder(c.kind, { pool: this.pool, newTonight: this.newTonight, exclude, rand: this.rand, mechanic: this.def.mechanic ?? DISTRICTS[homeDistrict(this.def)].mechanic, boss: this.def.boss, late: this.def.late });
+    const mech = this.def.mechanic ?? DISTRICTS[homeDistrict(this.def)].mechanic;
+    const order = makeOrder(c.kind, { pool: this.pool, newTonight: this.newTonight, exclude, rand: this.rand, mechanic: mech, boss: this.def.boss, late: this.def.late, combo: this.def.combo });
     c.order = order;
     const base = c.kind === 'boss' ? CRITIC_PATIENCE : this.def.patience * (c.kind === 'haeun' ? 0.7 : c.kind === 'nabi' ? 1.2 : 1);
-    c.max = base * this.patMul;
+    c.max = base * this.patMul * (c.kind === 'boss' ? 1 : pairPatience(order.tokens.length, mech === 'colorItem'));
     c.patience = c.max;
     if (this.n === 1 && G.data.stats.served === 0 && this.served === 0 && !this.customers.some((o) => o.tutorial)) {
       c.tutorial = true;

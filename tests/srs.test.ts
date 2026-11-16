@@ -7,6 +7,10 @@ describe('mastery', () => {
     expect(hintLevel(1)).toBe('partial');
     expect(hintLevel(2)).toBe('none');
     expect(hintLevel(5)).toBe('none');
+    // colour+item pairs keep hints one level longer
+    expect(hintLevel(1, 1)).toBe('full');
+    expect(hintLevel(2, 1)).toBe('partial');
+    expect(hintLevel(3, 1)).toBe('none');
   });
   it('clean serve raises mastery, mistakes lower it', () => {
     let s = newStat();

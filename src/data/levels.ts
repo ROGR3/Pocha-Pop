@@ -33,6 +33,8 @@ export interface NightDef {
   backdrop?: Backdrop;
   weather?: 'rain' | 'dry' | 'snow';
   review?: string[];
+  /** colorItem: chance of a colour+item pair (default 0.85). */
+  combo?: number;
 }
 
 export interface DistrictDef {
@@ -78,11 +80,11 @@ export const NIGHTS: NightDef[] = [
   { n: 10, district: 'hangang', newWords: [], newJamo: [], customers: 14, patience: 21, spawn: [4, 6], regulars: ALL_OLD },
   { n: 11, district: 'boss', boss: 'critic', newWords: ['hana', 'dul', 'hago', 'juseyo'], newJamo: [], customers: 8, patience: 24, spawn: [5, 7], regulars: ['kim', 'haeun', 'nabi'] },
   // 동대문: colour + thing
-  { n: 12, district: 'dongdaemun', prev: 11, newWords: ['ot', 'chima', 'baji', 'moja', 'gabang', 'ppalgansaek', 'paransaek', 'noransaek', 'geomeunsaek'], newJamo: ['ㅆ'], customers: 10, patience: 28, spawn: [5.5, 8], regulars: ['nabi', 'imo'] },
-  { n: 13, district: 'dongdaemun', newWords: ['gudu', 'undonghwa', 'jigap', 'usan', 'choroksaek', 'bunhongsaek', 'borasaek', 'hayansaek'], newJamo: ['ㅑ'], customers: 11, patience: 27, spawn: [5.5, 7.5], regulars: ['nabi', 'imo', 'kim'] },
-  { n: 14, district: 'dongdaemun', newWords: ['angyeong', 'hanbok', 'mokgeori', 'tisyeocheu', 'sigye', 'juhwangsaek', 'galsaek'], newJamo: ['ㅖ'], customers: 12, patience: 26, spawn: [5, 7.5], regulars: ['nabi', 'imo', 'haeun'] },
-  { n: 15, district: 'dongdaemun', newWords: ['hoesaek', 'saek'], newJamo: ['ㅚ'], customers: 12, patience: 25, spawn: [5, 7], regulars: ['nabi', 'imo', 'kim', 'haeun'] },
-  { n: 16, district: 'dongdaemun', newWords: [], newJamo: [], customers: 13, patience: 24, spawn: [4.5, 6.5], regulars: ['nabi', 'imo', 'kim', 'haeun'] },
+  { n: 12, district: 'dongdaemun', prev: 11, newWords: ['ot', 'chima', 'baji', 'moja', 'gabang', 'ppalgansaek', 'paransaek'], newJamo: ['ㅆ'], customers: 9, patience: 28, spawn: [6, 8.5], combo: 0.3, regulars: ['nabi', 'imo'] },
+  { n: 13, district: 'dongdaemun', newWords: ['gudu', 'jigap', 'usan', 'noransaek', 'geomeunsaek', 'hayansaek'], newJamo: ['ㅑ'], customers: 10, patience: 28, spawn: [5.5, 8], combo: 0.5, regulars: ['nabi', 'imo', 'kim'] },
+  { n: 14, district: 'dongdaemun', newWords: ['undonghwa', 'angyeong', 'sigye', 'tisyeocheu', 'choroksaek', 'bunhongsaek', 'borasaek'], newJamo: ['ㅖ'], customers: 11, patience: 27, spawn: [5.5, 7.5], combo: 0.65, regulars: ['nabi', 'imo', 'haeun'] },
+  { n: 15, district: 'dongdaemun', newWords: ['hanbok', 'mokgeori', 'juhwangsaek', 'galsaek', 'hoesaek', 'saek'], newJamo: ['ㅚ'], customers: 12, patience: 26, spawn: [5, 7.5], combo: 0.75, regulars: ['nabi', 'imo', 'kim', 'haeun'] },
+  { n: 16, district: 'dongdaemun', newWords: [], newJamo: [], customers: 13, patience: 25, spawn: [4.5, 7], regulars: ['nabi', 'imo', 'kim', 'haeun'] },
   { n: 116, district: 'boss', boss: 'blogger', newWords: [], newJamo: [], customers: 8, patience: 26, spawn: [5, 7], regulars: ['imo', 'nabi'] },
   // 홍대: loanwords (bubbles show the original)
   { n: 17, district: 'hongdae', newWords: ['norae', 'gasu', 'yeonghwa', 'deurama', 'geim', 'pati'], newJamo: [], customers: 11, patience: 26, spawn: [5.5, 7.5], regulars: ['nabi', 'minsu'] },

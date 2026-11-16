@@ -308,9 +308,9 @@ bash scripts/make-icons.sh           # app ikony (desktop + Android) z public/as
 
 | Hráč | po 미식가 (11) | po 용산 (126) | po 부산 (131) | na konci (303) |
 |---|---|---|---|---|
-| pomalejší (2★, 2 místa) | 709 | 2 416 | 2 846 | 3 238 |
-| normální (2–3★, 3 místa) | 951 | 3 109 | 3 731 | 4 259 |
-| zkušený (3★, 4 místa) | 1 726 | 5 336 | 6 427 | 7 367 |
+| pomalejší (2★, 2 místa) | 709 | 2 255 | 2 698 | 3 099 |
+| normální (2–3★, 3 místa) | 922 | 2 934 | 3 543 | 4 086 |
+| zkušený (3★, 4 místa) | 1 626 | 4 905 | 5 875 | 6 781 |
 
 Kombo platí ×1 / ×1,5 (od 5) / ×2 (od 10), místa u pultu ×1 / ×1,15 / ×1,3 (co-op ×1,15).
 Ceny: upgrady a menu balíčky 2 500, čepičky 135, každá barva na každé části stánku 5 500 – dohromady 8 135.

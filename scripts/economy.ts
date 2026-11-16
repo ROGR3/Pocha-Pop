@@ -24,7 +24,7 @@ function night(n: number, p: Profile): { coins: number; stars: number } {
   const seats = def.boss ? 3 : p.seats;
   const customers = def.boss ? 10 : def.customers;
   let coins = 0, combo = 0, served = 0, mistakes = 0;
-  const words = def.boss ? 3.5 : DISTRICTS[homeDistrict(def)].mechanic === 'colorItem' ? 2 : 1;
+  const words = def.boss ? 3.5 : DISTRICTS[homeDistrict(def)].mechanic === 'colorItem' ? 1 + (def.combo ?? 0.85) : 1;
   for (let i = 0; i < customers; i++) {
     if (rand() > p.served) { combo = 0; continue; }
     served++;

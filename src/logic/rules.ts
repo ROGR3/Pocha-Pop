@@ -84,3 +84,16 @@ export function seatsAvailable(nights: Record<number, { stars: number }>, bossNi
   const three = Object.entries(nights).some(([n, r]) => !bossNights.includes(Number(n)) && r.stars >= 3);
   return three ? [2, 3, 4] : [2, 3];
 }
+
+/** 동대문: patience factor for a colour+item pair. */
+export const PAIR_PATIENCE = 1.3;
+
+/** colorItem order shape from one roll: pair with chance `combo`, otherwise colour-only or item-only 50/50. */
+export function colorOrderShape(r: number, combo = 0.85): 'combo' | 'color' | 'item' {
+  if (r < combo) return 'combo';
+  return r < combo + (1 - combo) / 2 ? 'color' : 'item';
+}
+
+export function pairPatience(tokens: number, colorItem: boolean): number {
+  return colorItem && tokens > 1 ? PAIR_PATIENCE : 1;
+}

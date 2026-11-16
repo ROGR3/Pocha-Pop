@@ -2,6 +2,7 @@
 // builds the orders, judges "done" messages with the CoopReferee and tells
 // everybody (itself included) what happened. The Night scene only draws.
 import { DISTRICTS, homeDistrict, type NightDef } from '../data/levels';
+import { pairPatience } from '../logic/rules';
 import { COOP_WALK_MS, CoopReferee, TICK_MS, coopSpawn } from '../logic/coop';
 import { answerMatches, type Msg, type OrderData } from '../logic/netproto';
 import { makeOrder } from './orders';
@@ -136,7 +137,7 @@ export class CoopDirector {
     const exclude = new Set<string>(this.recent.slice(-3));
     for (const c of this.customers) if (c.state === 'wait') c.order.tokens.forEach((t) => exclude.add(t.id));
     const mechanic = this.def.mechanic ?? DISTRICTS[homeDistrict(this.def)].mechanic;
-    const o = makeOrder('generic', { pool: this.pool, newTonight: this.newTonight, exclude, rand: this.rand, mechanic, late: this.def.late });
+    const o = makeOrder('generic', { pool: this.pool, newTonight: this.newTonight, exclude, rand: this.rand, mechanic, late: this.def.late, combo: this.def.combo });
     o.tokens.forEach((t) => this.recent.push(t.id));
     const order: OrderData = { tokens: o.tokens, target: o.target, cs: o.cs, icons: o.icons, kind: 'generic' };
     if (o.alts) order.alts = o.alts;
@@ -144,7 +145,7 @@ export class CoopDirector {
     const generics = DISTRICTS[homeDistrict(this.def)].generics;
     const look = generics[Math.floor(this.rand() * generics.length)];
     const cid = this.nextCid++;
-    const patienceMs = Math.round(this.def.patience * this.patMul * 1000 + (this.listen ? speechMs(o.target) * 2 + LISTEN_EXTRA_MS : 0));
+    const patienceMs = Math.round(this.def.patience * this.patMul * pairPatience(o.tokens.length, mechanic === 'colorItem') * 1000 + (this.listen ? speechMs(o.target) * 2 + LISTEN_EXTRA_MS : 0));
     const difficulty = o.tokens.reduce((a, t) => a + word(t.id).difficulty, 0);
     const c: HostCustomer = { cid, seat, at: this.clock, patienceMs, order, difficulty, state: 'wait' };
     this.customers.push(c);

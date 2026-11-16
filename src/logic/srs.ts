@@ -20,9 +20,11 @@ export function newStat(): WordStat {
 
 export type HintLevel = 'full' | 'partial' | 'none';
 
-export function hintLevel(mastery: number): HintLevel {
-  if (mastery <= 0) return 'full';
-  if (mastery === 1) return 'partial';
+/** `bonus` keeps hints longer (colour+item pairs). */
+export function hintLevel(mastery: number, bonus = 0): HintLevel {
+  const m = mastery - bonus;
+  if (m <= 0) return 'full';
+  if (m === 1) return 'partial';
   return 'none';
 }
 

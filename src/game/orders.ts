@@ -10,6 +10,7 @@ import { DESTINATIONS, TICKETED } from '../data/travel';
 import { BODY_PARTS, SYMPTOMS } from '../data/pharmacy';
 import { FAMILY_FOR } from '../data/family';
 import { cap, colorAdj } from '../logic/czech';
+import { colorOrderShape } from '../logic/rules';
 import type { BossId, Mechanic, RegularId } from '../data/levels';
 import type { ReactionId } from '../logic/polite';
 
@@ -50,6 +51,8 @@ export interface OrderCtx {
   mechanic: Mechanic;
   boss?: BossId;
   late?: boolean;
+  /** colorItem: chance of a colour+item pair. */
+  combo?: number;
 }
 
 const CAT_FOOD = ['uyu', 'mul', 'gogi', 'chikin', 'dubu', 'mandu', 'gimbap'];
@@ -132,9 +135,16 @@ function pharmacyOrder(ctx: OrderCtx, kind: Kind): Order {
 function colorItem(ctx: OrderCtx, kind: Kind): Order {
   const items = ofCat(ctx.pool, 'clothes');
   const colors = ofCat(ctx.pool, 'color').filter((id) => id !== 'saek');
-  const it = pick(ctx, items);
-  if (!colors.length || ctx.rand() < 0.15) return { ...single(it, kind), icons: [`cl:${it}:`] };
-  const co = pick(ctx, colors);
+  const itemOnly = (id: string): Order => ({ ...single(id, kind), icons: [`cl:${id}:`] });
+  const colorOnly = (id: string): Order => ({ ...single(id, kind), cs: cap(word(id).cs) });
+  if (!colors.length) return itemOnly(pick(ctx, items));
+  const shape = colorOrderShape(ctx.rand(), ctx.combo);
+  if (shape === 'item') return itemOnly(pick(ctx, items));
+  if (shape === 'color') return colorOnly(pick(ctx, colors));
+  const it = pick(ctx, items), co = pick(ctx, colors);
+  // first meet: a word is typed alone once before it appears in a pair
+  if (G.stat(co).seen === 0) return colorOnly(co);
+  if (G.stat(it).seen === 0) return itemOnly(it);
   const wi = word(it), wc = word(co);
   const colour = COLORS.find((c) => c.word === co)!;
   return {
@@ -250,13 +260,15 @@ function sentence(tokens: Token[], cs: string, icons: string[]): Order {
 export function koreanHint(o: Order): { text: string; alpha: number } {
   if (o.hinted) return { text: o.target, alpha: 1 };
   if (o.kind === 'nabi') return { text: '', alpha: 0 };
+  // colour+item pair: hints stay one level longer
+  const bonus = o.kind !== 'boss' && o.tokens.length === 2 && word(o.tokens[0].id).category === 'color' ? 1 : 0;
   const parts = o.tokens.map((t) => {
-    const lvl = hintLevel(G.stat(t.id).mastery);
+    const lvl = hintLevel(G.stat(t.id).mastery, bonus);
     if (lvl === 'full') return t.ko;
     if (lvl === 'partial') return [...t.ko][0] + '…';
     return '·'.repeat(Math.min(3, [...t.ko].length));
   });
-  const all = o.tokens.map((t) => hintLevel(G.stat(t.id).mastery));
+  const all = o.tokens.map((t) => hintLevel(G.stat(t.id).mastery, bonus));
   const text = parts.map((p, i) => (i > 0 && !o.tokens[i].glue ? ' ' : '') + p).join('');
   if (all.every((l) => l === 'none')) return { text: '', alpha: 0 };
   return { text, alpha: all.every((l) => l === 'full') ? 1 : 0.6 };
