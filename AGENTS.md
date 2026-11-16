@@ -68,7 +68,7 @@ src-tauri/             Rust + gen/android (commitované; AndroidManifest má adj
 | `npm test` | vitest |
 | `npm run build` | tsc + vite build |
 | `npm run art` / `bash scripts/build-art.sh <name>` | Aseprite batch |
-| `npm run words` | regenerace slov |
+| `WORDS_TSV=<anki_korean.txt> npm run words` | regenerace slov (bez soukromého decku skončí chybou) |
 | `npm run sfx` | regenerace zvuků |
 | `npm run screenshots` | Playwright screenshoty do `screenshots/` (`ONLY=23,24` = jen některé) |
 | `npm run autoplay` | bot dohraje vybrané noci přes UI (`node scripts/autoplay.mjs 12 116`) |
@@ -125,7 +125,7 @@ USB kabel občas vypadne (adb forward/reverse pak zmizí). Systémové věci (bl
 `pkill -f` používej jen s ukotveným vzorem (`'^target/debug/...'`), jinak zabije i vlastní shell.
 
 ## Zdroje počítače
-Na tomhle stroji už jednou spadlo jádro při souběhu `cargo build` (16 vláken) + headless Chromium +
+Na vývojovém stroji už jednou spadlo jádro při souběhu `cargo build` (16 vláken) + headless Chromium +
 Vite + Aseprite. Těžké úlohy pouštěj **po jedné**, cargo s `CARGO_BUILD_JOBS=4`, po sobě zavírej dev servery.
 Po každém Android buildu ukonči Gradle/Kotlin démony (`bash scripts/stop-daemons.sh`; `sign-apk.sh` to dělá sám) –
 drží v paměti několik GB a jádro dvakrát spadlo (oops v `kswapd0`) chvíli po buildu APK.

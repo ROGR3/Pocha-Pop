@@ -4,7 +4,7 @@ Navazuje na `DESIGN.md` (slice je hotový, viz `README.md` a `AGENTS.md`). Tento
 pro druhou etapu. Platí všechno z první etapy: systémová klávesnice (IME), Android + Linux, čeština v UI,
 pixel art kreslený v Aseprite přes `art/src/*.lua`, paleta Endesga 32, kvalita a „feel“ jsou priorita.
 
-Zdroj slov: `/home/rogr/Projects/Recallo/anki_korean.txt` (639 slov z Duolinga; hra jich zatím používá 54).
+Zdroj slov: soukromý Anki export `anki_korean.txt` (Recallo), cesta přes `WORDS_TSV` (639 slov z Duolinga; hra jich zatím používá 54).
 Všechna korejská slova níže **v balíčku jsou**, kromě výslovně označených `[+]` (doplnit ručně,
 `scripts/build-words.ts` → sekce `EXTRA`, s komentářem proč).
 

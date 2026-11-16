@@ -3,7 +3,8 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { difficulty } from '../src/logic/difficulty';
 
-const SRC = process.env.WORDS_TSV ?? '/home/rogr/Projects/Recallo/anki_korean.txt';
+// The deck is a private Anki export (Recallo), so words.json is committed and the path comes from WORDS_TSV.
+const SRC = process.env.WORDS_TSV;
 
 /** ko → [czech, icon, romanised id]. Every food word has its own icon. */
 const FOOD: Record<string, [string, string, string]> = {
@@ -253,9 +254,11 @@ const EXTRA: Record<string, [string, string, string, string, string]> = {
   얘기: ['povídání', 'yaegi', 'yaegi', 'music', 'talk, story'],
 };
 
-const rows = existsSync(SRC)
-  ? readFileSync(SRC, 'utf8').split('\n').filter(Boolean).map((l) => l.split('\t'))
-  : [];
+if (!SRC || !existsSync(SRC)) {
+  console.error('src/data/words.json is committed; regenerating it needs the private Anki export:\n  WORDS_TSV=/path/to/anki_korean.txt npm run words');
+  process.exit(1);
+}
+const rows = readFileSync(SRC, 'utf8').split('\n').filter(Boolean).map((l) => l.split('\t'));
 const inDeck = new Map(rows.map((r) => [r[0].trim(), r]));
 
 interface Word { id: string; ko: string; cs: string; en: string; category: string; icon: string; difficulty: number; loan?: string }

@@ -79,7 +79,7 @@ npm test               # vitest – logika (jamo, matching, obtížnost, SRS, uk
 
 ```bash
 npm run tauri build                      # Linux: .deb + AppImage v src-tauri/target/release/bundle/
-export ANDROID_HOME=/opt/android-sdk NDK_HOME=/opt/android-sdk/ndk/27.0.12077973
+export ANDROID_HOME=<cesta k Android SDK> NDK_HOME=$ANDROID_HOME/ndk/27.0.12077973
 npm run tauri android build -- --apk     # APK v src-tauri/gen/android/app/build/outputs/apk/
 npm run tauri android build -- --apk --debug   # debug-podepsané APK, dá se rovnou nainstalovat
 ```
@@ -277,7 +277,7 @@ dotyky): `tts_status` = engine + korejský hlas, tři promluvy po sobě s mezero
 
 1. Uprav `scripts/build-words.ts`: `FOOD` (jídla), `MORE` (ko → [česky, ikona, id, kategorie]), `MORE_BY_ID`
    (homonyma jako 배 břicho/loď), `EXTRA` (slova mimo balíček – vždy s komentářem proč), `LOAN_ORIGINAL`.
-2. `npm run words` → přegeneruje `src/data/words.json` (obtížnost se počítá skriptem).
+2. `WORDS_TSV=<cesta k anki_korean.txt> npm run words` → přegeneruje `src/data/words.json` (obtížnost se počítá skriptem).
 3. Nakresli ikonu (viz níže) se stejným jménem a přidej slovo do noci v `src/data/levels.ts`.
 4. `npm test` – test ohlídá ikony, existenci slov i to, že noc používá jen už představená jamo.
 

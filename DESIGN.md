@@ -104,7 +104,7 @@ Celé UI **česky**.
   zdokumentovat a vyřešit (env `GTK_IM_MODULE=fcitx`).
 
 ### Data slov
-- Zdroj: `/home/rogr/Projects/Recallo/anki_korean.txt` (TSV: ko, en, kategorie; 50× Food, 281× Noun…).
+- Zdroj: soukromý Anki export `anki_korean.txt` (Recallo), cesta přes `WORDS_TSV` (TSV: ko, en, kategorie; 50× Food, 281× Noun…).
 - Vytvořit `src/data/words.json`: `{ id, ko, cs, category, icon, difficulty }` – **přeložit do češtiny**
   (bez zbytečných synonym), `difficulty` spočítat skriptem.
 - Slice: všechna Food slova (~50) + slova potřebná pro dialogy štamgastů a věty kritika.

@@ -11,3 +11,5 @@ src-tauri/gen/android/.kotlin/
 
 # local editor caches
 /target/
+screenshots/phone/
+.claude/settings.local.json

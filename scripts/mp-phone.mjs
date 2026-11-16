@@ -4,17 +4,17 @@
 //   node scripts/mp-phone.mjs host    phone hosts; `adb forward` + scripts/mp-bot.mjs from the PC joins
 //   node scripts/mp-phone.mjs guest   phone joins a host on the PC (Tauri under Xvfb: scripts/xvfb-tauri.sh
 //                                     start + Založit stánek) through `adb reverse`, 127.0.0.1:47123
-// Screenshots go to screenshots/phone-*.png.
+// Screenshots go to screenshots/phone/*.png (gitignored: raw device captures show the status bar).
 import { spawn, execFileSync } from 'node:child_process';
 import fs from 'node:fs';
-import { adb, cdp } from './adb-cdp.mjs';
+import { ADB, adb, cdp } from './adb-cdp.mjs';
 
 const mode = process.argv[2] ?? 'host';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const page = await cdp();
 let failed = false;
 const check = (ok, what, extra = '') => { console.log(ok ? 'PASS' : 'FAIL', what, extra); if (!ok) failed = true; };
-const shot = (name) => { fs.mkdirSync('screenshots', { recursive: true }); fs.writeFileSync(`screenshots/phone-${name}.png`, execFileSync(process.env.ADB ?? '/opt/android-sdk/platform-tools/adb', ['exec-out', 'screencap', '-p'])); };
+const shot = (name) => { fs.mkdirSync('screenshots/phone', { recursive: true }); fs.writeFileSync(`screenshots/phone/${name}.png`, execFileSync(ADB, ['exec-out', 'screencap', '-p'])); };
 async function until(fn, ms, step = 250) {
   const t0 = Date.now();
   while (Date.now() - t0 < ms) { const v = await fn(); if (v) return v; await sleep(step); }

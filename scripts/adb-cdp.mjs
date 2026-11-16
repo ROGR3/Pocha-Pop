@@ -7,7 +7,7 @@ import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import WebSocket from 'ws';
 
-const ADB = process.env.ADB ?? '/opt/android-sdk/platform-tools/adb';
+export const ADB = process.env.ADB ?? (process.env.ANDROID_HOME ? `${process.env.ANDROID_HOME}/platform-tools/adb` : 'adb');
 export const PKG = process.env.POCHA_PKG ?? 'cz.rogr.pochapop.debug';
 
 export const adb = (...args) => execFileSync(ADB, args, { encoding: 'utf8' }).trim();
