@@ -24,9 +24,9 @@ describe('colour data', () => {
     expect(colorFrame('brown')).toBe(11);
   });
   it('prices in the designed ranges', () => {
-    for (const p of PARTS) { expect(p.price).toBeGreaterThanOrEqual(40); expect(p.price).toBeLessThanOrEqual(80); }
+    for (const p of PARTS) { expect(p.price).toBeGreaterThanOrEqual(100); expect(p.price).toBeLessThanOrEqual(150); }
     expect(HATS.length).toBe(5);
-    for (const h of HATS) { expect(h.price).toBeGreaterThanOrEqual(30); expect(h.price).toBeLessThanOrEqual(60); }
+    for (const h of HATS) { expect(h.price).toBeGreaterThanOrEqual(20); expect(h.price).toBeLessThanOrEqual(40); }
   });
 });
 

@@ -188,15 +188,15 @@ export interface UpgradeDef {
 }
 
 export const UPGRADES: UpgradeDef[] = [
-  { id: 'lanterns', name: 'Lampiony', desc: 'Zákazníci čekají o 20 % déle.', price: 60 },
-  { id: 'awning', name: 'Plachta proti dešti', desc: 'V dešti +10 % trpělivosti.', price: 80 },
-  { id: 'radio', name: 'Rádio', desc: 'Tichá lo-fi smyčka do noci.', price: 100 },
-  { id: 'helper', name: 'Pomocník 김 대리', desc: 'Jednou za noc obslouží netrpělivého zákazníka.', price: 200, story: 'kim' },
-  { id: 'menu_soups', name: 'Menu: polévky', desc: 'Slova: 갈비탕, 삼계탕, 된장찌개', price: 120, words: ['galbitang', 'samgyetang', 'doenjangjjigae'], district: 'euljiro' },
-  { id: 'menu_sweets', name: 'Menu: sladkosti', desc: 'Slova: 사탕, 초콜릿, 케이크, 디저트', price: 120, words: ['satang', 'chokollit', 'keikeu', 'dijeoteu'] },
-  { id: 'menu_street', name: 'Menu: pouliční klasika', desc: 'Jídla z 을지로 i v 홍대, 용산 a 부산.', price: 250, after: 116, words: ['tteokbokki', 'gimbap', 'ramyeon', 'mandu', 'kimchi', 'japchae'], districts: ['hongdae', 'yongsan', 'busan'] },
-  { id: 'menu_drinks', name: 'Menu: nápoje', desc: 'Nápoje u řeky i v 용산 a 부산.', price: 200, after: 121, words: ['keopi', 'juseu', 'eumnyosu', 'beobeulti', 'cha', 'mul'], districts: ['yongsan', 'busan'] },
-  { id: 'menu_jeju', name: 'Menu: babiččino Jeju', desc: 'Ovoce a polévky z Jeju v přístavu.', price: 220, after: 126, words: ['gyul', 'samgyetang', 'galbitang', 'gwail', 'podo', 'bingsu'], districts: ['busan'] },
+  { id: 'lanterns', name: 'Lampiony', desc: 'Zákazníci čekají o 20 % déle.', price: 120 },
+  { id: 'awning', name: 'Plachta proti dešti', desc: 'V dešti +10 % trpělivosti.', price: 150 },
+  { id: 'radio', name: 'Rádio', desc: 'Tichá lo-fi smyčka do noci.', price: 180 },
+  { id: 'helper', name: 'Pomocník 김 대리', desc: 'Jednou za noc obslouží netrpělivého zákazníka.', price: 400, story: 'kim' },
+  { id: 'menu_soups', name: 'Menu: polévky', desc: 'Slova: 갈비탕, 삼계탕, 된장찌개', price: 250, words: ['galbitang', 'samgyetang', 'doenjangjjigae'], district: 'euljiro' },
+  { id: 'menu_sweets', name: 'Menu: sladkosti', desc: 'Slova: 사탕, 초콜릿, 케이크, 디저트', price: 250, words: ['satang', 'chokollit', 'keikeu', 'dijeoteu'] },
+  { id: 'menu_street', name: 'Menu: pouliční klasika', desc: 'Jídla z 을지로 i v 홍대, 용산 a 부산.', price: 400, after: 116, words: ['tteokbokki', 'gimbap', 'ramyeon', 'mandu', 'kimchi', 'japchae'], districts: ['hongdae', 'yongsan', 'busan'] },
+  { id: 'menu_drinks', name: 'Menu: nápoje', desc: 'Nápoje u řeky i v 용산 a 부산.', price: 350, after: 121, words: ['keopi', 'juseu', 'eumnyosu', 'beobeulti', 'cha', 'mul'], districts: ['yongsan', 'busan'] },
+  { id: 'menu_jeju', name: 'Menu: babiččino Jeju', desc: 'Ovoce a polévky z Jeju v přístavu.', price: 400, after: 126, words: ['gyul', 'samgyetang', 'galbitang', 'gwail', 'podo', 'bingsu'], districts: ['busan'] },
 ];
 
 /** Words a night can order: tonight's + earlier words of the same district (+ review, packs). */

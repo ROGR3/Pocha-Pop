@@ -47,14 +47,22 @@ describe('nights', () => {
 describe('rules', () => {
   it('combo multiplier', () => {
     expect(comboMultiplier(0)).toBe(1);
-    expect(comboMultiplier(3)).toBe(2);
-    expect(comboMultiplier(6)).toBe(3);
-    expect(comboMultiplier(99)).toBe(5);
+    expect(comboMultiplier(4)).toBe(1);
+    expect(comboMultiplier(5)).toBe(1.5);
+    expect(comboMultiplier(10)).toBe(2);
+    expect(comboMultiplier(99)).toBe(2);
+    expect(comboMultiplier(1000)).toBeLessThanOrEqual(2);
+  });
+  it('upgrade prices: total in the designed range, none cheap', () => {
+    const sum = UPGRADES.reduce((a, u) => a + u.price, 0);
+    expect(sum).toBeGreaterThanOrEqual(2000);
+    expect(sum).toBeLessThanOrEqual(3000);
+    for (const u of UPGRADES) expect(u.price, u.id).toBeGreaterThanOrEqual(100);
   });
   it('coins: tips for speed, none when hinted', () => {
     expect(serveCoins(4, 1, 0, false).tip).toBe(4);
     expect(serveCoins(4, 1, 0, true).tip).toBe(0);
-    expect(serveCoins(4, 0.5, 3, false).total).toBe((4 + 2) * 2);
+    expect(serveCoins(4, 0.5, 5, false).total).toBe((4 + 2) * 1.5);
   });
   it('stars', () => {
     expect(nightStars({ total: 10, served: 10, angry: 0, mistakes: 0 })).toBe(3);

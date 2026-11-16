@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { COOP_SEATS, CoopReferee, RUNOFF_MS, coopCustomers, coopSeats, coopSpawn, crowned, firstCoins, patienceFrac, COOP_WALK_MS, runoffCoins } from '../src/logic/coop';
+import { COOP_SEATS, COOP_SEAT_MUL, CoopReferee, RUNOFF_MS, coopCustomers, coopSeats, coopSpawn, crowned, firstCoins, patienceFrac, COOP_WALK_MS, runoffCoins } from '../src/logic/coop';
 import { serveCoins, spawnInterval } from '../src/logic/rules';
 import type { PlayerInfo } from '../src/logic/netproto';
 
@@ -20,11 +20,12 @@ describe('co-op scaling', () => {
     expect(coopCustomers(12, 3)).toBe(20);
     expect(coopSpawn([3, 5])).toEqual(spawnInterval([3, 5], 4));
   });
-  it('coins: ×1.3 for everyone, runoff = half without tip, rounded up', () => {
-    expect(firstCoins(4, 1, 0, false)).toBe(Math.round(serveCoins(4, 1, 0, false).total * 1.3));
-    expect(runoffCoins(4, 0)).toBe(Math.ceil((2 + 2) * 1.3 / 2));
-    expect(runoffCoins(3, 0)).toBe(Math.ceil(serveCoins(3, 0, 0, true).total * 1.3 / 2));
-    expect(runoffCoins(4, 6)).toBe(Math.ceil(4 * 3 * 1.3 / 2));
+  it('coins: COOP_SEAT_MUL for everyone, runoff = half without tip, rounded up', () => {
+    expect(COOP_SEAT_MUL).toBe(1.15);
+    expect(firstCoins(4, 1, 0, false)).toBe(Math.round(serveCoins(4, 1, 0, false).total * COOP_SEAT_MUL));
+    expect(runoffCoins(4, 0)).toBe(Math.ceil((2 + 2) * COOP_SEAT_MUL / 2));
+    expect(runoffCoins(3, 0)).toBe(Math.ceil(serveCoins(3, 0, 0, true).total * COOP_SEAT_MUL / 2));
+    expect(runoffCoins(4, 6)).toBe(Math.ceil(4 * 1.5 * COOP_SEAT_MUL / 2));
   });
 });
 

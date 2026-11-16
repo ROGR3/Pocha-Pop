@@ -9,7 +9,7 @@ export const MAX_PLAYERS = 3;
 /** Seats at the counter in co-op (2 or 3 players). */
 export const COOP_SEATS = 4;
 /** Everybody gets the 3-seat coin multiplier, whatever the seat count. */
-export const COOP_SEAT_MUL = 1.3;
+export const COOP_SEAT_MUL = 1.15;
 /** Customers walk to their stool in a fixed time, so all phones agree on when the order opens. */
 export const COOP_WALK_MS = 1600;
 /** Host broadcasts its clock this often. */

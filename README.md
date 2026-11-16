@@ -127,7 +127,7 @@ Testy desktopového okna bez otevírání okna na reálné ploše: `scripts/xvfb
 - Tab / tlačítko „?“ ukáže korejštinu (bez spropitného, mastery neroste).
 - Kombo za sérii bez chyby, spropitné za rychlost, 1–3 hvězdy za noc (bossové 1–5: každá chyba i chybějící
   pozdrav −1 hvězda).
-- **Místa u pultu** se volí v popupu noci: 2 (klidná, mince ×1,0), 3 (×1,3), 4 (nával ×1,7, po první noci se 3★).
+- **Místa u pultu** se volí v popupu noci: 2 (klidná, mince ×1,0), 3 (×1,15), 4 (nával ×1,3, po první noci se 3★).
   Víc míst = víc souběžných objednávek a rychlejší příchody (`spawn × 3/míst`). Bossové mají vždy 3.
 - **Pozdravy:** když si host sedne, ukáže se ruka (napiš 안녕하세요 / 환영해요 / 반가워요 → +15 % trpělivosti, +1 mince),
   když odchází, dveře (감사합니다 / 또 오세요 / 또 봐요 / 잘 가요 → +2). Pozdravy jsou dočasné cíle v matchingu;
@@ -155,7 +155,7 @@ Titulní obrazovka → **Spolu**. Napiš jméno (korejsky i latinkou, max. 8 zna
 barvou prvního hráče (s jeho iniciálou) a místo trpělivosti běží 3 s pruh doběhu: kdo to stihne, dostane polovinu
 mincí (bez spropitného), kdo ne, nedostane nic, ale ani chybu. Překlep v doběhu jen přeruší osobní kombo, překlep na
 otevřené objednávce se počítá do týmu. Hvězdy jsou společné (chyby = součet / počet hráčů), míst u pultu jsou vždy 4,
-zákazníků je víc (`×(1 + 0,35 × (hráčů − 1))`), mince ×1,3 pro všechny. V MP nejsou pozdravy, smlouvání, reakce,
+zákazníků je víc (`×(1 + 0,35 × (hráčů − 1))`), mince ×1,15 pro všechny. V MP nejsou pozdravy, smlouvání, reakce,
 pomocník, štamgasti, bossové, 약국, svátky ani pauza.
 
 Každý si do svého uložení připíše mince a mastery slov, která sám napsal; kampaň (hvězdy nocí) se nemění.
@@ -306,14 +306,16 @@ bash scripts/make-icons.sh           # app ikony (desktop + Android) z public/as
 
 `npx vite-node scripts/economy.ts` simuluje tři typy hráčů (všechny noci jednou, v pořadí odemykání):
 
-| Hráč | po 미식가 (11) | po 용산 (126) | po 부산 (131) | má na všechno* |
+| Hráč | po 미식가 (11) | po 용산 (126) | po 부산 (131) | na konci (303) |
 |---|---|---|---|---|
-| pomalejší (2★, 2 místa) | 832 | 2 840 | 3 370 | po vedlejší lince / opakováních |
-| normální (2–3★, 3 místa) | 1 409 | 4 445 | 5 287 | po noci 126 (konec 용산) |
-| zkušený (3★, 4 místa) | 3 686 | 10 842 | 13 061 | už v 동대문 |
+| pomalejší (2★, 2 místa) | 709 | 2 416 | 2 846 | 3 238 |
+| normální (2–3★, 3 místa) | 951 | 3 109 | 3 731 | 4 259 |
+| zkušený (3★, 4 místa) | 1 726 | 5 336 | 6 427 | 7 367 |
 
-\* všechno = upgrady a menu balíčky (1 350) + čepičky (220) + každá barva na každé části stánku (2 860) = 4 430.
-Normální hráč má tedy na všechno zhruba na začátku 부산, pomalejší až s opakováním nocí.
+Kombo platí ×1 / ×1,5 (od 5) / ×2 (od 10), místa u pultu ×1 / ×1,15 / ×1,3 (co-op ×1,15).
+Ceny: upgrady a menu balíčky 2 500, čepičky 135, každá barva na každé části stánku 5 500 – dohromady 8 135.
+Normální hráč si za první průchod koupí všechny upgrady a pár oblíbených barev (500 za barvu na celý stánek),
+na všechno nemá nikdo; zbytek je na opakování nocí, denní výzvy a co-op.
 
 ## Zvuk
 

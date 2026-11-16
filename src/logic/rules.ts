@@ -1,7 +1,8 @@
 // Scoring rules shared by the night scene and tests.
 
+/** ×1 for combo 0–4, ×1.5 for 5–9, ×2 from 10. Totals stay unrounded; callers round. */
 export function comboMultiplier(combo: number): number {
-  return Math.min(5, 1 + Math.floor(combo / 3));
+  return Math.min(2, 1 + 0.5 * Math.floor(combo / 5));
 }
 
 /** Coins for one serve. patienceLeft 0..1. Hinted orders get no tip. */
@@ -58,8 +59,8 @@ export const BOSS_SEATS = 3;
 /** More seats = more parallel orders = harder, so it pays more. */
 export function seatMultiplier(seats: number): number {
   if (seats <= 2) return 1;
-  if (seats === 3) return 1.3;
-  return 1.7;
+  if (seats === 3) return 1.15;
+  return 1.3;
 }
 
 /** Arrival gap scales with the seat count (3 seats = the night's base pace). */

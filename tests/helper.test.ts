@@ -5,8 +5,8 @@ import { bubbleDepth, seatMultiplier, seatsAvailable, spawnInterval } from '../s
 describe('seats', () => {
   it('multiplier grows with seats', () => {
     expect(seatMultiplier(2)).toBe(1);
-    expect(seatMultiplier(3)).toBe(1.3);
-    expect(seatMultiplier(4)).toBe(1.7);
+    expect(seatMultiplier(3)).toBe(1.15);
+    expect(seatMultiplier(4)).toBe(1.3);
   });
   it('arrival pace scales with 3/seats', () => {
     expect(spawnInterval([6, 9], 3)).toEqual([6, 9]);

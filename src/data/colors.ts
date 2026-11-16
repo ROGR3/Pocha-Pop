@@ -25,16 +25,16 @@ export function colorFrame(id: string | null | undefined): number {
 export type PartId = 'roof' | 'sign' | 'stools' | 'lanterns';
 
 export const PARTS: { id: PartId; name: string; price: number }[] = [
-  { id: 'roof', name: 'Plachta', price: 80 },
-  { id: 'sign', name: 'Cedule', price: 60 },
-  { id: 'stools', name: 'Stoličky', price: 50 },
-  { id: 'lanterns', name: 'Lampiony', price: 70 },
+  { id: 'roof', name: 'Plachta', price: 150 },
+  { id: 'sign', name: 'Cedule', price: 120 },
+  { id: 'stools', name: 'Stoličky', price: 100 },
+  { id: 'lanterns', name: 'Lampiony', price: 130 },
 ];
 
 export const HATS: { id: string; name: string; price: number }[] = [
-  { id: 'cap', name: 'Kšiltovka', price: 30 },
-  { id: 'bow', name: 'Mašle', price: 35 },
-  { id: 'crown', name: 'Korunka', price: 60 },
-  { id: 'beanie', name: 'Kulich', price: 45 },
-  { id: 'straw', name: 'Slamák', price: 50 },
+  { id: 'cap', name: 'Kšiltovka', price: 20 },
+  { id: 'bow', name: 'Mašle', price: 20 },
+  { id: 'crown', name: 'Korunka', price: 40 },
+  { id: 'beanie', name: 'Kulich', price: 25 },
+  { id: 'straw', name: 'Slamák', price: 30 },
 ];

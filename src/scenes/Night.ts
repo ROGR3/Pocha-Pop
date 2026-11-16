@@ -757,7 +757,7 @@ export class NightScene extends Phaser.Scene {
     this.time.delayedCall(900, () => puff.destroy());
     chef.once('animationcomplete', () => {
       chef.play('chef:serve');
-      chef.once('animationcomplete', () => chef.play(this.combo > 0 && this.combo % 3 === 0 ? 'chef:happy' : 'chef:idle').once('animationcomplete', () => chef.play('chef:idle')));
+      chef.once('animationcomplete', () => chef.play(this.combo > 0 && this.combo % 5 === 0 ? 'chef:happy' : 'chef:idle').once('animationcomplete', () => chef.play('chef:idle')));
       // dish slides along the counter
       G.audio.play('serve');
       const icons = o.icons;
@@ -835,12 +835,12 @@ export class NightScene extends Phaser.Scene {
 
   private updateCombo(bump = false) {
     const m = comboMultiplier(this.combo);
-    if (this.combo >= 3) {
-      this.comboText.setText(`KOMBO ×${m}  (${this.combo})`).setColor(m >= 4 ? C.pink : m >= 3 ? C.yellow : C.orange);
+    if (this.combo >= 5) {
+      this.comboText.setText(`KOMBO ×${m.toLocaleString('cs-CZ')}  (${this.combo})`).setColor(m >= 2 ? C.pink : C.yellow);
       snapText(this.comboText);
       if (bump) {
         this.tweens.add({ targets: this.comboText, scale: { from: 1.5, to: 1 }, duration: 260, ease: 'Back.easeOut' });
-        if (this.combo % 3 === 0) { G.audio.play('combo'); this.street.flash(m); }
+        if (this.combo % 5 === 0) { G.audio.play('combo'); this.street.flash(Math.round(m * 2)); }
       }
     } else this.comboText.setText('');
   }
