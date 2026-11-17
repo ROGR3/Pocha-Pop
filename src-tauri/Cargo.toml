@@ -1,6 +1,6 @@
 [package]
 name = "pocha-pop"
-version = "0.5.1"
+version = "0.6.0"
 description = "Pocha Pop – pixel-art hra na psaní korejsky"
 authors = ["Robin Grundel"]
 license = ""
