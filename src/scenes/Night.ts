@@ -14,7 +14,7 @@ import { hintLevel } from '../logic/srs';
 import { recordMissed, recordMistake, recordServe, rng } from '../logic/srs';
 import { Bubble } from '../game/bubble';
 import { playStory } from '../game/dialogue';
-import { joinTokens, makeOrder, orderTargets, tokenAt, type Kind, type Order } from '../game/orders';
+import { joinTokens, makeOrder, orderTargets, typoToken, type Kind, type Order } from '../game/orders';
 import { G, WORDS, iconTex, word } from '../game/state';
 import { dailyPool, daySeed, recordDaily } from '../logic/daily';
 import { dayKey } from '../logic/save';
@@ -684,8 +684,8 @@ export class NightScene extends Phaser.Scene {
   private mistake(text: string) {
     // blame the orders that matched what was typed just before
     const prev = [...text].slice(0, -1).join('');
-    const prevMatch = prev ? matchAgainst(prev, this.waiting(), (c) => c.order!.target).prefix : [];
-    const blamed = prevMatch.length ? prevMatch : [];
+    // alts count too: a typo in an alternative answer is a typo on that order
+    const blamed = prev ? matchAgainst(prev, this.waiting(), (c) => orderTargets(c.order!)).prefix : [];
     const greetPrefix = !!prev && matchPolite(prev, [], () => '', this.activeGreetings()).greetPrefix;
     // orphan text: its order vanished (김 대리, a walk-out, "Tak nic…", the runoff) – it can't be finished, clear it quietly
     if (prev && !greetPrefix && !matchAgainst(prev, this.waiting(), (c) => orderTargets(c.order!)).prefix.length) {
@@ -707,13 +707,13 @@ export class NightScene extends Phaser.Scene {
     if (counts) {
       this.mistakes++;
       this.points += TYPO_POINTS;
-      if (this.starPips) floatText(this, this.starPips.x, 26, '−1', C.red);
+      // boss nights rate only the boss: no point float there
+      if (this.starPips && !this.def.boss) floatText(this, this.starPips.x, 26, '−1', C.red);
     }
     for (const c of blamed) {
       const o = c.order!;
-      const ti = tokenAt(o, text);
+      const { i: ti, id } = typoToken(o, text);
       o.mistakes[ti] = true;
-      const id = o.tokens[ti].id;
       G.setStat(id, recordMistake(G.stat(id)));
       this.trouble.set(id, (this.trouble.get(id) ?? 0) + 1);
       c.bubble!.shake();
@@ -970,7 +970,7 @@ export class NightScene extends Phaser.Scene {
     this.updateProgress();
     G.audio.play('angry');
     c.sprite.play(`${c.key}:${c.kind === 'nabi' ? 'walk' : 'angry'}`);
-    floatText(this, c.sprite.x, c.sprite.y - 46, c.kind === 'boss' ? '−★★' : `hmpf! −${WALKOUT_POINTS}`, C.red);
+    floatText(this, c.sprite.x, c.sprite.y - 46, c.kind === 'boss' ? '−★★' : this.def.boss ? 'hmpf!' : `hmpf! −${WALKOUT_POINTS}`, C.red);
     if (c.kind === 'boss') this.critic.walkouts++;
     this.refreshStars();
     if (c.kind === 'boss') {

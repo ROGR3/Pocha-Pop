@@ -284,11 +284,21 @@ export function listenKoreanHint(o: Order): { text: string; alpha: number } {
 
 /** Which token was being typed when the jamo at `pos` (0-based) went wrong. */
 export function tokenAt(o: Order, typed: string): number {
-  const pos = matchedJamo(typed, o.target);
-  let acc = 0;
-  for (let i = 0; i < o.tokens.length; i++) {
-    acc += toJamo(o.tokens[i].ko).length;
-    if (pos < acc) return i;
+  return typoToken(o, typed).i;
+}
+
+/** Token where `typed` went wrong, in the answer (hint target or an alt) it follows best. */
+export function typoToken(o: Order, typed: string): { i: number; id: string } {
+  let tokens = o.tokens;
+  let pos = matchedJamo(typed, o.target);
+  for (const alt of o.alts ?? []) {
+    const p = matchedJamo(typed, joinTokens(alt));
+    if (p > pos) { tokens = alt; pos = p; }
   }
-  return o.tokens.length - 1;
+  let acc = 0;
+  for (let i = 0; i < tokens.length; i++) {
+    acc += toJamo(tokens[i].ko).length;
+    if (pos < acc) return { i, id: tokens[i].id };
+  }
+  return { i: tokens.length - 1, id: tokens[tokens.length - 1].id };
 }

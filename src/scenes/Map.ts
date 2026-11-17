@@ -245,16 +245,22 @@ export class MapScene extends Phaser.Scene {
     const def = nightDef(n);
     const boss = !!def.boss;
     const pw = W - 30;
-    // boss: the rule text (s, wrapped) is measured first so the panel can grow by its extra height
+    // boss: the rule text (s, wrapped) is measured first so the panel fits it
     const bossRule = boss ? txt(this, 12, 0, 'Čeká pozdrav 안녕하세요. Hodnotí jen jeho: překlep −★, odchod −★★, bez pozdravu −★.', { size: 's', color: C.light, wrap: pw - 24 }) : null;
-    let ph = (def.newWords.length > Math.max(5, Math.floor((W - 46) / 26)) ? 222 : 200) + (boss ? 0 : 24);
-    if (bossRule) ph += Math.max(0, bossRule.height + 4 - (def.newWords.length ? 0 : 26));
+    let ph = (def.newWords.length > Math.max(5, Math.floor((W - 46) / 26)) ? 222 : 200) + 24;
     // 'Zákazníků …' and 'nejlépe …' share a row when they fit (216 px: the best line gets its own row)
     const info = txt(this, 12, 0, `Zákazníků: ${def.customers}   Trpělivost: ${def.patience} s`, { size: 'xs', color: C.grey });
     const rec = G.track().nights[n];
     const best = rec ? this.bestLine(rec.stars, rec.bestCoins, !!rec.perfect) : null;
     const bestRow = !!best && info.width + 8 + best.w > pw - 24;
     if (bestRow) ph += 12;
+    if (bossRule) {
+      // boss: size the panel to its content (title, jamo, words, rule, info rows) + the bottom line and button
+      const per = Math.max(5, Math.floor((pw - 16) / 26));
+      const jamoH = def.newJamo.length ? (def.newJamo.length > 7 ? 28 : 16) : 0;
+      const wordsH = def.newWords.length ? (def.newWords.length > per ? 64 : 40) : 0;
+      ph = 32 + jamoH + wordsH + bossRule.height + 4 + 12 + (bestRow ? 12 : 0) + 56;
+    }
     const c = this.add.container(15, Math.round(H / 2 - ph / 2)).setDepth(DEPTH.overlay);
     const shade = this.add.rectangle(-15, -c.y, W, H, 0x181425, 0.6).setOrigin(0, 0).setInteractive();
     shade.on('pointerup', () => { c.destroy(); this.popup = undefined; });
