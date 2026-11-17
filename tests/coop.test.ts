@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { COOP_SEATS, COOP_SEAT_MUL, CoopReferee, RUNOFF_MS, coopCustomers, coopSeats, coopSpawn, crowned, firstCoins, patienceFrac, COOP_WALK_MS, runoffCoins } from '../src/logic/coop';
+import { COOP_SEATS, COOP_SEAT_MUL, CoopReferee, RUNOFF_MS, coopCustomers, coopSeats, coopSpawn, crowned, teamTypos, firstCoins, patienceFrac, COOP_WALK_MS, runoffCoins } from '../src/logic/coop';
 import { serveCoins, spawnInterval } from '../src/logic/rules';
 import type { PlayerInfo } from '../src/logic/netproto';
 
@@ -93,6 +93,38 @@ describe('runoff rule', () => {
     r.miss(0, -1);
     expect(r.player(1)!.mistakes).toBe(1);
     expect(r.player(0)!.mistakes).toBe(1);
+  });
+  it('free typos (greeting, reaction) only break the combo', () => {
+    const r = new CoopReferee(P.slice(0, 2));
+    r.open(1, 2);
+    r.done(0, 1, ok(0));
+    r.miss(0, 2, true);
+    expect(r.player(0)!.combo).toBe(0);
+    expect(r.player(0)!.mistakes).toBe(0);
+    // no order id (old path): still counts
+    r.miss(0, -1);
+    expect(r.player(0)!.mistakes).toBe(1);
+  });
+  it('team typos: sum ÷ players who started, rounded', () => {
+    expect(teamTypos(0, 3)).toBe(0);
+    expect(teamTypos(4, 3)).toBe(1);
+    expect(teamTypos(5, 3)).toBe(2);
+    expect(teamTypos(3, 2)).toBe(2);
+    expect(teamTypos(7, 0)).toBe(7);
+  });
+  it('team stars match the old formula for counted typos', () => {
+    const old = (total: number, served: number, m: number) => {
+      const s = (served - 0.25 * m) / total;
+      return s >= 0.9 ? 3 : s >= 0.7 ? 2 : s >= 0.45 ? 1 : 0;
+    };
+    for (let angry = 0; angry <= 4; angry++)
+      for (let typos = 0; typos <= 30; typos++) {
+        const r = new CoopReferee(P);
+        for (let i = 1; i <= 12; i++) { r.open(i, 2); if (i > angry) r.done(i % 3, i, ok(i)); else r.walkOut(i); }
+        for (let k = 0; k < typos; k++) r.miss(k % 3, -1);
+        expect(r.stars(12)).toBe(old(12, 12 - angry, Math.round(typos / 3)));
+        expect(r.summary(1, 12).typos).toBe(Math.round(typos / 3));
+      }
   });
   it('hinted first serve: no tip', () => {
     const r = new CoopReferee(P.slice(0, 2));

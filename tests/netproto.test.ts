@@ -7,14 +7,27 @@ const order: OrderData = {
 };
 
 describe('netproto v2 (Poslech)', () => {
-  it('protocol version 2, start carries the track', () => {
-    expect(PROTO).toBe(2);
+  it('start carries the track', () => {
     const m = decode(encode({ t: 'start', night: 3, seed: 1, district: 'euljiro', seats: 3, total: 9, track: 'listen' }));
     expect(m && m.t === 'start' && m.track).toBe('listen');
     // an old host's start (no track) is still valid = Čtení
     const old = decode(JSON.stringify({ t: 'start', night: 3, seed: 1, district: 'euljiro', seats: 3, total: 9 }));
     expect(old && old.t === 'start' && old.track).toBeUndefined();
     expect(decode(JSON.stringify({ t: 'start', night: 3, seed: 1, district: 'euljiro', seats: 3, total: 9, track: 'sing' }))).toBeNull();
+  });
+});
+
+describe('netproto v3 (penalty points)', () => {
+  it('miss with and without free, summary carries typos', () => {
+    expect(PROTO).toBe(3);
+    expect(decode(encode({ t: 'miss', cid: 4 }))).toEqual({ t: 'miss', cid: 4 });
+    expect(decode(encode({ t: 'miss', cid: 4, free: true }))).toEqual({ t: 'miss', cid: 4, free: true });
+    expect(decode('{"t":"miss","cid":4,"free":"x"}')).toBeNull();
+    const summary = { night: 7, stars: 3, total: 14, served: 14, angry: 0, mistakes: 2, players: [] };
+    expect(decode(JSON.stringify({ t: 'end', summary: { ...summary, typos: 1 } }))).toEqual({ t: 'end', summary: { ...summary, typos: 1 } });
+    // an older host's summary without typos is dropped (versions are rejected at hello anyway)
+    expect(decode(JSON.stringify({ t: 'end', summary }))).toBeNull();
+    expect(decode(JSON.stringify({ t: 'end', summary: { ...summary, typos: 0.5 } }))).toBeNull();
   });
 });
 
@@ -37,7 +50,7 @@ describe('netproto', () => {
       { t: 'close', cid: 1 },
       { t: 'leave', cid: 1, happy: false },
       { t: 'tick', ms: 4000 },
-      { t: 'end', summary: { night: 7, stars: 3, total: 14, served: 13, angry: 1, mistakes: 2, players: [{ pid: 0, name: 'A', color: 'orange', first: 8, runoff: 2, coins: 120, bestCombo: 5, mistakes: 1 }] } },
+      { t: 'end', summary: { night: 7, stars: 3, total: 14, served: 13, angry: 1, mistakes: 2, typos: 1, players: [{ pid: 0, name: 'A', color: 'orange', first: 8, runoff: 2, coins: 120, bestCombo: 5, mistakes: 1 }] } },
       { t: 'kick' },
       { t: 'hostLeft' },
     ];

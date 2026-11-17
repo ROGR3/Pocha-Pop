@@ -1,7 +1,8 @@
 // Co-op night rules ("doběh"): the host is the referee. The first player to
 // finish an order gets full coins; the others then have RUNOFF_MS to finish it
 // too for half the coins (no tip), and nothing – but no penalty – after that.
-import { nightStars, serveCoins, spawnInterval } from './rules';
+import { serveCoins, spawnInterval } from './rules';
+import { penaltyPoints, starsFromPoints } from './stars';
 import type { CoopSummary, PlayerInfo } from './netproto';
 
 export const RUNOFF_MS = 3000;
@@ -129,12 +130,14 @@ export class CoopReferee {
 
   /**
    * A typo. On an open order it counts for the team; during the runoff (or
-   * on a closed order) it only breaks the player's own combo.
+   * on a closed order) it only breaks the player's own combo. `free` = a typo
+   * the player's night did not count (greeting, reaction): combo only.
    */
-  miss(pid: number, cid: number) {
+  miss(pid: number, cid: number, free = false) {
     const p = this.player(pid);
     if (!p || !p.connected) return;
     p.combo = 0;
+    if (free) return;
     const o = this.orders.get(cid);
     if (o && (o.closed || o.firstPid !== undefined)) return;
     p.mistakes++;
@@ -170,18 +173,27 @@ export class CoopReferee {
     if (p) p.connected = false;
   }
 
+  /** Team typos: the players' sum split over everyone who started. */
+  typos(): number {
+    return teamTypos(this.players.reduce((a, p) => a + p.mistakes, 0), this.startedWith);
+  }
+
   stars(total: number): number {
-    const sum = this.players.reduce((a, p) => a + p.mistakes, 0);
-    return nightStars({ total, served: this.served, angry: this.angry, mistakes: Math.round(sum / this.startedWith) });
+    return starsFromPoints(penaltyPoints(this.typos(), this.angry), total);
   }
 
   summary(night: number, total: number): CoopSummary {
     return {
       night, stars: this.stars(total), total, served: this.served, angry: this.angry,
-      mistakes: this.players.reduce((a, p) => a + p.mistakes, 0),
+      mistakes: this.players.reduce((a, p) => a + p.mistakes, 0), typos: this.typos(),
       players: this.players.map((p) => ({ pid: p.pid, name: p.name, color: p.color, first: p.first, runoff: p.runoff, coins: p.coins, bestCombo: p.bestCombo, mistakes: p.mistakes, left: p.connected ? undefined : true })),
     };
   }
+}
+
+/** Team typos for the stars: sum of everyone's typos ÷ players who started, rounded. */
+export function teamTypos(sum: number, startedWith: number): number {
+  return Math.round(sum / Math.max(1, startedWith));
 }
 
 /** Player(s) with the most first serves (the crown). Nobody when nobody served. */

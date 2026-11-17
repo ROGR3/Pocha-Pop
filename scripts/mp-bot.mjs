@@ -11,7 +11,7 @@ const addr = args.find((a) => !a.startsWith('--') && /:\d+$/.test(a)) ?? '127.0.
 const REACT = Number(opt('react', 1800));
 const NAME = opt('name', 'Bot');
 const TIMEOUT = Number(opt('timeout', 300)) * 1000;
-const PROTO = 1;
+const PROTO = 3;
 const WALK_MS = 1600;
 
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);

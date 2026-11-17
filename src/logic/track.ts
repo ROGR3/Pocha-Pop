@@ -14,6 +14,16 @@ export interface NightRecord {
   plays: number;
   /** Most seats this night was played with (map shows a stool badge). */
   seats?: number;
+  /** Finished at least once without a penalty point (golden stars). */
+  perfect?: boolean;
+}
+
+/** One more play of a night: stars / coins / seats keep the best, perfect is kept once earned. */
+export function mergeNightRecord(rec: NightRecord | undefined, r: { stars: number; coins: number; seats: number; perfect: boolean }): NightRecord {
+  const o = rec ?? { stars: 0, bestCoins: 0, plays: 0 };
+  const out: NightRecord = { stars: Math.max(o.stars, r.stars), bestCoins: Math.max(o.bestCoins, r.coins), plays: o.plays + 1, seats: Math.max(o.seats ?? 0, r.seats) };
+  if (o.perfect || r.perfect) out.perfect = true;
+  return out;
 }
 
 export interface FriendState {

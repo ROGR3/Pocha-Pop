@@ -1,4 +1,5 @@
 // Scoring rules shared by the night scene and tests.
+import { penaltyPoints, starsFromPoints } from './stars';
 
 /** ×1 for combo 0–4, ×1.5 for 5–9, ×2 from 10. Totals stay unrounded; callers round. */
 export function comboMultiplier(combo: number): number {
@@ -19,14 +20,9 @@ export interface NightTally {
   mistakes: number;
 }
 
-/** 0..3 stars. 0 = night failed (next night stays locked). */
+/** 0..3 stars from penalty points (see stars.ts). 0 = night failed (next night stays locked). */
 export function nightStars(t: NightTally): number {
-  if (t.total <= 0) return 0;
-  const score = (t.served - 0.25 * t.mistakes) / t.total;
-  if (score >= 0.9) return 3;
-  if (score >= 0.7) return 2;
-  if (score >= 0.45) return 1;
-  return 0;
+  return starsFromPoints(penaltyPoints(t.mistakes, t.angry), t.total);
 }
 
 /** Critic review 1..5: every mistake −1 star, every walk-out −2. */

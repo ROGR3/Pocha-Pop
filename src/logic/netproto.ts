@@ -2,8 +2,8 @@
 // scripts/mp-relay.mjs) only carries them as opaque strings; everything is
 // validated here, so a broken / foreign message is simply dropped (null).
 
-/** 2: `start` carries the track (Čtení / Poslech). */
-export const PROTO = 2;
+/** 2: `start` carries the track (Čtení / Poslech). 3: penalty points (`miss.free`, `summary.typos`). */
+export const PROTO = 3;
 
 export type PlayerColor = 'orange' | 'blue' | 'green';
 export const PLAYER_COLORS: PlayerColor[] = ['orange', 'blue', 'green'];
@@ -42,6 +42,8 @@ export interface CoopSummary {
   angry: number;
   /** Team mistakes (sum over players). */
   mistakes: number;
+  /** Team typos for the stars (sum ÷ players who started, rounded). */
+  typos: number;
   players: CoopPlayerResult[];
 }
 
@@ -52,7 +54,7 @@ export type Msg =
   | { t: 'hello'; proto: number; name: string; color: PlayerColor }
   | { t: 'ready' }
   | { t: 'done'; cid: number; words: string[]; ms: number; clean?: boolean; hinted?: boolean }
-  | { t: 'miss'; cid: number }
+  | { t: 'miss'; cid: number; free?: boolean }
   | { t: 'bye' }
   // host → clients
   | { t: 'welcome'; pid: number; players: PlayerInfo[] }
@@ -106,7 +108,7 @@ function isResult(v: unknown): boolean {
 }
 
 function isSummary(v: unknown): v is CoopSummary {
-  return isObj(v) && isInt(v.night) && isInt(v.stars) && isInt(v.total) && isInt(v.served) && isInt(v.angry) && isInt(v.mistakes)
+  return isObj(v) && isInt(v.night) && isInt(v.stars) && isInt(v.total) && isInt(v.served) && isInt(v.angry) && isInt(v.mistakes) && isInt(v.typos)
     && Array.isArray(v.players) && v.players.length <= 3 && v.players.every(isResult);
 }
 
@@ -114,7 +116,7 @@ const CHECK: Record<MsgType, (m: Record<string, unknown>) => boolean> = {
   hello: (m) => isInt(m.proto) && isStr(m.name, 16) && isColor(m.color),
   ready: () => true,
   done: (m) => isInt(m.cid) && strArr(m.words, 8) && (m.words as string[]).length > 0 && isNum(m.ms) && optBool(m.clean) && optBool(m.hinted),
-  miss: (m) => isInt(m.cid),
+  miss: (m) => isInt(m.cid) && (m.free === undefined || typeof m.free === 'boolean'),
   bye: () => true,
   welcome: (m) => isInt(m.pid) && players(m.players),
   reject: (m) => m.reason === 'full' || m.reason === 'proto' || m.reason === 'started',

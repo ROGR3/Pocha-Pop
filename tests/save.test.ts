@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { MemoryBackend, SAVE_VERSION, SaveManager, bumpStreak, currentStreak, defaultSave, deserialize, migrate, serialize } from '../src/logic/save';
 import { recordServe, newStat } from '../src/logic/srs';
+import { mergeNightRecord } from '../src/logic/track';
 
 describe('save data', () => {
   it('round-trips', () => {
@@ -165,5 +166,28 @@ describe('migration v3 → v4 (tracks)', () => {
     expect(m.tracks.read).toEqual({ nights: {}, words: {}, friends: {}, daily: {}, training: { sessions: 0, best: 0 } });
     expect(m.tracks.listen.training).toEqual({ sessions: 0, best: 3 });
     expect(migrate({ settings: { voiceRate: 0.75, voice: 0.3 } }).settings).toMatchObject({ voiceRate: 0.75, voice: 0.3 });
+  });
+});
+
+describe('perfect nights (golden stars)', () => {
+  it('migrate keeps the optional perfect flag per night and track', () => {
+    const s = defaultSave();
+    s.tracks.read.nights[3] = { stars: 3, bestCoins: 40, plays: 2, perfect: true };
+    s.tracks.listen.nights[11] = { stars: 5, bestCoins: 90, plays: 1, perfect: true };
+    s.tracks.read.nights[4] = { stars: 2, bestCoins: 20, plays: 1 };
+    const m = deserialize(serialize(s));
+    expect(m.version).toBe(SAVE_VERSION);
+    expect(m.tracks.read.nights[3].perfect).toBe(true);
+    expect(m.tracks.listen.nights[11].perfect).toBe(true);
+    expect(m.tracks.read.nights[4].perfect).toBeUndefined();
+    expect(m.tracks.listen.nights[3]).toBeUndefined();
+  });
+  it('merge: stars max, perfect once earned stays', () => {
+    let r = mergeNightRecord(undefined, { stars: 2, coins: 30, seats: 3, perfect: false });
+    expect(r).toEqual({ stars: 2, bestCoins: 30, plays: 1, seats: 3 });
+    r = mergeNightRecord(r, { stars: 3, coins: 20, seats: 2, perfect: true });
+    expect(r).toEqual({ stars: 3, bestCoins: 30, plays: 2, seats: 3, perfect: true });
+    r = mergeNightRecord(r, { stars: 1, coins: 50, seats: 4, perfect: false });
+    expect(r).toEqual({ stars: 3, bestCoins: 50, plays: 3, seats: 4, perfect: true });
   });
 });

@@ -58,7 +58,7 @@ export class CoopDirector {
 
   private onMsg(m: Msg, pid: number) {
     if (m.t === 'bye') this.referee.drop(pid);
-    if (m.t === 'miss') this.referee.miss(pid, m.cid);
+    if (m.t === 'miss') this.referee.miss(pid, m.cid, m.free ?? false);
     if (m.t === 'done') {
       const c = this.customers.find((x) => x.cid === m.cid);
       // anti-desync: the answer has to be the order (or one of its alternatives)
