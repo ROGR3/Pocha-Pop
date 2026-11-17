@@ -131,8 +131,11 @@ do
       end
     end
   end
-  sheet("star", 15, 14, { "full", "empty", "d1", "d2", "d3", "d4" }, function(img, f, i)
+  -- "gold" (appended, frame 6): a night without a single penalty point – one ramp step
+  -- brighter and one white glint, same shape
+  sheet("star", 15, 14, { "full", "empty", "d1", "d2", "d3", "d4", "gold" }, function(img, f, i)
     if f == "empty" then star(img, 1, 1, "x", "w", "y")
+    elseif f == "gold" then star(img, 1, 1, "l", "l", "k"); L.set(img, 5, 6, "t")
     else star(img, 1, 1, "k", "l", "j") end
     if f == "d1" then L.set(img, 4, 3, "t") end
     if f == "d2" then L.set(img, 4, 3, "t"); L.set(img, 5, 4, "t"); L.set(img, 3, 5, "t") end
@@ -145,10 +148,17 @@ end
 -- ------------------------------------------------------------ small stars 8x8: full, empty
 do
   local S = { "...#...", "..###..", "#######", ".#####.", "..###..", ".##.##.", ".#...#." }
-  sheet("star_s", 9, 9, { "full", "empty" }, function(img, f)
+  -- "gold" (appended, frame 2): brighter body and one white glint
+  sheet("star_s", 9, 9, { "full", "empty", "gold" }, function(img, f)
     for j, row in ipairs(S) do for k = 1, #row do
-      if row:sub(k, k) == "#" then L.set(img, k, j, f == "full" and (j <= 3 and "l" or "k") or "x") end
+      if row:sub(k, k) == "#" then
+        local c = "x"
+        if f == "full" then c = j <= 3 and "l" or "k"
+        elseif f == "gold" then c = j <= 5 and "l" or "k" end
+        L.set(img, k, j, c)
+      end
     end end
+    if f == "gold" then L.set(img, 3, 3, "t") end
   end, { outline = "g" })
 end
 
