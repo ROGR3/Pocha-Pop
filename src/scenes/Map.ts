@@ -10,6 +10,7 @@ import { G, iconTex, word } from '../game/state';
 import { BG_PREFIX, DEPTH } from '../game/street';
 import { C, button, fadeIn, goto, iconButton, iconFrame, panel, segmented, smallStars, snapText, toast, txt } from '../game/ui';
 import { BOSS_SEATS, DEFAULT_SEATS, SEAT_OPTIONS, seatMultiplier, seatsAvailable } from '../logic/rules';
+import { starLimits } from '../logic/stars';
 
 interface Section { pre: string; title: string; sub: string; nights: number[]; color: string; h: number }
 
@@ -213,8 +214,8 @@ export class MapScene extends Phaser.Scene {
     const name = boss ? NAMES[def.boss!] : def.district === 'pharmacy' ? `L${n - 200}` : def.district === 'holiday' ? '★' : String(n);
     const label = txt(this, x, y + h + 2, name, { size: boss ? 's' : 'm', color: unlocked ? C.white : C.grey, origin: [0.5, 0], shadow: true });
     L.add([s, label]);
-    if (rec && !boss) L.add(smallStars(this, x, y + h + 21, rec.stars));
-    if (rec && boss) L.add(txt(this, x, y + h + 15, '★'.repeat(rec.stars), { size: 's', color: C.yellow, origin: [0.5, 0] }));
+    if (rec && !boss) L.add(smallStars(this, x, y + h + 21, rec.stars, 3, !!rec.perfect));
+    if (rec && boss && rec.stars > 0) L.add(smallStars(this, x, y + h + 20, rec.stars, rec.stars, !!rec.perfect));
     if (rec?.seats && !boss) {
       // most seats this night was played with: tiny stool + number under the stars
       L.add(this.add.image(x - 3, y + h + 32, 'uiicons', iconFrame('stool_s')));
@@ -242,13 +243,23 @@ export class MapScene extends Phaser.Scene {
     this.popup?.destroy();
     const W = this.scale.width, H = this.scale.height;
     const def = nightDef(n);
-    const pw = W - 30, ph = def.newWords.length > Math.max(5, Math.floor((W - 46) / 26)) ? 222 : 200;
+    const boss = !!def.boss;
+    const pw = W - 30;
+    // boss: the rule text (s, wrapped) is measured first so the panel can grow by its extra height
+    const bossRule = boss ? txt(this, 12, 0, 'Čeká pozdrav 안녕하세요. Hodnotí jen jeho: překlep −★, odchod −★★, bez pozdravu −★.', { size: 's', color: C.light, wrap: pw - 24 }) : null;
+    let ph = (def.newWords.length > Math.max(5, Math.floor((W - 46) / 26)) ? 222 : 200) + (boss ? 0 : 24);
+    if (bossRule) ph += Math.max(0, bossRule.height + 4 - (def.newWords.length ? 0 : 26));
+    // 'Zákazníků …' and 'nejlépe …' share a row when they fit (216 px: the best line gets its own row)
+    const info = txt(this, 12, 0, `Zákazníků: ${def.customers}   Trpělivost: ${def.patience} s`, { size: 'xs', color: C.grey });
+    const rec = G.track().nights[n];
+    const best = rec ? this.bestLine(rec.stars, rec.bestCoins, !!rec.perfect) : null;
+    const bestRow = !!best && info.width + 8 + best.w > pw - 24;
+    if (bestRow) ph += 12;
     const c = this.add.container(15, Math.round(H / 2 - ph / 2)).setDepth(DEPTH.overlay);
     const shade = this.add.rectangle(-15, -c.y, W, H, 0x181425, 0.6).setOrigin(0, 0).setInteractive();
     shade.on('pointerup', () => { c.destroy(); this.popup = undefined; });
     c.add(shade);
     c.add(panel(this, 0, 0, pw, ph));
-    const boss = !!def.boss;
     const dist = DISTRICTS[homeDistrict(def)];
     const title = boss ? `Boss: ${NAMES[def.boss!]}` : def.district === 'holiday' ? `${HOLIDAY_NAME[n] ?? '명절'}` : `${def.district === 'pharmacy' ? `약국 ${n - 200}` : `Noc ${n}`} · ${dist.ko}`;
     c.add(txt(this, pw / 2, 10, title, { size: 'l', color: C.yellow, origin: [0.5, 0] }));
@@ -271,13 +282,31 @@ export class MapScene extends Phaser.Scene {
     } else if (!boss) {
       c.add(txt(this, 12, y, 'Opakování všeho, co už umíš – rychleji!', { size: 's', color: C.light, wrap: pw - 24 }));
       y += 26;
-    } else {
-      c.add(txt(this, 12, y, 'Objednává celými větami a čeká pozdrav. Každá chyba i chybějící pozdrav = −1 hvězda.', { size: 's', color: C.light, wrap: pw - 24 }));
-      y += 26;
     }
-    c.add(txt(this, 12, y, `Zákazníků: ${def.customers}   Trpělivost: ${def.patience} s`, { size: 'xs', color: C.grey }));
-    const rec = G.track().nights[n];
-    if (rec) c.add(txt(this, pw - 12, y, `nejlépe: ${rec.stars}★  ${rec.bestCoins}`, { size: 'xs', color: C.yellow, origin: [1, 0] }));
+    if (bossRule) {
+      // bosses always show their rule (also on nights with new words)
+      bossRule.setY(y);
+      c.add(bossRule);
+      y += bossRule.height + 4;
+    }
+    info.setY(y);
+    c.add(info);
+    if (best) {
+      if (bestRow) y += 12;
+      best.c.setPosition(pw - 12, y);
+      c.add(best.c);
+    }
+    if (!boss) {
+      y += 12;
+      c.add(txt(this, 12, y, 'Překlep = 1 b. · naštvaný odchod = 4 b.', { size: 'xs', color: C.light }));
+      y += 12;
+      const l = starLimits(def.customers);
+      // three cells spread evenly between the panel margins (fits at 216 px)
+      const cells = [`★★★ do ${l.three} b.`, `★★ do ${l.two} b.`, `★ do ${l.one} b.`].map((t) => txt(this, 0, y, t, { size: 'xs', color: C.yellow }));
+      const gap = (pw - 24 - cells.reduce((a, t) => a + t.width, 0)) / 2;
+      let cx = 12;
+      for (const t of cells) { t.setX(Math.round(cx)); c.add(t); cx += t.width + gap; }
+    }
     if (!boss) {
       const SEAT_DESC: Record<number, string> = { 2: 'Klidná noc', 3: 'Běžná noc', 4: 'Nával' };
       const avail = seatsAvailable(G.track().nights, NIGHTS.filter((d) => d.boss).map((d) => d.n));
@@ -313,4 +342,22 @@ export class MapScene extends Phaser.Scene {
     this.popup = c;
   }
 
+  /** 'nejlépe: ★★★  120', right-aligned at the container's x; the stars are sprites so a perfect night shows them golden. */
+  private bestLine(stars: number, coins: number, gold: boolean) {
+    const c = this.add.container(0, 0);
+    const ct = txt(this, 0, 0, String(coins), { size: 'xs', color: C.yellow, origin: [1, 0] });
+    c.add(ct);
+    let lx = -ct.width - 5;
+    if (stars > 0) {
+      c.add(smallStars(this, lx - stars * 4 + 1, 4, stars, stars, gold));
+      lx -= stars * 8 + 2;
+    } else {
+      const z = txt(this, lx, 0, '0★', { size: 'xs', color: C.yellow, origin: [1, 0] });
+      c.add(z);
+      lx -= z.width + 3;
+    }
+    const lab = txt(this, lx, 0, 'nejlépe:', { size: 'xs', color: C.yellow, origin: [1, 0] });
+    c.add(lab);
+    return { c, w: -lx + lab.width };
+  }
 }

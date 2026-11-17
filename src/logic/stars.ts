@@ -2,6 +2,8 @@
 // the player can count them before, during and after a night. Same balance as
 // the old (served − 0.25·typos) / total formula when every typo is counted.
 
+import { plural } from './czech';
+
 export const TYPO_POINTS = 1;
 export const WALKOUT_POINTS = 4;
 
@@ -66,4 +68,17 @@ export function isPerfectBoss(stars: number, critic: { mistakes: number; walkout
 /** Co-op: the team collected no penalty points. */
 export function isPerfectCoop(s: { angry: number; typos: number }): boolean {
   return penaltyPoints(s.typos, s.angry) === 0;
+}
+
+// ------------------------------------------------------------------ result verdict (Czech)
+
+export type VerdictTone = 'perfect' | 'full' | 'near' | 'fail';
+
+/** One line under the result stars: how the penalty points turned into stars. */
+export function verdict(stars: number, points: number, n: number): { text: string; tone: VerdictTone } {
+  const l = starLimits(n);
+  if (stars >= 3) return points === 0 ? { text: 'Bez jediného trestného bodu!', tone: 'perfect' } : { text: `Trestné body ${points} z ${l.three} – plný počet!`, tone: 'full' };
+  if (stars <= 0) return { text: `Trestných bodů ${points}, na ★ smíš mít nejvýš ${l.one}. Zkus to znovu!`, tone: 'fail' };
+  const over = nextStar(points, n)!.over;
+  return { text: `Na ${'★'.repeat(stars + 1)} ${plural(over, 'chyběl', 'chyběly', 'chybělo')} ${over} ${plural(over, 'bod', 'body', 'bodů')}.`, tone: 'near' };
 }

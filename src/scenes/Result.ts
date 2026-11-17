@@ -10,7 +10,10 @@ import { playStory } from '../game/dialogue';
 import { markSeen } from '../logic/save';
 import { G, iconTex, word } from '../game/state';
 import { BG_PREFIX } from '../game/street';
-import { C, button, fadeIn, goto, panel, snapText, toast, txt } from '../game/ui';
+import { C, STAR_GOLD, button, fadeIn, goto, panel, snapText, toast, txt } from '../game/ui';
+import { WALKOUT_POINTS, verdict, type VerdictTone } from '../logic/stars';
+
+export const VERDICT_COLOR: Record<VerdictTone, string> = { perfect: C.green, full: C.cream, near: C.cream, fail: C.light };
 import type { NightSummary } from './Night';
 import type { RegularId } from '../data/levels';
 
@@ -58,7 +61,11 @@ export class ResultScene extends Phaser.Scene {
         L.add(st);
         this.time.delayedCall(500 + i * 380, () => {
           G.audio.play('star', { detune: i * 200 });
-          this.tweens.add({ targets: st, scale: big ? 2 : 1, alpha: 1, duration: 300, ease: 'Back.easeOut', onComplete: () => st.play('star:ding') });
+          this.tweens.add({ targets: st, scale: big ? 2 : 1, alpha: 1, duration: 300, ease: 'Back.easeOut', onComplete: () => {
+            st.play('star:ding');
+            // a night without a penalty point: the star settles golden
+            if (s.perfect) st.once('animationcomplete', () => st.setFrame(STAR_GOLD));
+          } });
           this.cameras.main.shake(80, 0.003);
         });
       }
@@ -70,38 +77,57 @@ export class ResultScene extends Phaser.Scene {
       const review = txt(this, W / 2, y, BOSS_REVIEW[def.boss!][s.stars], { size: 's', color: C.cream, origin: [0.5, 0], align: 'center', wrap: W - 24 });
       L.add(review);
       y += review.height + 8;
-    } else if (s.night === DAILY_NIGHT) {
-      const msg = s.dailyCounted ? `Výsledek dne zapsán! Nejlepší denní výzva: ${dailyBest(G.track().daily)} mincí.` : 'Dnešní pokus už je zapsaný – tohle bylo jen pro radost.';
-      L.add(txt(this, W / 2, y, msg, { size: 's', color: s.dailyCounted ? C.green : C.light, origin: [0.5, 0], align: 'center', wrap: W - 24 }));
-      y += 26;
-    } else if (failed) {
-      L.add(txt(this, W / 2, y, 'Málo spokojených zákazníků. Zkus to znovu – příště to vyjde!', { size: 's', color: C.light, origin: [0.5, 0], align: 'center', wrap: W - 24 }));
-      y += 26;
+    } else {
+      if (s.night === DAILY_NIGHT) {
+        const msg = s.dailyCounted ? `Výsledek dne zapsán! Nejlepší denní výzva: ${dailyBest(G.track().daily)} mincí.` : 'Dnešní pokus už je zapsaný – tohle bylo jen pro radost.';
+        const dm = txt(this, W / 2, y, msg, { size: 's', color: s.dailyCounted ? C.green : C.light, origin: [0.5, 0], align: 'center', wrap: W - 24 });
+        L.add(dm);
+        y += dm.height + 2;
+      }
+      const v = verdict(s.stars, s.points, s.total);
+      const vt = txt(this, W / 2, y, v.text, { size: 's', color: VERDICT_COLOR[v.tone], origin: [0.5, 0], align: 'center', wrap: W - 24 });
+      L.add(vt);
+      y += vt.height + 6;
     }
     const pw = W - 24;
-    L.add(panel(this, 12, y, pw, 84));
-    const rows: [string, string, string][] = [
-      ['Obslouženo', `${s.served} / ${s.total}`, C.white],
-      ['Odešli naštvaní', String(s.angry), s.angry ? C.pink : C.white],
-      ['Překlepy', String(s.mistakes), s.mistakes ? C.pink : C.white],
-      ['Nejlepší kombo', `${s.bestCombo}×`, C.orange],
-    ];
+    L.add(panel(this, 12, y, pw, 97));
+    let rows: [string, string, string][];
+    if (boss && s.critic) {
+      const k = s.critic;
+      const x = k.mistakes + k.noGreet + 2 * k.walkouts;
+      rows = [
+        ['Překlepy u bosse', `${k.mistakes} × −★`, k.mistakes ? C.pink : C.white],
+        ['Odchod bosse', `${k.walkouts} × −★★`, k.walkouts ? C.pink : C.white],
+        ['Pozdrav', k.noGreet ? 'chyběl −★' : 'ano', k.noGreet ? C.pink : C.white],
+        ['Hodnocení', 5 - x < 1 ? `5 − ${x} → 1★` : `5 − ${x} = ${s.stars}★`, C.yellow],
+        ['Nejlepší kombo', `${s.bestCombo}×`, C.orange],
+      ];
+    } else {
+      rows = [
+        ['Obslouženo', `${s.served} / ${s.total}`, C.white],
+        ['Odešli naštvaní', `${s.angry} × ${WALKOUT_POINTS} = ${s.angry * WALKOUT_POINTS}`, s.angry ? C.pink : C.white],
+        ['Překlepy', `${s.mistakes} × 1 = ${s.mistakes}`, s.mistakes ? C.pink : C.white],
+        ['Trestné body', String(s.points), C.yellow],
+        ['Nejlepší kombo', `${s.bestCombo}×`, C.orange],
+      ];
+    }
     rows.forEach(([a, b, col], i) => {
       L.add(txt(this, 22, y + 8 + i * 13, a, { size: 's', color: C.light }));
       L.add(txt(this, 12 + pw - 10, y + 8 + i * 13, b, { size: 's', color: col, origin: [1, 0] }));
     });
-    const coinY = y + 8 + 4 * 13 + 4;
+    const coinY = y + 8 + 5 * 13 + 4;
     L.add(this.add.sprite(26, coinY + 5, 'coin').play('coin:spin'));
     L.add(txt(this, 34, coinY, 'Mince', { size: 's', color: C.yellow }));
     const ct = txt(this, 12 + pw - 10, coinY, '+0', { size: 'm', color: C.yellow, origin: [1, 0] });
     L.add(ct);
     const counter = { v: 0 };
     this.tweens.add({ targets: counter, v: s.coins, duration: 900, delay: 600, onUpdate: () => { ct.setText(`+${Math.round(counter.v)}`); snapText(ct); }, onComplete: () => G.audio.play('coin') });
-    y += 88;
+    y += 101;
     if (!boss && s.seats) {
-      const extra = `Míst u pultu: ${s.seats} (mince ×${seatMultiplier(s.seats).toLocaleString('cs-CZ')})${s.helped ? ` · 김 대리 pomohl ${s.helped}×` : ''}`;
-      L.add(txt(this, W / 2, y, extra, { size: 'xs', color: C.grey, origin: [0.5, 0] }));
-      y += 12;
+      const extra = `Míst u pultu: ${s.seats} (mince ×${seatMultiplier(s.seats).toLocaleString('cs-CZ')})${s.helped ? ` · 김 대리 pomohl ${s.helped}× (bez trestu)` : ''}${s.lost ? ` · ${s.lost}× odešel po smlouvání (bez trestu)` : ''}`;
+      const et = txt(this, W / 2, y, extra, { size: 'xs', color: C.grey, origin: [0.5, 0], align: 'center', wrap: W - 16 });
+      L.add(et);
+      y += et.height + 4;
     } else y += 4;
     if (s.newWords.length) {
       L.add(txt(this, W / 2, y, 'Nová slova v receptáři', { size: 's', color: C.cream, origin: [0.5, 0] }));

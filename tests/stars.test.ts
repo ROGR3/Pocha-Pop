@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { countsAsTypo, isPerfect, isPerfectBoss, isPerfectCoop, nextStar, penaltyPoints, starLimits, starsFromPoints } from '../src/logic/stars';
+import { verdict, countsAsTypo, isPerfect, isPerfectBoss, isPerfectCoop, nextStar, penaltyPoints, starLimits, starsFromPoints } from '../src/logic/stars';
 import { criticStars, nightStars } from '../src/logic/rules';
 import { plural } from '../src/logic/czech';
 
@@ -79,5 +79,16 @@ describe('perfect nights (golden stars)', () => {
     expect(isPerfectCoop({ angry: 0, typos: 0 })).toBe(true);
     expect(isPerfectCoop({ angry: 0, typos: 1 })).toBe(false);
     expect(isPerfectCoop({ angry: 1, typos: 0 })).toBe(false);
+  });
+});
+
+describe('verdict', () => {
+  it('perfect / full / near / fail', () => {
+    expect(verdict(3, 0, 10)).toEqual({ text: 'Bez jediného trestného bodu!', tone: 'perfect' });
+    expect(verdict(3, 3, 10)).toEqual({ text: 'Trestné body 3 z 4 – plný počet!', tone: 'full' });
+    expect(verdict(2, 5, 10).text).toBe('Na ★★★ chyběl 1 bod.');
+    expect(verdict(2, 7, 10).text).toBe('Na ★★★ chyběly 3 body.');
+    expect(verdict(1, 20, 12).text).toBe('Na ★★ chybělo 6 bodů.');
+    expect(verdict(0, 30, 10)).toEqual({ text: 'Trestných bodů 30, na ★ smíš mít nejvýš 22. Zkus to znovu!', tone: 'fail' });
   });
 });

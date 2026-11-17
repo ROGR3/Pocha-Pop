@@ -241,9 +241,13 @@ export function starRow(scene: Phaser.Scene, x: number, y: number, n: number, of
   return c;
 }
 
-export function smallStars(scene: Phaser.Scene, x: number, y: number, n: number, of = 3) {
+/** Golden frames (a night without a single penalty point): 'star' 6, 'star_s' 2. */
+export const STAR_GOLD = 6;
+export const STAR_S_GOLD = 2;
+
+export function smallStars(scene: Phaser.Scene, x: number, y: number, n: number, of = 3, gold = false) {
   const c = scene.add.container(Math.round(x), Math.round(y));
-  for (let i = 0; i < of; i++) c.add(scene.add.image(Math.round((i - (of - 1) / 2) * 8), 0, 'star_s', i < n ? 0 : 1));
+  for (let i = 0; i < of; i++) c.add(scene.add.image(Math.round((i - (of - 1) / 2) * 8), 0, 'star_s', i < n ? (gold ? STAR_S_GOLD : 0) : 1));
   return c;
 }
 

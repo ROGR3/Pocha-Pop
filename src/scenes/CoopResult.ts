@@ -7,7 +7,10 @@ import type { CoopSummary, Msg } from '../logic/netproto';
 import { PCOL, PFRAME } from '../game/coopui';
 import { G } from '../game/state';
 import { BG_PREFIX } from '../game/street';
-import { C, button, fadeIn, goto, panel, snapText, txt } from '../game/ui';
+import { C, STAR_GOLD, button, fadeIn, goto, panel, snapText, txt } from '../game/ui';
+import { WALKOUT_POINTS, isPerfectCoop, penaltyPoints, verdict } from '../logic/stars';
+import { plural } from '../logic/czech';
+import { VERDICT_COLOR } from './Result';
 
 export class CoopResultScene extends Phaser.Scene {
   private s!: CoopSummary;
@@ -42,6 +45,7 @@ export class CoopResultScene extends Phaser.Scene {
     // shared stars
     const big = W >= 220;
     const sy = 54;
+    const gold = isPerfectCoop(s);
     for (let i = 0; i < 3; i++) {
       const x = Math.round(W / 2 + (i - 1) * (big ? 34 : 18));
       this.add.image(x, sy, 'star', 1).setScale(big ? 2 : 1);
@@ -49,22 +53,33 @@ export class CoopResultScene extends Phaser.Scene {
         const st = this.add.sprite(x, sy, 'star', 0).setScale(0).setAlpha(0);
         this.time.delayedCall(500 + i * 380, () => {
           G.audio.play('star', { detune: i * 200 });
-          this.tweens.add({ targets: st, scale: big ? 2 : 1, alpha: 1, duration: 300, ease: 'Back.easeOut', onComplete: () => st.play('star:ding') });
+          this.tweens.add({ targets: st, scale: big ? 2 : 1, alpha: 1, duration: 300, ease: 'Back.easeOut', onComplete: () => {
+            st.play('star:ding');
+            if (gold) st.once('animationcomplete', () => st.setFrame(STAR_GOLD));
+          } });
         });
       }
     }
     if (failed) this.time.delayedCall(400, () => G.audio.play('fail'));
     else this.time.delayedCall(500 + s.stars * 380, () => G.audio.play('fanfare'));
     let y = sy + (big ? 30 : 20);
-    txt(this, W / 2, y, `Obslouženo ${s.served} / ${s.total} · odešli naštvaní ${s.angry} · překlepy týmu ${s.mistakes}`, { size: 'xs', color: C.light, origin: [0.5, 0], align: 'center', wrap: W - 20 });
-    y += 22;
+    const n = Math.max(1, s.players.length);
+    const pts = txt(this, W / 2, y, `Trestné body týmu ${penaltyPoints(s.typos, s.angry)}: odchody ${s.angry} × ${WALKOUT_POINTS} + překlepy ${s.mistakes} ÷ ${n} ${plural(n, 'hráč', 'hráči', 'hráčů')} = ${s.typos}`, { size: 'xs', color: C.light, origin: [0.5, 0], align: 'center', wrap: W - 20 });
+    y += pts.height + 2;
+    const v = verdict(s.stars, penaltyPoints(s.typos, s.angry), s.total);
+    const vt = txt(this, W / 2, y, v.text, { size: 'xs', color: VERDICT_COLOR[v.tone], origin: [0.5, 0], align: 'center', wrap: W - 20 });
+    y += vt.height + 6;
     // players table
     const pw = W - 16;
     const rows = s.players.length;
     panel(this, 8, y, pw, 24 + rows * 26);
-    const cols = [pw * 0.5, pw * 0.64, pw * 0.8, pw - 6].map((x) => Math.round(8 + x));
-    const head = ['první', 'doběh', 'mince', 'kombo'];
-    head.forEach((h, i) => txt(this, cols[i], y + 7, h, { size: 'xs', color: C.grey, origin: [1, 0] }));
+    const cols = [pw * 0.46, pw * 0.6, pw * 0.72, pw * 0.84, pw - 6].map((x) => Math.round(8 + x));
+    // coins: a coin icon instead of a word so five columns fit at 216 px
+    const head = ['první', 'doběh', 'chyby', '', 'kombo'];
+    // narrow screens: neighbouring headers are staggered so they don't touch
+    const stagger = W < 240;
+    head.forEach((h, i) => { if (h) txt(this, cols[i], y + (stagger ? (i % 2 ? 12 : 4) : 7), h, { size: 'xs', color: C.grey, origin: [1, 0] }); });
+    this.add.image(cols[3] - 5, y + (stagger ? 16 : 11), 'coin', 0);
     const crown = crowned(s.players);
     const order = [...s.players].sort((a, b) => b.first - a.first || b.coins - a.coins);
     order.forEach((p, i) => {
@@ -74,11 +89,13 @@ export class CoopResultScene extends Phaser.Scene {
       const name = txt(this, 28, ry + 1, p.name + (p.pid === this.me ? ' (ty)' : ''), { size: 's', color: PCOL[p.color] });
       if (p.left) txt(this, 28, ry + 12, 'odešel(a)', { size: 'xs', color: C.grey });
       if (crown.includes(p.pid)) {
-        const cr = this.add.image(Math.round(28 + name.width + 9), ry + 5, 'crown').setScale(0);
+        // no room after the name (216 px): the crown sits on the player's dot
+        const after = 28 + name.width + 17 <= cols[0] - 10;
+        const cr = this.add.image(after ? Math.round(28 + name.width + 9) : 20, after ? ry + 5 : ry + 1, 'crown').setScale(0);
         this.time.delayedCall(1700, () => { this.tweens.add({ targets: cr, scale: 1, duration: 300, ease: 'Back.easeOut' }); G.audio.play('coin', { detune: 600 }); });
       }
-      const vals = [String(p.first), String(p.runoff), `+${p.coins}`, `${p.bestCombo}×`];
-      vals.forEach((v, k) => txt(this, cols[k], ry + 2, v, { size: 's', color: k === 2 ? C.yellow : C.white, origin: [1, 0] }));
+      const vals = [String(p.first), String(p.runoff), String(p.mistakes), `+${p.coins}`, `${p.bestCombo}×`];
+      vals.forEach((v, k) => txt(this, cols[k], ry + 2, v, { size: 's', color: k === 3 ? C.yellow : C.white, origin: [1, 0] }));
     });
     y += 24 + rows * 26 + 10;
     const mine = s.players.find((p) => p.pid === this.me);

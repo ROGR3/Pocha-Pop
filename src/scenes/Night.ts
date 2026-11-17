@@ -4,7 +4,7 @@ import Phaser from 'phaser';
 import { DAILY_NIGHT, NIGHTS, nightTitle, CRITIC_ORDERS, CRITIC_PATIENCE, DISTRICTS, homeDistrict, nightDef, nightPool, reactionsOn, type NightDef, type RegularId } from '../data/levels';
 import { BOSS_INTRO, HOLIDAY_INTRO, NAMES, PHARMACY_INTRO } from '../data/story';
 import { matchAgainst } from '../logic/hangul';
-import { BOSS_SEATS, DEFAULT_SEATS, ERROR_CLEAR_MS, comboMultiplier, criticStars, nightStars, pairPatience, patienceMultiplier, seatMultiplier, serveCoins, spawnInterval } from '../logic/rules';
+import { BOSS_SEATS, DEFAULT_SEATS, ERROR_CLEAR_MS, comboMultiplier, criticStars, pairPatience, patienceMultiplier, seatMultiplier, serveCoins, spawnInterval } from '../logic/rules';
 import { helperPick } from '../logic/helper';
 import { DISCOUNT_MUL, HAGGLE_CHANCE, HAGGLE_WINDOW, HAGGLE_WORDS, INSIST_LEAVE, INSIST_MUL, BOSS_GREET_WINDOW, BYE_COINS, BYE_WORDS, GREET_WINDOW, HELLO_COINS, HELLO_PATIENCE, HELLO_WORDS, REACTIONS, REACTION_CHANCE, REACTION_COINS, REACTION_TIME, matchPolite, pickReaction, type GreetKind, type Greeting, type ReactionId } from '../logic/polite';
 import { ITEM_REACTIONS } from '../data/reactions';
@@ -23,13 +23,14 @@ import { DEPTH, Street, particleFrame } from '../game/street';
 import { TypeBox } from '../game/typebox';
 import { attachHat } from '../game/hats';
 import { IS_ANDROID } from '../game/ime';
-import { C, HEX, button, cssRect, iconFrame, fadeIn, floatText, goto, iconButton, panel, snapText, toast, txt } from '../game/ui';
+import { C, HEX, STAR_S_GOLD, button, cssRect, iconFrame, fadeIn, floatText, goto, iconButton, panel, smallStars, snapText, textW, toast, txt } from '../game/ui';
+import { WALKOUT_POINTS, TYPO_POINTS, countsAsTypo, isPerfect, isPerfectBoss, starLimits, starsFromPoints } from '../logic/stars';
 import { COOP_SEAT_MUL, COOP_WALK_MS, RUNOFF_MS, patienceFrac } from '../logic/coop';
 import type { CoopSummary, Msg, OrderData, PlayerInfo } from '../logic/netproto';
 import { CoopDirector } from '../game/coopHost';
 import { PFRAME, PCOL, PlayerTag, initial } from '../game/coopui';
 import type { NetSession } from '../game/net';
-import { RATE_SLOW, listenHint, replayRule } from '../logic/track';
+import { RATE_SLOW, listenHint, mergeNightRecord, replayRule } from '../logic/track';
 import { splitSyllable } from '../logic/hangul';
 
 type StartMsg = Extract<Msg, { t: 'start' }>;
@@ -110,7 +111,13 @@ export interface NightSummary {
   bestCombo: number;
   newWords: string[];
   trouble: string[];
-  critic?: { stars: number; mistakes: number; walkouts: number };
+  critic?: { stars: number; mistakes: number; walkouts: number; noGreet: number };
+  /** Penalty points (typos + 4 per angry walk-out). */
+  points: number;
+  /** Customers who left after 싸다 (no penalty). */
+  lost: number;
+  /** A night without a single penalty point (golden stars). */
+  perfect: boolean;
   regularsSeen: RegularId[];
   clean: Partial<Record<RegularId, number>>;
   seats: number;
@@ -170,7 +177,11 @@ export class NightScene extends Phaser.Scene {
   private trouble = new Map<string, number>();
   private regularsSeen: RegularId[] = [];
   private cleanServes: Partial<Record<RegularId, number>> = {};
-  private critic = { mistakes: 0, walkouts: 0, done: false };
+  private critic = { mistakes: 0, walkouts: 0, noGreet: 0, done: false };
+  /** Customers the night was planned with (fixed for the whole night). */
+  private N = 0;
+  /** Penalty points so far. */
+  private points = 0;
   private patMul = 1;
   private seats = DEFAULT_SEATS;
   private seatMul = 1;
@@ -198,6 +209,8 @@ export class NightScene extends Phaser.Scene {
   private coinIcon!: Phaser.GameObjects.Sprite;
   private progress!: Phaser.GameObjects.Rectangle;
   private progressBg!: Phaser.GameObjects.Rectangle;
+  /** Star pips in the HUD (single player only). */
+  private starPips?: Phaser.GameObjects.Container;
   private comboText!: Phaser.GameObjects.Text;
   private titleText!: Phaser.GameObjects.Text;
   private hud!: Phaser.GameObjects.Container;
@@ -232,7 +245,9 @@ export class NightScene extends Phaser.Scene {
     this.trouble = new Map();
     this.regularsSeen = [];
     this.cleanServes = {};
-    this.critic = { mistakes: 0, walkouts: 0, done: false };
+    this.critic = { mistakes: 0, walkouts: 0, noGreet: 0, done: false };
+    this.points = 0;
+    this.starPips = undefined;
     // the daily challenge is the same night for everyone that day
     this.rand = rng(this.n === DAILY_NIGHT ? daySeed(dayKey(new Date())) : Date.now() & 0xffffffff);
     this.coop = null;
@@ -268,6 +283,7 @@ export class NightScene extends Phaser.Scene {
     G.audio.setLofi(G.hasUpgrade('radio'), G.station());
 
     if (!this.coop) this.buildQueue();
+    this.N = this.coop ? this.coop.start.total : this.queue.length + this.arrived;
     this.buildHud();
     this.box = new TypeBox(this, 4, 0, 10, INPUT_H - 6, 'Napiš objednávku…');
     this.box.root.setDepth(DEPTH.input);
@@ -391,6 +407,11 @@ export class NightScene extends Phaser.Scene {
     const pause = iconButton(s, 0, 11, 'pause', () => this.togglePause()).setName('pause');
     this.comboText = txt(s, 0, 32, '', { size: 'm', color: C.orange, origin: [0.5, 0.5], shadow: true });
     this.hud.add([bg, line, night, this.progressBg, this.progress, this.coinIcon, this.coinText, pause, this.comboText]);
+    if (!this.coop) {
+      const of = this.def.boss ? 5 : 3;
+      this.starPips = smallStars(s, 0, 11, of, of, true);
+      this.hud.add(this.starPips);
+    }
   }
 
   private layoutHud() {
@@ -402,8 +423,14 @@ export class NightScene extends Phaser.Scene {
     this.coinIcon.setPosition(W - 64, 11);
     this.coinText.setPosition(W - 56, 11);
     const px = Math.max(48, this.titleText.width + 12);
-    this.progressBg.setPosition(px, 9).width = W - 76 - px;
+    const pipsW = this.starPips ? this.starPips.length * 8 + 4 : 0;
+    const barW = W - 76 - px - pipsW;
+    this.progressBg.setPosition(px, 9).width = Math.max(2, barW);
     this.progress.setPosition(px + 1, 10);
+    const showBar = barW >= 16;
+    this.progressBg.setVisible(showBar);
+    this.progress.setVisible(showBar);
+    if (this.starPips) this.starPips.setPosition(Math.round((showBar ? px + barW : px - 4) + pipsW / 2 + 1), 11);
     this.comboText.setPosition(Math.round(W / 2), this.coop ? 48 : 34);
     if (this.coop) this.layoutTags();
     this.updateProgress();
@@ -413,6 +440,38 @@ export class NightScene extends Phaser.Scene {
     const done = this.served + this.angry + this.lost;
     const total = Math.max(1, this.totalCustomers());
     this.progress.width = Math.round((this.progressBg.width - 2) * (done / total));
+  }
+
+  /** Stars still reachable with the penalties so far. */
+  private reachable() {
+    return this.def.boss ? criticStars(this.critic.mistakes + this.critic.noGreet, this.critic.walkouts) : starsFromPoints(this.points, this.N);
+  }
+
+  /** No penalty yet: the HUD pips (and the result) are golden. */
+  private perfectSoFar() {
+    return this.def.boss ? this.critic.mistakes + this.critic.walkouts + this.critic.noGreet === 0 : this.points === 0;
+  }
+
+  /** HUD pips follow the reachable stars; a lost pip pops (with a sound on regular nights). */
+  private refreshStars() {
+    const pips = this.starPips;
+    if (!pips) return;
+    const reach = this.reachable();
+    const gold = this.perfectSoFar();
+    const imgs = pips.list as Phaser.GameObjects.Image[];
+    let lost = false;
+    imgs.forEach((im, i) => {
+      const full = String(im.frame.name) !== '1';
+      if (i < reach) { if (full) im.setFrame(gold ? STAR_S_GOLD : 0); return; }
+      if (!full) return;
+      im.setFrame(1);
+      this.tweens.add({ targets: im, scale: { from: 1.6, to: 1 }, duration: 200 });
+      lost = true;
+    });
+    if (lost && !this.def.boss) {
+      G.audio.play('angry', { volume: 0.4 });
+      floatText(this, pips.x, 34, '−★', C.red);
+    }
   }
 
   // ------------------------------------------------------------- customers
@@ -623,17 +682,33 @@ export class NightScene extends Phaser.Scene {
   }
 
   private mistake(text: string) {
+    // blame the orders that matched what was typed just before
+    const prev = [...text].slice(0, -1).join('');
+    const prevMatch = prev ? matchAgainst(prev, this.waiting(), (c) => c.order!.target).prefix : [];
+    const blamed = prevMatch.length ? prevMatch : [];
+    const greetPrefix = !!prev && matchPolite(prev, [], () => '', this.activeGreetings()).greetPrefix;
+    // orphan text: its order vanished (김 대리, a walk-out, "Tak nic…", the runoff) – it can't be finished, clear it quietly
+    if (prev && !greetPrefix && !matchAgainst(prev, this.waiting(), (c) => orderTargets(c.order!)).prefix.length) {
+      G.ime.clear();
+      return;
+    }
+    const counts = countsAsTypo({
+      blamedOrder: blamed.some((c) => !c.order!.reaction),
+      prevEmpty: !prev,
+      orderWaiting: this.waiting().some((c) => !c.order!.reaction),
+      politeActive: this.activeGreetings().length > 0,
+    });
     this.inError = true;
-    this.mistakes++;
     this.combo = 0;
     this.updateCombo();
     G.audio.play('error');
     this.box.error();
     this.cameras.main.shake(120, 0.004);
-    // blame the orders that matched what was typed just before
-    const prev = [...text].slice(0, -1).join('');
-    const prevMatch = prev ? matchAgainst(prev, this.waiting(), (c) => c.order!.target).prefix : [];
-    const blamed = prevMatch.length ? prevMatch : [];
+    if (counts) {
+      this.mistakes++;
+      this.points += TYPO_POINTS;
+      if (this.starPips) floatText(this, this.starPips.x, 26, '−1', C.red);
+    }
     for (const c of blamed) {
       const o = c.order!;
       const ti = tokenAt(o, text);
@@ -654,15 +729,15 @@ export class NightScene extends Phaser.Scene {
         this.time.delayedCall(600, () => c.state === 'wait' && c.sprite.play(`${c.key}:idle`));
       }
     }
-    if (this.coop) this.coop.s.toHost({ t: 'miss', cid: blamed[0]?.coop?.cid ?? -1 });
+    if (this.coop) this.coop.s.toHost({ t: 'miss', cid: blamed[0]?.coop?.cid ?? -1, free: !counts });
     if (!blamed.length) {
-      const g = prev ? matchPolite(prev, [], () => '', this.activeGreetings()) : null;
-      if (g?.greetPrefix) {
+      if (greetPrefix) {
         this.greetDirty = true;
         for (const gr of this.activeGreetings()) if (matchPolite(prev, [], () => '', [gr]).greetPrefix) G.setStat(gr.id, recordMistake(G.stat(gr.id)));
         for (const c of this.customers) if (c.greet) this.tweens.add({ targets: c.greet.tag, x: { from: c.greet.tag.x - 2, to: c.greet.tag.x }, duration: 200, ease: 'Elastic.easeOut' });
       } else this.waiting().forEach((c) => c.bubble!.shake());
     }
+    this.refreshStars();
     this.errorTimer?.remove();
     this.errorTimer = this.time.delayedCall(ERROR_CLEAR_MS, () => { if (this.inError) G.ime.clear(); });
   }
@@ -889,14 +964,16 @@ export class NightScene extends Phaser.Scene {
       this.trouble.set(t.id, (this.trouble.get(t.id) ?? 0) + 1);
     });
     this.angry++;
+    this.points += WALKOUT_POINTS;
     this.combo = 0;
     this.updateCombo();
     this.updateProgress();
     G.audio.play('angry');
     c.sprite.play(`${c.key}:${c.kind === 'nabi' ? 'walk' : 'angry'}`);
-    floatText(this, c.sprite.x, c.sprite.y - 46, c.kind === 'boss' ? '−★★' : 'hmpf!', C.red);
+    floatText(this, c.sprite.x, c.sprite.y - 46, c.kind === 'boss' ? '−★★' : `hmpf! −${WALKOUT_POINTS}`, C.red);
+    if (c.kind === 'boss') this.critic.walkouts++;
+    this.refreshStars();
     if (c.kind === 'boss') {
-      this.critic.walkouts++;
       if (--c.ordersLeft > 0) {
         // the critic grumbles but orders again
         const b = c.bubble!;
@@ -994,6 +1071,9 @@ export class NightScene extends Phaser.Scene {
         });
       });
     });
+    // half-typed text for the order 김 대리 just took (and no other): clear it so no error shows
+    const typed = G.ime.state.text;
+    if (typed && matchAgainst(typed, [o], (x) => orderTargets(x)).prefix.length && !matchAgainst(typed, this.waiting(), (w) => orderTargets(w.order!)).prefix.length) G.ime.clear();
     this.onInput(G.ime.state.text, G.ime.state.composing, true);
   }
 
@@ -1167,8 +1247,9 @@ export class NightScene extends Phaser.Scene {
       if (left < 1.2) c.greet.tag.setAlpha(Math.floor(this.clock * 6) % 2 ? 0.4 : 1);
       if (left <= 0) {
         if (c.kind === 'boss' && c.greet.kind === 'hello' && !this.criticGreeted) {
-          this.critic.mistakes++;
+          this.critic.noGreet++;
           floatText(this, c.sprite.x, c.sprite.y - 44, '−★ bez pozdravu', C.red);
+          this.refreshStars();
           c.sprite.play(`${c.key}:neutral`);
           this.time.delayedCall(700, () => c.state === 'wait' && c.sprite.play(`${c.key}:idle`));
           G.audio.play('angry', { volume: 0.6 });
@@ -1267,12 +1348,13 @@ export class NightScene extends Phaser.Scene {
   }
 
   private finish() {
-    const total = this.served + this.angry;
+    const total = this.N;
     const boss = !!this.def.boss;
-    const stars = boss ? criticStars(this.critic.mistakes, this.critic.walkouts) : nightStars({ total, served: this.served, angry: this.angry, mistakes: this.mistakes });
+    const stars = this.reachable();
+    const perfect = boss ? isPerfectBoss(stars, this.critic) : isPerfect(stars, this.points);
     const d = G.data, t = G.track();
     const rec = t.nights[this.n] ?? { stars: 0, bestCoins: 0, plays: 0 };
-    t.nights[this.n] = { stars: Math.max(rec.stars, stars), bestCoins: Math.max(rec.bestCoins, this.coins), plays: rec.plays + 1, seats: Math.max(rec.seats ?? 0, this.seats) };
+    t.nights[this.n] = mergeNightRecord(t.nights[this.n], { stars, coins: this.coins, seats: this.seats, perfect });
     d.coins += this.coins;
     d.stats.served += this.served;
     d.stats.mistakes += this.mistakes;
@@ -1293,7 +1375,8 @@ export class NightScene extends Phaser.Scene {
     const summary: NightSummary = {
       night: this.n, stars, total, served: this.served, angry: this.angry, mistakes: this.mistakes, coins: this.coins, tips: this.tips,
       bestCombo: this.bestCombo, newWords, trouble, regularsSeen: this.regularsSeen, clean: this.cleanServes, seats: this.seats, helped: this.helped, greetings: this.greetings, reactions: this.reactions, haggles: this.haggles,
-      critic: boss ? { stars, mistakes: this.critic.mistakes, walkouts: this.critic.walkouts } : undefined,
+      critic: boss ? { stars, mistakes: this.critic.mistakes, walkouts: this.critic.walkouts, noGreet: this.critic.noGreet } : undefined,
+      points: this.points, lost: this.lost, perfect,
       dailyCounted, listen: this.listen, replays: this.replaysAsked, firstClear: stars > 0 && rec.stars === 0,
     };
     G.ime.deactivate();
@@ -1618,12 +1701,28 @@ export class NightScene extends Phaser.Scene {
     const W = this.scale.width, H = this.scale.height;
     const c = this.add.container(0, 0).setDepth(DEPTH.overlay);
     c.add(this.add.rectangle(0, 0, W, H, 0x181425, 0.7).setOrigin(0, 0).setInteractive());
-    const pw = 160, ph = 120, px = Math.round(W / 2 - pw / 2), py = Math.round(H / 2 - ph / 2 - 30);
+    const ph = 146, py = Math.round(H / 2 - ph / 2 - 30);
+    // the star rules: how many penalty points so far and where the limits are
+    let l1: string, l2: string, c2: string;
+    if (this.def.boss) {
+      l1 = `Hodnocení teď: ${this.reachable()}★ z 5`;
+      l2 = 'překlep −★ · odchod −★★';
+      c2 = C.grey;
+    } else {
+      const lim = starLimits(this.N);
+      l1 = `Trestné body: ${this.points}`;
+      l2 = `★★★ do ${lim.three} · ★★ do ${lim.two} · ★ do ${lim.one}`;
+      c2 = C.yellow;
+    }
+    const t1 = txt(this, W / 2, py + 30, l1, { size: 'xs', color: C.cream, origin: [0.5, 0] });
+    const t2 = txt(this, W / 2, py + 41, l2, { size: 'xs', color: c2, origin: [0.5, 0] });
+    const pw = textW(t2) > 160 - 12 ? Math.min(W - 16, 196) : 160, px = Math.round(W / 2 - pw / 2);
     c.add(panel(this, px, py, pw, ph));
     c.add(txt(this, W / 2, py + 10, 'Pauza', { size: 'l', color: C.yellow, origin: [0.5, 0] }));
-    c.add(button(this, W / 2, py + 44, 120, 20, 'Pokračovat', () => this.togglePause(), { size: 's' }));
-    c.add(button(this, W / 2, py + 70, 120, 20, 'Začít znovu', () => { this.tweens.resumeAll(); goto(this, 'Night', { night: this.n, seats: this.seats }); }, { size: 's', style: 'wood' }));
-    c.add(button(this, W / 2, py + 96, 120, 20, 'Zpět na mapu', () => { this.tweens.resumeAll(); goto(this, 'Map'); }, { size: 's', style: 'wood' }));
+    c.add([t1, t2]);
+    c.add(button(this, W / 2, py + 70, 120, 20, 'Pokračovat', () => this.togglePause(), { size: 's' }));
+    c.add(button(this, W / 2, py + 96, 120, 20, 'Začít znovu', () => { this.tweens.resumeAll(); goto(this, 'Night', { night: this.n, seats: this.seats }); }, { size: 's', style: 'wood' }));
+    c.add(button(this, W / 2, py + 122, 120, 20, 'Zpět na mapu', () => { this.tweens.resumeAll(); goto(this, 'Map'); }, { size: 's', style: 'wood' }));
     this.pauseLayer = c;
   }
 }
